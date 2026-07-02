@@ -164,16 +164,24 @@ Story structure:
 
 ```
 packages/ui/
-├── .storybook/            # main.ts, preview.ts (tokens.css imported globally)
+├── .storybook/                  # main.ts, preview.ts (tokens.css imported globally)
 ├── src/
-│   ├── tokens/tokens.css  # §2 as CSS custom properties (--rui-*)
-│   ├── components/
-│   │   ├── Button/
-│   │   ├──── Button.tsx + Button.stories.tsx
-│   │   ├── Badge/
-│   │   ├──── Badge.tsx + Badge.stories.tsx   # every component ships with its stories
-│   │   └── …
+│   ├── tokens/tokens.css        # §2 as CSS custom properties (--rui-*)
+│   └── components/
+│       ├── Button/              # one folder per component — the public entry
+│       │   ├── Button.tsx           # main component (the package export)
+│       │   ├── Button.stories.tsx   # every component ships with its stories
+│       │   └── ButtonIcon.tsx       # optional support parts live beside it (imported by Button)
+│       ├── Badge/
+│       │   ├── Badge.tsx
+│       │   └── Badge.stories.tsx
+│       └── …
 ```
+
+The component folder is the unit: it groups the main component, its stories,
+and any support/sub-components. No barrel `index.ts` — the package `exports`
+map points straight at the main file (`./Button` → `Button/Button.js`); support
+parts are imported by the main component, never re-exported.
 
 Per-component acceptance criteria (definition of done for each story):
 
