@@ -271,9 +271,14 @@ because they *are* the first impression.
 
 ## 9. Open questions to settle before coding
 
-1. **Auth posture:** agreed on seeded users + role switcher, or do we want real Supabase
-   auth with pre-provisioned logins? (Recommendation: switcher — better demo UX,
-   authorization logic still real.)
+1. ~~**Auth posture:**~~ **Resolved — seeded users + role switcher (no login).** A fixed
+   set of seeded users (admin / approver / payer); a UI switcher changes who we're
+   "acting as." Reviewers demo the approval loop from every seat with zero signup.
+   Server access uses the Supabase **secret key** (`@supabase/server` `auth: 'secret'`
+   / admin client) with the acting role enforced in app code + zod, not a real JWT
+   session — so we skip `@supabase/ssr` cookie/refresh plumbing. RLS policies are still
+   authored (defense in depth), exercised via the server role. Authorization logic
+   (who may approve/pay) stays real; only the identity mechanism is seeded.
 2. **Data access:** SDK calls Next.js route handlers (pure API contract story) vs.
    server actions for mutations (less code, more idiomatic App Router)? Recommendation:
    route handlers for reads consumed by the SDK, server actions for form mutations —
