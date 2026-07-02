@@ -108,7 +108,7 @@ ramps/
 ├── apps/
 │   └── web/                  # Next.js (App Router) — pages, server actions/route handlers
 ├── packages/
-│   ├── ui/                   # Ramp design system: tokens, primitives, composed components
+│   ├── ui/                   # Ramp design system: tokens, primitives, composed components (+ Storybook)
 │   ├── schemas/              # Zod schemas + inferred types — the single source of truth
 │   ├── sdk/                  # Typed API client consuming schemas (used by web, testable alone)
 │   └── config/               # Shared tsconfig / eslint / tailwind preset
@@ -173,38 +173,50 @@ Design notes:
 | Styling | Tailwind + CSS custom properties for Ramp tokens | Tokens as CSS vars = themable, inspectable, honest design-system work |
 | Components | Radix primitives skinned to Ramp + hand-built table | Accessibility for free; effort spent on look/feel, not reinventing focus traps |
 | Forms | react-hook-form + zodResolver | Contract reuse in the UI layer |
+| Component workbench | Storybook 8 in `packages/ui` (a11y addon, static build deployed) | Design system auditable in isolation; per-component definition of done |
 | Deploy | Vercel + hosted Supabase (plus full local instructions) | A live link is the strongest first impression there is |
 
 ---
 
 ## 5. Ramp design system reproduction (design-engineer baseline)
 
-This is a *deliverable*, not styling. Treat it as its own workstream with its own doc
-(`docs/design-system.md`).
+This is a *deliverable*, not styling. Treat it as its own workstream.
 
-**Research phase (day 1):** collect screenshots from ramp.com, product demo videos,
-help-center screenshots, and public dashboards. Extract:
+**Research phase: DONE — see `docs/design-system.md`.** Headline findings (all from
+primary sources — Ramp's shipped CSS/JS):
 
-- **Tokens:** Ramp's warm off-white/cream backgrounds, near-black ink, the signature
-  yellow-green accent, muted status colors; spacing scale; radii (Ramp is fairly
-  square/low-radius); shadow/elevation treatment.
-- **Type:** identify Ramp's typeface from web inspection; pick the closest freely
-  licensed match and document the substitution honestly.
-- **Patterns:** dense tables with pill statuses, right-side detail drawers, quiet
-  buttons with a single strong accent, generous whitespace in shells but density in data.
+- Ramp's internal system is **Ryu** (web) / **Mew** (mobile); not public, but its full
+  **style-dictionary token sheet ships inside app.ramp.com bundles** — we extracted
+  ~290 tokens (colors incl. dark mode, type scale, weights, spacing, table metrics).
+- Typeface: **TWK Lausanne 300/350/400** with `"ss01" on`; Ryu's own fallback stack is
+  `Lausanne, Inter, Roboto, Arial` → we use **Inter (300/400/700)**, Ramp's own
+  declared substitute. Body text is weight **300** — the defining trait.
+- Palette: ink `#1A1919`, warm surfaces `#F4F2F0`/`#E9E5E2`, border `#D2CECB`,
+  hushed `#6E6A68`, lime accent `#E4F222` (always paired with ink), constructive
+  greens, **orange destructive** (`#FF7A36` family — no red anywhere), mustard warning.
+- The `@ramp-ds/ui` npm package is **not affiliated with Ramp** — excluded (details in
+  design-system doc §4).
 
-**Build order in `packages/ui`:**
+**Storybook is part of the deliverable:** Storybook 8 in `packages/ui` (React + Vite
+builder, a11y addon). Every component is developed in isolation with stories covering
+all states, token-only styling (no hardcoded values), and reference screenshots for
+side-by-side comparison. Static Storybook build deployed and linked from README —
+reviewers audit the design system in one click.
 
-1. `tokens.css` (CSS custom properties) + Tailwind preset consuming them
+**Build order in `packages/ui` (each step = component + stories):**
+
+1. `tokens.css` (`--rui-*` custom properties from the extracted sheet) + Tailwind
+   preset consuming them + Storybook tokens documentation page
 2. Primitives: Button, Input, Select, Badge/StatusPill, Checkbox, Tabs, Tooltip
 3. Structural: Sidebar/AppShell, PageHeader, Drawer, Modal, Toast
-4. The DataTable (columns, sorting, selection, sticky header, empty/loading states)
+4. The DataTable (columns, sorting, selection, sticky header, empty/loading states —
+   Ryu's real table metrics: 64px rows, 56px selection col, 44px gutter)
 5. Domain compositions: ApprovalChain, ActivityTimeline, MoneyText, InvoicePreview
 
-**Opinions to bring (assignment explicitly asks for them)** — develop during research,
-document in README. Candidate areas: status taxonomy overload (11 statuses ≈ user
-confusion — we can propose grouped presentation), drawer vs. full-page detail trade-offs,
-information density defaults.
+**Opinions to bring (assignment explicitly asks for them)** — seeded in
+`docs/design-system.md` §7: weight-300 body vs. WCAG contrast in dense tables;
+orange-destructive vs. mustard-warning collision in status-pill-heavy screens;
+11-status taxonomy → grouped presentation proposal.
 
 ---
 
@@ -228,8 +240,8 @@ The demo must feel alive without real integrations:
 
 | Day | Focus | Exit criteria |
 |---|---|---|
-| **1** | Design research + scaffolding | Monorepo builds; supabase migrations + seed run; zod schemas for all models; Ramp token sheet + reference screenshot library assembled |
-| **2** | Design system core + app shell | `packages/ui` with tokens, Button/Input/Badge/Tabs/Drawer/AppShell; navigable empty app that already *looks like Ramp* |
+| **1** | Scaffolding (design research ✅ done — `docs/design-system.md`) | Monorepo builds; supabase migrations + seed run; zod schemas for all models; Storybook boots with tokens page; reference screenshot library assembled |
+| **2** | Design system core + app shell | `packages/ui` with tokens, Button/Input/Badge/Tabs/Drawer/AppShell — each with stories; navigable empty app that already *looks like Ramp* |
 | **3** | Bills workspace + vendors | DataTable with lifecycle tabs, filters, status pills; bill detail drawer (read-only); vendors list/detail; all against seed data |
 | **4** | Create bill + approvals | Upload → fake OCR → confirm form; approval policies + chain; approve/reject with comments; role switcher; activity timeline |
 | **5** | Payments + lifecycle | Schedule payment flow, payments view, simulator, failure path; server-side transition guards; dashboard if time permits |
@@ -269,8 +281,8 @@ because they *are* the first impression.
 3. **LLM-backed OCR** as a stretch: impressive but adds an API-key requirement for
    reviewers. Recommendation: fixture-based fake with the extractor behind an interface;
    mention the swap-in point in README.
-4. **Ramp typeface:** confirm what they actually ship (research task) and pick the
-   licensed substitute deliberately.
+4. ~~**Ramp typeface:**~~ **Resolved** — they ship TWK Lausanne (300/350/400, `ss01`);
+   we use Inter, which is Ryu's own declared fallback (see `docs/design-system.md` §2.1).
 5. **Repo name/product name:** "Ramps" — keep, or brand it lightly (logo lockup in the
    sidebar) as a taste signal?
 
