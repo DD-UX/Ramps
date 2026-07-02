@@ -1,0 +1,19 @@
+# IDE
+.idea/
+.vscode/
+
+# Dependencies
+node_modules/
+
+# Env
+.env
+.env.local
+.env*.local
+
+# Build output
+.next/
+dist/
+.turbo/
+
+# OS
+.DS_Store
