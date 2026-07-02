@@ -1,0 +1,29 @@
+{
+  "name": "@ramps/schemas",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Zod schemas — the single source of truth for every model that crosses a boundary.",
+  "type": "module",
+  "exports": {
+    "./primitives": {
+      "types": "./dist/primitives.d.ts",
+      "import": "./dist/primitives.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@ramps/config": "workspace:*",
+    "typescript": "6.0.3"
+  }
+}
