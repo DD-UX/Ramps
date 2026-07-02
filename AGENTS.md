@@ -119,6 +119,27 @@ features/<feature>/
 One category per file (no constants inside component files). Tests colocated:
 `Foo.tsx` + `Foo.test.tsx`.
 
+### Imports & module graph
+
+- **Avoid barrels.** No `index.ts` files that re-export a folder. Import the
+  concrete module (`@ramps/schemas/bill`, `./helpers/format-money.helpers`), not
+  an aggregator. Barrels defeat tree-shaking and are the most common source of
+  import cycles.
+
+```ts
+// ✅ DO — direct, specific
+import { BillSchema } from '@ramps/schemas/bill';
+// ❌ DON'T — barrel re-export
+import { BillSchema } from '@ramps/schemas';
+```
+
+- **No cyclic dependencies**, at any level: not between packages, not between
+  feature folders, not between files. If two modules need each other, the shared
+  piece belongs in a third module they both import. Dependency direction is
+  one-way: `schemas → sdk → ui/web`; a package never imports "upward".
+- Packages expose an explicit `exports` map of subpaths; there is no catch-all
+  entry point.
+
 ### Dependencies
 
 - Every dependency must earn its place; prefer Radix primitives + hand-built

@@ -146,6 +146,11 @@ function relPosix(file) {
   return relative(projectRoot, file).split('\\').join('/');
 }
 
+// Remove /* block */ and // line comments so structural checks see code only.
+function stripBlockAndLineComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+}
+
 // The feature a file belongs to, i.e. the segment right after `features/`.
 // Returns null for shared (non-feature) code.
 function featureName(file) {
@@ -191,6 +196,27 @@ for (const file of files) {
   if (!/\.(ts|tsx)$/.test(name)) continue;
 
   const base = name.replace(/\.(ts|tsx)$/, '');
+
+  // Barrels are banned (AGENTS.md "Imports & module graph"): an `index` file
+  // whose entire body is re-exports adds an aggregation layer that breaks
+  // tree-shaking and invites cycles. Import concrete modules instead.
+  if (base === 'index') {
+    let body = '';
+    try {
+      body = stripBlockAndLineComments(readFileSync(file, 'utf8')).trim();
+    } catch {
+      /* unreadable */
+    }
+    const statements = body.split(';').map((s) => s.trim()).filter(Boolean);
+    const isBarrel =
+      statements.length > 0 && statements.every((s) => /^export\s+(\*|type\s+\*|\{[^}]*\})\s+from\s+/.test(s));
+    if (isBarrel) {
+      violations.push(
+        `${rel}: barrel file — its body is only re-exports. Delete it and import the concrete module directly (AGENTS.md "Imports & module graph").`,
+      );
+    }
+    continue;
+  }
   if (EXEMPT_STEMS.has(base)) continue;
   if (NEXT_RESERVED.has(base)) continue;
 
