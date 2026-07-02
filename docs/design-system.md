@@ -167,9 +167,12 @@ packages/ui/
 ├── .storybook/            # main.ts, preview.ts (tokens.css imported globally)
 ├── src/
 │   ├── tokens/tokens.css  # §2 as CSS custom properties (--rui-*)
-│   ├── button/button.tsx + button.stories.tsx
-│   ├── badge/…            # every component ships with its stories
-│   └── …
+│   ├── components/
+│   │   ├── Button/
+│   │   ├──── Button.tsx + Button.stories.tsx
+│   │   ├── Badge/
+│   │   ├──── Badge.tsx + Badge.stories.tsx   # every component ships with its stories
+│   │   └── …
 ```
 
 Per-component acceptance criteria (definition of done for each story):
