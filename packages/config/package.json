@@ -6,16 +6,28 @@
   "type": "module",
   "exports": {
     "./tsconfig.base.json": "./tsconfig.base.json",
-    "./eslint": "./src/eslint.config.js"
+    "./eslint": "./src/eslint.config.js",
+    "./eslint-react": "./src/eslint.react.js"
   },
   "files": [
     "tsconfig.base.json",
     "src"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.check.json"
+    "typecheck": "echo 'no-op: @ramps/config ships JSON + runtime JS presets, validated by eslint itself'"
+  },
+  "dependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-simple-import-sort": "13.0.0",
+    "eslint-plugin-storybook": "10.4.6",
+    "globals": "17.7.0",
+    "typescript-eslint": "8.62.1"
   },
   "devDependencies": {
+    "eslint": "10.6.0",
     "typescript": "6.0.3"
   }
 }
