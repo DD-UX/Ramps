@@ -1,0 +1,12 @@
+{
+  "//": "Type-checks the JS presets in src/ (they carry // @ts-check). Not a build.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "allowJs": true,
+    "checkJs": true,
+    "types": []
+  },
+  "include": ["src/**/*.js"]
+}

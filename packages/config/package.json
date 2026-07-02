@@ -1,0 +1,21 @@
+{
+  "name": "@ramps/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared TypeScript / ESLint / Prettier presets for the monorepo.",
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint": "./src/eslint.config.js"
+  },
+  "files": [
+    "tsconfig.base.json",
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.check.json"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}
