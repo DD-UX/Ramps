@@ -17,10 +17,10 @@ Invoice arrives ──▶ Bill created ──▶ Approval routing ──▶ Paym
 
 ## Documentation
 
-| Doc | What's inside |
-|---|---|
-| [Assignment brief](docs/assignment.md) | The original prompt: scope a sensible MVP of a payables product, Ramp Bill Pay as inspiration, Ramp design system as the baseline (design-engineer track). "We care as much about what you build as how you build it." |
-| [Analysis & execution plan](docs/ANALYSIS.md) | Product understanding of the AP domain (bill lifecycle as a state machine, bills vs. payments as separate objects), MVP scope with explicit cuts, monorepo architecture with zod as the single source of truth, data model, week plan, and risks. |
+| Doc                                                        | What's inside                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Assignment brief](docs/assignment.md)                     | The original prompt: scope a sensible MVP of a payables product, Ramp Bill Pay as inspiration, Ramp design system as the baseline (design-engineer track). "We care as much about what you build as how you build it."                                                                                     |
+| [Analysis & execution plan](docs/ANALYSIS.md)              | Product understanding of the AP domain (bill lifecycle as a state machine, bills vs. payments as separate objects), MVP scope with explicit cuts, monorepo architecture with zod as the single source of truth, data model, week plan, and risks.                                                          |
 | [Design system research & playbook](docs/design-system.md) | Ramp's design language reverse-engineered from primary sources: the Ryu token sheet (~290 tokens extracted from shipped bundles), TWK Lausanne typography (body weight 300, `ss01`), verified palette with color swatches, validation of third-party claims, and the Storybook playbook for `packages/ui`. |
 
 ## Highlights from the research
@@ -28,7 +28,7 @@ Invoice arrives ──▶ Bill created ──▶ Approval routing ──▶ Paym
 - Ramp's internal design system is **Ryu** (web) / **Mew** (mobile) — never open-sourced,
   but its complete style-dictionary token sheet ships to the browser, and was extracted
   and verified against Ramp's live CSS.
-- Typeface: **TWK Lausanne** — reproduced here with **Inter**, which is Ryu's *own*
+- Typeface: **TWK Lausanne** — reproduced here with **Inter**, which is Ryu's _own_
   declared fallback stack (`Lausanne, Inter, Roboto, Arial`).
 - Identity traits preserved: lime accent ![#e4f222](docs/assets/swatches/e4f222.svg) `#e4f222`
   always paired with ink ![#1a1919](docs/assets/swatches/1a1919.svg) `#1a1919`, warm
@@ -54,3 +54,25 @@ ramps/
 Contracts are defined once in zod: compile-time types via `z.infer`, runtime validation
 at every boundary (API input/output, forms), with Postgres enums and constraints kept
 in lockstep.
+
+## Developer tooling
+
+### AI skills
+
+Third-party agent skills are tracked by `skills-lock.json` (source + content hash),
+the same way `pnpm-lock.yaml` pins packages. The skill files themselves are **not**
+committed — materialize them locally from the lockfile:
+
+```bash
+npx skills add          # installs every skill pinned in skills-lock.json
+```
+
+This writes to `.agents/skills/` with a symlink under `.claude/skills/` (both
+gitignored). Currently pinned:
+
+| Skill                                                  | Why                                                                                                                                                                         |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`supabase/server`](https://skills.sh/supabase/server) | Guardrails for server-side Supabase (`@supabase/server`): auth modes and the **new** API keys (`sb_publishable_…` / `sb_secret_…`), not the legacy `anon` / `service_role`. |
+
+Our own hand-authored skills (e.g. `create-feature`) live in-tree under
+`.claude/skills/` and are committed normally.

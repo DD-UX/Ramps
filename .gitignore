@@ -21,5 +21,10 @@ coverage/
 # Next.js auto-generated (recreated on every build)
 next-env.d.ts
 
+# Third-party AI skills — materialized from skills-lock.json via `npx skills add`.
+# The lockfile is the source of truth (like pnpm-lock.yaml); artifacts are local.
+.agents/
+.claude/skills/supabase-server
+
 # OS
 .DS_Store
