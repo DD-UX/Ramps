@@ -1,0 +1,33 @@
+{
+  "name": "@ramps/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Next.js (App Router) app — the payables product surface.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ramps/schemas": "workspace:*",
+    "@ramps/sdk": "workspace:*",
+    "@ramps/ui": "workspace:*",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@ramps/config": "workspace:*",
+    "@next/eslint-plugin-next": "16.2.10",
+    "@types/node": "26.1.0",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "eslint": "10.6.0",
+    "typescript": "6.0.3"
+  }
+}

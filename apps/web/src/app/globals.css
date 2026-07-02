@@ -1,0 +1,12 @@
+/* App-level base styles. Design tokens come from @ramps/ui/tokens.css
+   (imported in layout.tsx before this file). Keep this minimal — component
+   styling lives in @ramps/ui, not here. */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}

@@ -18,5 +18,8 @@ storybook-static/
 coverage/
 *.tsbuildinfo
 
+# Next.js auto-generated (recreated on every build)
+next-env.d.ts
+
 # OS
 .DS_Store
