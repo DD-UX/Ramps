@@ -1,0 +1,30 @@
+{
+  "name": "@ramps/sdk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Typed API client — the only place the app calls fetch; every response is parsed with a schema.",
+  "type": "module",
+  "exports": {
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@ramps/schemas": "workspace:*",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@ramps/config": "workspace:*",
+    "typescript": "6.0.3"
+  }
+}

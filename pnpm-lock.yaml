@@ -37,6 +37,22 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
 
+  packages/sdk:
+    dependencies:
+      '@ramps/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@ramps/config':
+        specifier: workspace:*
+        version: link:../config
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
 packages:
 
   '@turbo/darwin-64@2.10.2':
