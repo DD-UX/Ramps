@@ -1,0 +1,9 @@
+-- ramps — seed data (placeholder)
+--
+-- Realistic demo data lands here in a later round: ~15 vendors and ~40 bills
+-- across every lifecycle state (plus one failed payment), so a single
+-- `supabase db reset` reproduces the full demo. Bills and payments are
+-- separate tables with independent status enums (see AGENTS.md § supabase/).
+--
+-- Migrations (append-only SQL: tables, enums, CHECK constraints) live in
+-- ./migrations and run before this file on reset.
