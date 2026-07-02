@@ -146,6 +146,15 @@ users            (id, name, email, role: admin|accounts_payable|employee, avatar
                   # an admin-built policy names users (any role, incl. employee) as
                   # approvers, so an off-AP employee on a chain can approve that bill
                   # only, without submitting. Off any chain, employee hits the redirect.
+                  # Effective policies = (role_policies ∪ included) \ excluded; see
+                  # user_policy_overrides. §9 open-question 2 has the full model.
+policies         (key)  # catalog of atomic capabilities (SSoT enum in packages/schemas):
+                  # employee.all, billpay.view, bill.create, bill.submit, bill.edit,
+                  # bill.approve, bill.pay, vendor.view, vendor.manage, payment.view,
+                  # policy.manage, user.manage
+role_policies    (role, policy_key)          # seeded: which policies each role sums to
+user_policy_overrides
+                 (user_id, policy_key, mode: include|exclude)  # per-user +/- (exclude wins)
 vendors          (id, name, owner_id→users, default_payment_method, default_gl_account,
                   bank_details_json, status)
 bills            (id, vendor_id, created_by, invoice_number, invoice_date, due_date,
@@ -302,17 +311,72 @@ because they *are* the first impression.
    access {page}"). Because `redirect()` can't raise a toast directly, the redirect
    carries a short-lived flash marker (cookie or `?notice=`) that the destination
    reads once, renders, and clears.
-2. **Data access:** SDK calls Next.js route handlers (pure API contract story) vs.
+2. ~~**Permissions model:**~~ **Resolved — unified policy model (role = sum of policies;
+   user = role + overrides).** A **policy** is one atomic capability (e.g. `bill.create`).
+   A **role** is the sum of a set of policies. A **user** has a role **plus**
+   `includedPolicies[]` (additive) and `excludedPolicies[]` (subtractive):
+   `effective(user) = (policies(role) ∪ included) \ excluded` — **exclude wins**. This
+   encodes both directions: a policy can grant beyond a role *and* remove despite it
+   (Ramp's Separation of Duties = the subtractive case). Stored as **data** (seeded
+   `role_policies` + per-user override rows, RLS-mirrored, queryable); the policy
+   **catalog** is the SSoT in `packages/schemas` (zod enum). Roles are seeded, **not**
+   runtime-editable — only *policies* are edited at runtime (see Settings, below).
+
+   *Policy catalog (demo):* `employee.all` (non-AP realm — the employee dashboard),
+   `billpay.view`, `bill.create`, `bill.submit`, `bill.edit`, `bill.approve`,
+   `bill.pay`, `vendor.view`, `vendor.manage`, `payment.view`, `policy.manage`,
+   `user.manage`.
+
+   *Role → policies:*
+   - `admin` — all policies (incl. `policy.manage` / `user.manage`).
+   - `accounts_payable` — Bill Pay set (view/create/submit/edit/pay, vendors, payments)
+     **but not** `bill.approve` (separation of duties) nor the admin levers; plus
+     `employee.all`.
+   - `employee` — **only** `employee.all`. Blocked from Bill Pay → redirected to the
+     employee dashboard. Gains `bill.approve` only when a policy names them (approver).
+
+   *UI:* the role selector shows a **badge** per user; users with overrides read
+   **"Customized,"** and hovering lists their `+ included` / `− excluded` policies.
+
+   *Settings tab (admin-only, gated by `policy.manage`):* admin adds/removes approval
+   **policies** — this is the demo's "boom" lever (AP creates a bill → employee can't
+   approve → admin adds a policy → employee approves). Roles/permission-catalog are not
+   editable here; only policies.
+
+   *Employee dashboard (non-AP realm):* a **minimal** "Employee Home" landing page,
+   granted by `employee.all`. Doubles as the **redirect target** when an off-Bill-Pay
+   employee hits a Bill Pay route, and makes role switches visually obvious.
+
+   *Approval routing (how Ramp does per-bill without manual work — verified against
+   support.ramp.com):* admins configure **rules once** (`condition → approver`, e.g.
+   `amount ≥ $X → user`); on **bill submit** Ramp auto-evaluates active rules and
+   materializes per-bill `approvals` rows. No manual per-bill assignment. Ramp is
+   **non-retroactive** (a rule added later does not backfill existing bills), but
+   **any user can add an approver to an in-flight bill's chain**. Our model mirrors
+   this: policy = rule; evaluation = a `filter`+`sort` at submit; the Approvals tab is
+   `bills where an approval row names me AND status = pending`. **See open question 7**
+   for the one unresolved detail (how the Settings edit reaches an already-created bill).
+
+3. **Data access:** SDK calls Next.js route handlers (pure API contract story) vs.
    server actions for mutations (less code, more idiomatic App Router)? Recommendation:
    route handlers for reads consumed by the SDK, server actions for form mutations —
    both zod-guarded. Worth a deliberate choice, it's a "how you build it" signal.
-3. **LLM-backed OCR** as a stretch: impressive but adds an API-key requirement for
+4. **LLM-backed OCR** as a stretch: impressive but adds an API-key requirement for
    reviewers. Recommendation: fixture-based fake with the extractor behind an interface;
    mention the swap-in point in README.
-4. ~~**Ramp typeface:**~~ **Resolved** — they ship TWK Lausanne (300/350/400, `ss01`);
+5. ~~**Ramp typeface:**~~ **Resolved** — they ship TWK Lausanne (300/350/400, `ss01`);
    we use Inter, which is Ryu's own declared fallback (see `docs/design-system.md` §2.1).
-5. **Repo name/product name:** "Ramps" — keep, or brand it lightly (logo lockup in the
+6. **Repo name/product name:** "Ramps" — keep, or brand it lightly (logo lockup in the
    sidebar) as a taste signal?
+7. **The "boom" mechanic — how the Settings edit reaches an already-created bill.**
+   The demo edits approval access *after* a bill exists. Ramp is **non-retroactive**
+   for rules but **does** allow adding an approver to an in-flight bill. Options:
+   (a) **Add approver to this bill** — the Settings action writes an `approvals` row for
+   the specific in-flight bill (mirrors Ramp's "add to in-flight chain"); rules stay
+   non-retroactive. Most faithful. (b) **Rules re-evaluate live** — policies recompute
+   on view, so a new rule instantly affects existing bills. Simpler/punchier, but
+   diverges from Ramp. (c) **Both** — create a rule *and* backfill it onto matching open
+   bills. Decide when fresh; does **not** block starting the data model.
 
 ---
 
