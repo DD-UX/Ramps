@@ -279,6 +279,16 @@ because they *are* the first impression.
    session — so we skip `@supabase/ssr` cookie/refresh plumbing. RLS policies are still
    authored (defense in depth), exercised via the server role. Authorization logic
    (who may approve/pay) stays real; only the identity mechanism is seeded.
+
+   *Switcher mechanics:* a **foldable drawer** (collapsed by default) lists the seeded
+   users/roles. Selecting one writes a **server-readable cookie** (`acting_role` /
+   `acting_user_id`) and calls `router.refresh()` so the current route re-renders
+   server-side already in that role's context (correct first paint). If the new role
+   isn't authorized for the current route, the Server Component **redirects to that
+   role's home** and surfaces a **toast** ("Redirected to your home — {role} can't
+   access {page}"). Because `redirect()` can't raise a toast directly, the redirect
+   carries a short-lived flash marker (cookie or `?notice=`) that the destination
+   reads once, renders, and clears.
 2. **Data access:** SDK calls Next.js route handlers (pure API contract story) vs.
    server actions for mutations (less code, more idiomatic App Router)? Recommendation:
    route handlers for reads consumed by the SDK, server actions for form mutations —
