@@ -1,3 +1,13 @@
 packages:
   - apps/*
   - packages/*
+
+# esbuild ships a postinstall that compiles its native binary; Storybook/Vite need it.
+onlyBuiltDependencies:
+  - esbuild
+
+# jsx-a11y hasn't published an eslint@10 peer range yet, but its flat config
+# works. Accept the wider peer instead of pinning eslint back.
+peerDependencyRules:
+  allowedVersions:
+    'eslint-plugin-jsx-a11y>eslint': '10'

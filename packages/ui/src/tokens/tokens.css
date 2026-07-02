@@ -1,0 +1,33 @@
+/**
+ * @ramps/ui design tokens — verified Ramp (Ryu) values as CSS custom properties.
+ * Source of truth: docs/design-system.md §2. This is a seed; the full token
+ * sheet lands with the design-system build. Components consume `--rui-*` only —
+ * never hardcoded hex/size/radius values.
+ */
+:root {
+  /* Palette (docs/design-system.md §2) */
+  --rui-ink: #1a1919;
+  --rui-ink-strong: #0c0a08;
+  --rui-limestone: #f4f2f0;
+  --rui-bone: #d2cecb;
+  --rui-hushed: #6e6a68;
+  --rui-accent: #e4f222; /* lime — always paired with ink */
+  --rui-destructive: #ff7a36; /* orange family — never red */
+
+  /* Typography */
+  --rui-font-sans: 'Inter', 'Lausanne', 'Roboto', Arial, sans-serif;
+  --rui-font-weight-body: 300;
+  --rui-font-weight-heading: 400;
+  --rui-font-weight-bold: 700;
+
+  /* Radii */
+  --rui-radius-control: 4px;
+  --rui-radius-surface: 12px;
+  --rui-radius-pill: 100vmin;
+
+  /* Spacing base (4px scale) */
+  --rui-space-1: 4px;
+  --rui-space-2: 8px;
+  --rui-space-3: 12px;
+  --rui-space-4: 16px;
+}

@@ -1,0 +1,49 @@
+{
+  "name": "@ramps/ui",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Ramp design system: verified tokens + components + Storybook workbench.",
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./src/tokens/tokens.css",
+    "./Button": {
+      "types": "./dist/components/Button/Button.d.ts",
+      "import": "./dist/components/Button/Button.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build",
+    "clean": "rm -rf dist .turbo storybook-static *.tsbuildinfo"
+  },
+  "dependencies": {
+    "clsx": "2.1.1",
+    "tailwind-merge": "3.6.0"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@ramps/config": "workspace:*",
+    "@storybook/addon-a11y": "10.4.6",
+    "@storybook/addon-docs": "10.4.6",
+    "@storybook/react-vite": "10.4.6",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.3",
+    "eslint": "10.6.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "storybook": "10.4.6",
+    "typescript": "6.0.3",
+    "vite": "8.1.3"
+  }
+}
