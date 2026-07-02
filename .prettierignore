@@ -1,0 +1,8 @@
+node_modules
+.next
+dist
+.turbo
+storybook-static
+coverage
+pnpm-lock.yaml
+docs/assets/swatches
