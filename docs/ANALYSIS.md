@@ -138,7 +138,14 @@ packages/schemas (zod)  ──▶ z.infer types (compile time)
 ### Data model (first cut)
 
 ```
-users            (id, name, email, role: admin|approver|clerk, avatar)
+users            (id, name, email, role: admin|accounts_payable|employee, avatar)
+                  # Ramp-founded (support.ramp.com): role = Bill Pay *capability*.
+                  # admin = Owner/Admin super-user; accounts_payable = the AP add-on
+                  # (submit bills, manage vendors); employee = no Bill Pay by default.
+                  # "Approver" is NOT a role — it is chain membership (see approvals):
+                  # an admin-built policy names users (any role, incl. employee) as
+                  # approvers, so an off-AP employee on a chain can approve that bill
+                  # only, without submitting. Off any chain, employee hits the redirect.
 vendors          (id, name, owner_id→users, default_payment_method, default_gl_account,
                   bank_details_json, status)
 bills            (id, vendor_id, created_by, invoice_number, invoice_date, due_date,
@@ -147,6 +154,9 @@ bills            (id, vendor_id, created_by, invoice_number, invoice_date, due_d
                           partially_paid|paid|rejected|archived)
 bill_line_items  (id, bill_id, description, qty, unit_price_cents, gl_account)
 approval_policies(id, min_amount_cents, approver_role/approver_id, sequence)
+                  # Admin-configured routing (Ramp: submitter can NOT pick approvers;
+                  # the workflow is auto-determined by admin rules). A step names a
+                  # specific user OR a role/group; amount is the demo's routing condition.
 approvals        (id, bill_id, approver_id, sequence, status: pending|approved|rejected,
                   comment, acted_at)
 payments         (id, bill_id, method: ach|check|wire, amount_cents, scheduled_date,
@@ -272,8 +282,11 @@ because they *are* the first impression.
 ## 9. Open questions to settle before coding
 
 1. ~~**Auth posture:**~~ **Resolved — seeded users + role switcher (no login).** A fixed
-   set of seeded users (admin / approver / payer); a UI switcher changes who we're
-   "acting as." Reviewers demo the approval loop from every seat with zero signup.
+   set of seeded users across Ramp-founded roles (`admin` / `accounts_payable` /
+   `employee`) plus an employee seeded onto an approval chain to play the pure
+   **approver** (approver is chain membership, not a role — see §4 data model); a UI
+   switcher changes who we're "acting as." Reviewers demo the approval loop from every
+   seat with zero signup.
    Server access uses the Supabase **secret key** (`@supabase/server` `auth: 'secret'`
    / admin client) with the acting role enforced in app code + zod, not a real JWT
    session — so we skip `@supabase/ssr` cookie/refresh plumbing. RLS policies are still
