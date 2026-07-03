@@ -57,6 +57,10 @@ Key domain insights from the Ramp docs (these are what "grokking the workflow" m
 
 ## 3. Scope
 
+> The full feature-grained catalog (every Ramp Bill Pay capability we digested, mapped to
+> In / Simulated / Nice-to-have / Cut) and the phase-by-phase execution sequence live in
+> [`roadmap.md`](./roadmap.md). This section is the week-level summary.
+
 ### MVP — must ship (the golden path)
 
 1. **App shell** — Ramp-style left sidebar nav, org/user switcher (fake), top bar.
