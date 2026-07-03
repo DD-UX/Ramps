@@ -31,6 +31,13 @@
   --rui-space-3: 12px;
   --rui-space-4: 16px;
 
+  /* Form controls — shared borders/focus for Input, Select, Checkbox. Border
+     is bone at rest, ink on focus; the focus ring is the accent lime. */
+  --rui-control-border: var(--rui-bone);
+  --rui-control-border-focus: var(--rui-ink);
+  --rui-control-ring: var(--rui-accent);
+  --rui-control-placeholder: var(--rui-hushed);
+
   /* Status tones — the restrained tinted surfaces used by StatusPill for the
      bill lifecycle. Derived from the core palette (never a raw red); neutral
      states use limestone/bone, active states borrow the accent + destructive

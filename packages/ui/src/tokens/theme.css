@@ -23,6 +23,12 @@
   --color-accent: var(--rui-accent);
   --color-destructive: var(--rui-destructive);
 
+  /* Form controls — shared border/ring/placeholder colours. */
+  --color-control-border: var(--rui-control-border);
+  --color-control-border-focus: var(--rui-control-border-focus);
+  --color-control-ring: var(--rui-control-ring);
+  --color-control-placeholder: var(--rui-control-placeholder);
+
   /* Status tones (StatusPill) — surface + on-surface pairs per lifecycle tone. */
   --color-tone-neutral-surface: var(--rui-tone-neutral-surface);
   --color-tone-neutral-on: var(--rui-tone-neutral-on);
