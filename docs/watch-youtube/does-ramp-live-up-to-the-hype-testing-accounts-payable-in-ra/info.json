@@ -1,0 +1,124 @@
+{
+  "title": "Does Ramp Live Up to the Hype? Testing Accounts Payable in Ramp",
+  "id": "JyJ1a65RBf4",
+  "url": "https://www.youtube.com/watch?v=JyJ1a65RBf4",
+  "uploader": "Financial Tech Lab by Clara CFO Group",
+  "duration": 1735,
+  "chapters": [
+    {
+      "title": "Intro to Ramp Bill Pay",
+      "start": 0.0,
+      "end": 73.0
+    },
+    {
+      "title": "Ramp Platform Overview",
+      "start": 73.0,
+      "end": 155.0
+    },
+    {
+      "title": "Bill Pay Dashboard Overview",
+      "start": 155.0,
+      "end": 180.0
+    },
+    {
+      "title": "Uploading Invoices into Ramp",
+      "start": 180.0,
+      "end": 253.0
+    },
+    {
+      "title": "AI Invoice Detection & Missing Info",
+      "start": 253.0,
+      "end": 311.0
+    },
+    {
+      "title": "Reviewing an Imported Invoice",
+      "start": 311.0,
+      "end": 458.0
+    },
+    {
+      "title": "Scheduling Bill Payments",
+      "start": 458.0,
+      "end": 532.0
+    },
+    {
+      "title": "Reviewing Second Invoice Import",
+      "start": 532.0,
+      "end": 607.0
+    },
+    {
+      "title": "AI Line Item Extraction Example",
+      "start": 607.0,
+      "end": 662.0
+    },
+    {
+      "title": "Collapsing Line Items",
+      "start": 662.0,
+      "end": 707.0
+    },
+    {
+      "title": "Reviewing Third Invoice",
+      "start": 707.0,
+      "end": 752.0
+    },
+    {
+      "title": "Inventory Item Handling",
+      "start": 752.0,
+      "end": 1004.0
+    },
+    {
+      "title": "Approving Bills",
+      "start": 1004.0,
+      "end": 1027.0
+    },
+    {
+      "title": "Scheduling Payments",
+      "start": 1027.0,
+      "end": 1083.0
+    },
+    {
+      "title": "Adding Vendor Payment Details",
+      "start": 1083.0,
+      "end": 1179.0
+    },
+    {
+      "title": "Vendor Payment Request Example",
+      "start": 1179.0,
+      "end": 1226.0
+    },
+    {
+      "title": "Bill Pay Dashboard Overview",
+      "start": 1226.0,
+      "end": 1241.0
+    },
+    {
+      "title": "Creating a New Vendor",
+      "start": 1241.0,
+      "end": 1381.0
+    },
+    {
+      "title": "Ramp Limitations with Multi-Invoice PDFs",
+      "start": 1381.0,
+      "end": 1520.0
+    },
+    {
+      "title": "Example of Complex Invoice Failure",
+      "start": 1520.0,
+      "end": 1645.0
+    },
+    {
+      "title": "When Ramp Works vs When It Doesn’t",
+      "start": 1645.0,
+      "end": 1668.0
+    },
+    {
+      "title": "Payment Methods (ACH, Wire, Check)",
+      "start": 1668.0,
+      "end": 1691.0
+    },
+    {
+      "title": "Final Thoughts on Ramp Bill Pay",
+      "start": 1691.0,
+      "end": 1735
+    }
+  ]
+}
