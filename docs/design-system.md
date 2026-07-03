@@ -205,3 +205,17 @@ Seeds from the research, to substantiate while building:
    mustard in dense tables full of status pills — worth a critique with examples.
 3. Ramp's **11 bill statuses** surface raw in the UI; propose grouped presentation
    (Needs attention / In progress / Done) with detail on hover.
+
+## 8. Live UI evidence (video research)
+
+Token sheets above are sourced from Ramp's CSS. For the *product* surfaces — the
+Bill Pay tab shell, the `For approval` table, the AI suggested-action states, the
+payment drawer — see the frame-by-frame walkthrough captured with the
+`watch-youtube` skill:
+
+- [`watch-youtube/ramp-bill-pay-series-ap-agent/findings.md`](watch-youtube/ramp-bill-pay-series-ap-agent/findings.md)
+  — annotated notes + 8 committed snapshots.
+
+Key visual anchors for reproduction: the five-tab shell (Overview / Drafts / For
+approval / For payment / History), the N-of-M approval counter, and the
+amber `Review recommended` vs. green `Ready to approve` cards.
