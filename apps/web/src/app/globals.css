@@ -1,6 +1,14 @@
-/* App-level base styles. Design tokens come from @ramps/ui/tokens.css
-   (imported in layout.tsx before this file). Keep this minimal — component
-   styling lives in @ramps/ui, not here. */
+/* The design system's Tailwind theme bridge: pulls in Tailwind's utilities and
+   @imports @ramps/ui/tokens.css (the --rui-* SSoT). Everything the app renders
+   is styled through these token-mapped utilities. */
+@import '@ramps/ui/theme.css';
+
+/* Scan the design-system package for class usage so utilities used only inside
+   @ramps/ui components (Button, StatusPill, …) are emitted for the web app too.
+   Tailwind v4 only scans the current project by default. */
+@source '../../../../packages/ui/src';
+
+/* App-level base. Keep minimal — component styling lives in @ramps/ui. */
 * {
   box-sizing: border-box;
 }

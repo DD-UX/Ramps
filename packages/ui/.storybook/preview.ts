@@ -1,7 +1,9 @@
 import type { Preview } from '@storybook/react-vite';
 
-// Load the design tokens globally so every story renders with --rui-* set.
-import '../src/tokens/tokens.css';
+// Load the Tailwind theme bridge globally: it pulls in Tailwind's generated
+// utilities AND @imports tokens.css, so every story renders with both the
+// compiled classes and the --rui-* custom properties set.
+import '../src/tokens/theme.css';
 
 const preview: Preview = {
   parameters: {

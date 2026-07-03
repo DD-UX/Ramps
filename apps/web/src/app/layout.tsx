@@ -1,4 +1,5 @@
-import '@ramps/ui/tokens.css';
+// globals.css imports @ramps/ui/theme.css, which pulls in Tailwind + the
+// --rui-* token sheet. One import, whole design system.
 import './globals.css';
 
 import type { Metadata } from 'next';

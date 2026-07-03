@@ -22,12 +22,14 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@ramps/config": "workspace:*",
     "@next/eslint-plugin-next": "16.2.10",
+    "@ramps/config": "workspace:*",
+    "@tailwindcss/postcss": "4.3.2",
     "@types/node": "26.1.0",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "eslint": "10.6.0",
+    "tailwindcss": "4.3.2",
     "typescript": "6.0.3"
   }
 }

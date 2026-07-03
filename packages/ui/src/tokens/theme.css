@@ -1,0 +1,42 @@
+/**
+ * @ramps/ui — Tailwind v4 theme bridge.
+ *
+ * tokens.css is the raw SSoT (verified Ramp/Ryu `--rui-*` custom properties).
+ * This file is the Tailwind layer: it pulls Tailwind in and re-exposes those
+ * exact token values through `@theme`, so components use *semantic* utilities
+ * (`bg-accent`, `text-ink`, `rounded-control`, `font-heading`) instead of
+ * arbitrary `[var(--rui-*)]` classes. One source of truth, two consumers
+ * (Storybook via @tailwindcss/vite, web via @tailwindcss/postcss).
+ *
+ * Import this ONCE at the app/storybook root; it @imports tokens.css for you.
+ */
+@import 'tailwindcss';
+@import './tokens.css';
+
+@theme {
+  /* Palette — names mirror the Ramp/Ryu token vocabulary. */
+  --color-ink: var(--rui-ink);
+  --color-ink-strong: var(--rui-ink-strong);
+  --color-limestone: var(--rui-limestone);
+  --color-bone: var(--rui-bone);
+  --color-hushed: var(--rui-hushed);
+  --color-accent: var(--rui-accent);
+  --color-destructive: var(--rui-destructive);
+
+  /* Typography */
+  --font-sans: var(--rui-font-sans);
+  --font-weight-body: var(--rui-font-weight-body);
+  --font-weight-heading: var(--rui-font-weight-heading);
+  --font-weight-bold: var(--rui-font-weight-bold);
+
+  /* Radii */
+  --radius-control: var(--rui-radius-control);
+  --radius-surface: var(--rui-radius-surface);
+  --radius-pill: var(--rui-radius-pill);
+
+  /* Spacing (4px scale) — additive to Tailwind's default numeric scale. */
+  --spacing-rui-1: var(--rui-space-1);
+  --spacing-rui-2: var(--rui-space-2);
+  --spacing-rui-3: var(--rui-space-3);
+  --spacing-rui-4: var(--rui-space-4);
+}
