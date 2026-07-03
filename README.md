@@ -77,3 +77,10 @@ gitignored). Currently pinned:
 
 Our own hand-authored skills (e.g. `create-feature`) live in-tree under
 `.claude/skills/` and are committed normally.
+
+**`watch-youtube`** was written specifically to **research Ramp's functionalities
+and UX**. It downloads a Ramp walkthrough video, extracts frames, and lets the
+agent *watch* them (not just read a transcript) — then commits the frames as
+documentation next to our design-system research. It ships a URL-timestamp mode
+to grab a single frame at a precise moment. See the first artifact it produced:
+[`docs/watch-youtube/ramp-bill-pay-series-ap-agent/findings.md`](docs/watch-youtube/ramp-bill-pay-series-ap-agent/findings.md).
