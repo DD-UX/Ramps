@@ -30,4 +30,21 @@
   --rui-space-2: 8px;
   --rui-space-3: 12px;
   --rui-space-4: 16px;
+
+  /* Status tones — the restrained tinted surfaces used by StatusPill for the
+     bill lifecycle. Derived from the core palette (never a raw red); neutral
+     states use limestone/bone, active states borrow the accent + destructive
+     families. surface = pill background, on = text/icon on that surface. */
+  --rui-tone-neutral-surface: var(--rui-limestone);
+  --rui-tone-neutral-on: var(--rui-hushed);
+  --rui-tone-info-surface: #ece9ff; /* muted periwinkle — in-flight/scheduled */
+  --rui-tone-info-on: #4b3fb0;
+  --rui-tone-accent-surface: var(--rui-accent);
+  --rui-tone-accent-on: var(--rui-ink);
+  --rui-tone-positive-surface: #e6f4ea; /* muted green — paid/approved */
+  --rui-tone-positive-on: #1f7a44;
+  --rui-tone-warning-surface: #fdeede; /* muted amber — needs attention */
+  --rui-tone-warning-on: #9a5b12;
+  --rui-tone-critical-surface: #ffe9df; /* destructive family tint — never red */
+  --rui-tone-critical-on: #b23f12;
 }

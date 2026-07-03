@@ -23,6 +23,20 @@
   --color-accent: var(--rui-accent);
   --color-destructive: var(--rui-destructive);
 
+  /* Status tones (StatusPill) — surface + on-surface pairs per lifecycle tone. */
+  --color-tone-neutral-surface: var(--rui-tone-neutral-surface);
+  --color-tone-neutral-on: var(--rui-tone-neutral-on);
+  --color-tone-info-surface: var(--rui-tone-info-surface);
+  --color-tone-info-on: var(--rui-tone-info-on);
+  --color-tone-accent-surface: var(--rui-tone-accent-surface);
+  --color-tone-accent-on: var(--rui-tone-accent-on);
+  --color-tone-positive-surface: var(--rui-tone-positive-surface);
+  --color-tone-positive-on: var(--rui-tone-positive-on);
+  --color-tone-warning-surface: var(--rui-tone-warning-surface);
+  --color-tone-warning-on: var(--rui-tone-warning-on);
+  --color-tone-critical-surface: var(--rui-tone-critical-surface);
+  --color-tone-critical-on: var(--rui-tone-critical-on);
+
   /* Typography */
   --font-sans: var(--rui-font-sans);
   --font-weight-body: var(--rui-font-weight-body);

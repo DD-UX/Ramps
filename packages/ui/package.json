@@ -10,6 +10,10 @@
     "./Button": {
       "types": "./dist/components/Button/Button.d.ts",
       "import": "./dist/components/Button/Button.js"
+    },
+    "./StatusPill": {
+      "types": "./dist/components/StatusPill/StatusPill.d.ts",
+      "import": "./dist/components/StatusPill/StatusPill.js"
     }
   },
   "files": [
