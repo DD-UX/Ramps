@@ -359,7 +359,9 @@ because they *are* the first impression.
    **any user can add an approver to an in-flight bill's chain**. Our model mirrors
    this: policy = rule; evaluation = a `filter`+`sort` at submit; the Approvals tab is
    `bills where an approval row names me AND status = pending`. **See open question 7**
-   for the one unresolved detail (how the Settings edit reaches an already-created bill).
+   (now resolved) for how the Settings edit reaches an already-created bill: add an
+   `approvals` row to the in-flight chain; phantom approvers auto-approve on a simulated
+   delay; the assigned human is the stopper.
 
 3. **Data access:** SDK calls Next.js route handlers (pure API contract story) vs.
    server actions for mutations (less code, more idiomatic App Router)? Recommendation:
@@ -372,15 +374,27 @@ because they *are* the first impression.
    we use Inter, which is Ryu's own declared fallback (see `docs/design-system.md` §2.1).
 6. **Repo name/product name:** "Ramps" — keep, or brand it lightly (logo lockup in the
    sidebar) as a taste signal?
-7. **The "boom" mechanic — how the Settings edit reaches an already-created bill.**
-   The demo edits approval access *after* a bill exists. Ramp is **non-retroactive**
-   for rules but **does** allow adding an approver to an in-flight bill. Options:
-   (a) **Add approver to this bill** — the Settings action writes an `approvals` row for
-   the specific in-flight bill (mirrors Ramp's "add to in-flight chain"); rules stay
-   non-retroactive. Most faithful. (b) **Rules re-evaluate live** — policies recompute
-   on view, so a new rule instantly affects existing bills. Simpler/punchier, but
-   diverges from Ramp. (c) **Both** — create a rule *and* backfill it onto matching open
-   bills. Decide when fresh; does **not** block starting the data model.
+7. ~~**The "boom" mechanic — how the Settings edit reaches an already-created bill.**~~
+   **Resolved — option (a), grounded in the real Ramp UI.** The AP Agent video
+   (see [`docs/watch-youtube/ramp-bill-pay-series-ap-agent/findings.md`](watch-youtube/ramp-bill-pay-series-ap-agent/findings.md))
+   confirms the approval surface: a `For approval` tab whose table tracks each bill as
+   an **N-of-M approval** chain, with a single sequential `Next approver` and a per-row
+   `Approve` action. That is exactly the `approvals`-as-chain model in §4.
+
+   The mechanic we build:
+   - **Add approver to this bill** — the Settings/bill action writes one `approvals` row
+     against the *specific* in-flight bill (Ramp's "add to in-flight chain"). Rules stay
+     **non-retroactive**; nothing recomputes globally. Most faithful.
+   - **Phantom approvers auto-approve** — bills seed with a chain of `M` approvers. The
+     seeded ("phantom") approvers never appear in the role-switcher drawer; on submit
+     they auto-approve after a **simulated delay** (same device as the payment
+     simulator), advancing the counter `0 of M → (M-1) of M`.
+   - **The human is the stopper** — the one approver the demo user *assigns* is the real
+     employee. The bill parks at `(M-1) of M` / `Needs your approval` until that human
+     clicks `Approve`, at which point it clears to `M of M` and moves to `For payment`.
+
+   Rejected: (b) live rule re-evaluation and (c) rule + backfill — both diverge from
+   Ramp's non-retroactive rules and add global-recompute complexity for no demo payoff.
 
 ---
 
