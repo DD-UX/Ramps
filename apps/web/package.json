@@ -6,11 +6,13 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --port 3000",
+    "build:storybook": "pnpm --filter @ramps/ui exec storybook build --output-dir ../../apps/web/public/storybook",
+    "prebuild": "pnpm build:storybook",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf .next .turbo *.tsbuildinfo"
+    "clean": "rm -rf .next .turbo public/storybook *.tsbuildinfo"
   },
   "dependencies": {
     "@ramps/schemas": "workspace:*",
