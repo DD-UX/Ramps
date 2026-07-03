@@ -33,13 +33,14 @@ screenshot shipped with the brief.
 | # | Ramp capability | What it means | Decision | Rationale |
 |---|---|---|---|---|
 | 1 | **Bill Pay OCR** | Scan/parse invoice → prefill fields | 🟡 Simulated | Fixture-based fake behind an interface; unknown uploads → `missing_info`. Real extractor slots in later. Core to the create-bill "wow." |
-| 2 | **Line-item splits & allocation templates** | Split one line across multiple GL codes | 🔵 Nice-to-have | `bill_line_items` accommodates it in the model; split UI only if ahead. Allocation templates cut. |
+| 2 | **Line-item coding (accounting dimensions)** | Per-line GL account, department, class, location, tax code, billable | 🟢 In | The t=46 frame's coding grid. Seeded dimension tables (`gl_accounts`, `departments`, `classes`, `locations`, `tax_codes`) with `external_id` provenance for a future integration seam. |
+| 2b | **Line-item splits & allocation templates** | Split one line across multiple GL codes | 🔵 Nice-to-have | Ramp models a split as *replace-with-N-lines* (`split_group_id`), not a separate entry table. Model supports it; split UI + saved templates only if ahead. |
 | 3 | **AP email forwarding** (`@ap.ramp.com`) | Dedicated inbox; vendors email invoices in | ⚪ Cut | Real inbound-email infra, no demo value. Roadmap line in README. |
 | 4 | **Spreadsheet (CSV) upload of bills** | Bulk-create bills from a sheet | 🔵 Nice-to-have | Cheap to fake (parse CSV → draft bills); good bulk story if time. |
 | 5 | **Managing bills** (filters, sorts, bulk) | The dense AP table | 🟢 **In — centerpiece** | This *is* the product. DataTable with lifecycle tabs, filters, sort, bulk select. |
 | 6 | **Creating draft bills** | Upload → draft → review/code | 🟢 In | The create-bill flow; pairs with OCR (#1). |
 | 7 | **Uploading invoices/bills** | Multiple upload entry points | 🟢 In (one path) | Single upload path real; email/CSV entry points cut/nice. |
-| 8 | **Invoice line items: expense vs. item** | Match lines to "expenses"/"items", sync to accounting | 🟡 Simplified | Model line items + GL category; skip the expense/item accounting-sync duality. |
+| 8 | **Invoice line items: expense vs. item** | Match lines to "expenses"/"items", sync to accounting | 🟡 Simplified | Keep Ramp's `kind: expense\|item` discriminator on the line (expense→GL account+dims; item→product+qty); skip the live accounting sync. |
 | 9 | **Recurring bill payments** | Auto-create bills on a schedule | ⚪ Cut | Scheduler infra; roadmap line. One-off bills only. |
 | 10 | **Bill lifecycle** | Status state machine + process controls | 🟢 **In — spine** | The state machine is our core domain flex; server-guarded transitions. |
 | 11 | **AP Aging Report** | Outstanding payables by age bucket | 🔵 Nice-to-have | Highest-value nice-to-have; the finance artifact that signals real AP understanding. |
