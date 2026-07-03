@@ -210,12 +210,20 @@ Seeds from the research, to substantiate while building:
 
 Token sheets above are sourced from Ramp's CSS. For the *product* surfaces — the
 Bill Pay tab shell, the `For approval` table, the AI suggested-action states, the
-payment drawer — see the frame-by-frame walkthrough captured with the
-`watch-youtube` skill:
+payment drawer, the line-item coding grid, the accounting-integration seam, and
+the OCR failure states — see the frame-by-frame research captured with the
+`watch-youtube` skill. **Ten videos** (the official Ramp Bill Pay playlist plus a
+third-party accountant review) are digested, each with annotated `findings.md` +
+curated snapshots, and rolled up into one cross-video synthesis:
 
-- [`watch-youtube/ramp-bill-pay-series-ap-agent/findings.md`](watch-youtube/ramp-bill-pay-series-ap-agent/findings.md)
-  — annotated notes + 8 committed snapshots.
+- **[`watch-youtube/README.md`](watch-youtube/README.md)** — the synthesis index:
+  corpus table + the nine cross-cutting build lessons (lifecycle, ingest, line
+  coding, the bidirectional integration seam, payments, approvals, vendors, 1099,
+  CSV export). **Start here.**
+- Per-video notes live in each `watch-youtube/<slug>/findings.md`.
 
 Key visual anchors for reproduction: the five-tab shell (Overview / Drafts / For
-approval / For payment / History), the N-of-M approval counter, and the
-amber `Review recommended` vs. green `Ready to approve` cards.
+approval / For payment / History), the N-of-M approval counter, the amber
+`Review recommended` vs. green `Ready to approve` cards, the provider-labelled
+line-coding dropdowns (`external_id`/`source` seam), and the `Imported ·` /
+`Open in {provider}` deep-link pattern shared by all four import videos.
