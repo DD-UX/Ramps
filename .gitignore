@@ -21,6 +21,9 @@ storybook-static/
 coverage/
 *.tsbuildinfo
 
+# graphify — generated knowledge graph (rebuilt from source via `graphify .`)
+graphify-out/
+
 # Next.js auto-generated (recreated on every build)
 next-env.d.ts
 

@@ -227,6 +227,25 @@ Deep dive: [ANALYSIS §4 — data model](docs/ANALYSIS.md#4-architecture)
 
 ---
 
+## Codebase navigation (graphify)
+
+This project can carry a knowledge graph at `graphify-out/` (god nodes, community
+structure, cross-file relationships). When `graphify-out/graph.json` exists, prefer
+it over raw grep/file browsing:
+
+- For codebase questions, run `graphify query "<question>"` first — it returns a
+  scoped subgraph, usually far smaller than raw search output. Use
+  `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"`
+  for a focused concept.
+- If `graphify-out/wiki/index.md` exists, use it for broad navigation.
+- Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review, or when
+  query/path/explain don't surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current
+  (AST-only, no API cost).
+- The graph is generated output — `graphify-out/` is gitignored, not committed.
+
+---
+
 ## Non-negotiables
 
 - **`@ramp-ds/ui` / ramp-ds.vercel.app is off-limits** — not affiliated with Ramp,
