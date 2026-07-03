@@ -98,8 +98,12 @@ Key domain insights from the Ramp docs (these are what "grokking the workflow" m
   real extractor slots in.
 - **Real auth (signup/login)** — seeded users + a role switcher demos *authorization*
   (the interesting part: approver permissions) without burning a day on *authentication*.
-- **Accounting sync (QuickBooks/NetSuite), multi-entity, intl FX, email invoice
-  ingest, mobile** — noted as roadmap in README to show awareness.
+- **Accounting *sync* (QuickBooks/NetSuite/Sage), multi-entity, intl FX, email invoice
+  ingest, mobile** — noted as roadmap in README to show awareness. Note: we *do* model
+  the accounting **dimensions** these integrations provide (GL account, department,
+  class, location, tax code) as seeded local reference tables with `external_id`
+  provenance — only the live sync is cut. This keeps line-item coding real and demoable
+  while leaving a clean seam for a future integration (see §4 data model + design notes).
 
 ---
 
@@ -165,7 +169,32 @@ bills            (id, vendor_id, created_by, invoice_number, invoice_date, due_d
                   amount_cents, currency, memo, gl_account, document_url,
                   status: draft|missing_info|awaiting_approval|approved|scheduled|
                           partially_paid|paid|rejected|archived)
-bill_line_items  (id, bill_id, description, qty, unit_price_cents, gl_account)
+
+# --- Accounting dimensions (the "Accounting X" dropdowns on a line) -----------
+# Ramp-founded: these are the fields normally *absorbed from the accounting
+# integration* (QuickBooks/Sage/Xero). We don't sync, but we seed them as local
+# reference tables so line-item coding is real. Provenance columns (external_id,
+# source) are the integration seam — nullable, never queried by sync code.
+# This mirrors the standard shape AP tools use for synced dimensions: a local
+# record holding the provider's native ID + a display name + active status.
+# See docs/watch-youtube/.../findings.md (frame 9, t=46).
+gl_accounts      (id, name, code, category, type, active,
+                  external_id, source: quickbooks|sage|xero|seed)  # Accounting Category
+departments      (id, name, code, active, external_id, source)     # Accounting Department
+classes          (id, name, code, active, external_id, source)     # Accounting Class
+locations        (id, name, code, active, external_id, source)     # Accounting Location
+tax_codes        (id, name, rate_bps, active, external_id, source) # Accounting Tax Code
+
+bill_line_items  (id, bill_id, line_no, kind: expense|item, description,
+                  qty, unit_price_cents, amount_cents,
+                  # coding — every dimension lives at the LINE level (Ramp-founded):
+                  gl_account_id→gl_accounts, department_id→departments,
+                  class_id→classes, location_id→locations, tax_code_id→tax_codes,
+                  billable: bool,
+                  # split provenance: a split REPLACES a line with N lines
+                  # (Ramp's model — no separate GL-distribution/entry table),
+                  # so we tag the children with the row they came from.
+                  split_group_id: uuid|null)
 approval_policies(id, min_amount_cents, approver_role/approver_id, sequence)
                   # Admin-configured routing (Ramp: submitter can NOT pick approvers;
                   # the workflow is auto-determined by admin rules). A step names a
@@ -184,6 +213,23 @@ Design notes:
 - **`activity_events` from day one** — powers the timeline UI and screams "audit trail
   matters in AP."
 - Postgres enums + CHECK constraints so the DB defends itself even if app code slips.
+- **Coding is line-level, not header-level** (Ramp-founded, confirmed in the AP Agent
+  video frame at t=46 and Ramp's "Bill Pay accounting" docs). One bill mixes codings
+  across lines; each line owns its `gl_account / department / class / location / tax_code
+  / billable`.
+- **One line-item table — NO separate `bill_entries` / GL-distribution table.** Some AP
+  systems split *invoice line* from *GL distribution* (a separate journal-entry table);
+  Ramp does **not** expose that. Per Ramp's docs a **split *replaces* a line with N
+  lines**, each with its own amount + coding — so we model splits as sibling rows tagged
+  by `split_group_id`, not as child entries. We stay faithful to Ramp's presentation.
+- **`kind: expense|item`** is Ramp's one real line *type* distinction: `expense` codes to
+  a GL account (+ dimensions); `item` references a product with qty/unit price. Ramp
+  forbids mixing the two on one line, so it's a per-row discriminator, not two tables.
+- **Dimensions carry `external_id` + `source` provenance** — nullable columns that say
+  "this came from an integration (QuickBooks/Sage/Xero)" without any sync code. This is
+  the standard way AP tools stamp a synced record with its provider's native ID; it makes
+  a future accounting sync a data problem, not a schema migration. Narrative, not
+  machinery.
 
 ### Stack decisions
 
