@@ -41,6 +41,19 @@ confirm — do not install for them. (`place.sh` also uses `python3`, already av
 
 1. **Check deps** (above). Stop if missing.
 
+1b. **Check the URL for a timestamp.** A user sharing `…?t=90` / `&t=1m30s` /
+   `#t=45` / `&start=120` is pointing at an exact moment — the strongest possible
+   signal for what to capture. If present, **short-circuit**: fetch, place, grab a
+   *single* frame at that second, view it, done — skip uniform sampling.
+
+   ```bash
+   TS=$(bash "$CLAUDE_PROJECT_DIR/.claude/skills/watch-youtube/scripts/url-timestamp.sh" "<url>")
+   # If $TS is non-empty: after fetch + place (steps 2–3), run:
+   #   frames.sh "$WORK/video.mp4" "$SNAPS" at "$TS"
+   # then Read the one frame and synthesize. Only fall through to steps 4–6 if the
+   # user also wants broader context.
+   ```
+
 2. **Fetch** the video + captions into a scratch work dir (`$TMPDIR`, disposable):
 
    ```bash
