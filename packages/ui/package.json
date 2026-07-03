@@ -22,6 +22,22 @@
     "./Select": {
       "types": "./dist/components/Select/Select.d.ts",
       "import": "./dist/components/Select/Select.js"
+    },
+    "./Checkbox": {
+      "types": "./dist/components/Checkbox/Checkbox.d.ts",
+      "import": "./dist/components/Checkbox/Checkbox.js"
+    },
+    "./Tabs": {
+      "types": "./dist/components/Tabs/Tabs.d.ts",
+      "import": "./dist/components/Tabs/Tabs.js"
+    },
+    "./Tooltip": {
+      "types": "./dist/components/Tooltip/Tooltip.d.ts",
+      "import": "./dist/components/Tooltip/Tooltip.js"
+    },
+    "./Toast": {
+      "types": "./dist/components/Toast/Toast.d.ts",
+      "import": "./dist/components/Toast/Toast.js"
     }
   },
   "files": [
