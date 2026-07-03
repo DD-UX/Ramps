@@ -13,6 +13,8 @@ scope a sensible MVP, and build it end-to-end.
 
 **We care as much about what you build as how you build it.**
 
+![Ramp Bill Pay — Bill Creation and Management reference (from the assignment)](assets/assignment/bill-pay-reference.jpeg)
+
 ## What to submit
 
 - A working product: data models, backend, frontend, everything.
