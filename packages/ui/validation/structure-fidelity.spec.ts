@@ -43,17 +43,17 @@ function px(value: string): number {
 
 test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   /**
-   * Snapshot 9 — line-item controls have *near-square* corners. The generic
-   * 12px "surface" radius is too round for this product; the square token
-   * (~6px) is what the frames actually show. Guard the exact token AND an
-   * upper bound so no one silently swaps it back to a soft radius.
+   * Measured from the frames at 5-7x zoom (does-ramp-live-up §06/07: "Create
+   * bill" button, Invoice # input, line-item selects, Incomplete badge, toast
+   * edge): the design has NO round corners. `square` is exactly 0px and it is
+   * the only rectangle radius — the old control/surface tokens are gone so a
+   * soft radius can never sneak back in.
    */
-  test('radius-square token is the near-zero corner the frames use', () => {
-    const square = px(RUI['--rui-radius-square']);
-    const surface = px(RUI['--rui-radius-surface']);
-    expect(square, 'radius-square is defined').toBeGreaterThan(0);
-    expect(square, 'radius-square stays near-square (frames read ~6px)').toBeLessThanOrEqual(8);
-    expect(square, 'radius-square is squarer than the soft surface radius').toBeLessThan(surface);
+  test('radius-square token is the sharp 0px corner the frames show', () => {
+    expect(RUI['--rui-radius-square'], 'radius-square token exists').toBeDefined();
+    expect(px(RUI['--rui-radius-square']), 'radius-square is exactly 0 (no rounding)').toBe(0);
+    expect(RUI['--rui-radius-control'], 'legacy control radius removed').toBeUndefined();
+    expect(RUI['--rui-radius-surface'], 'legacy surface radius removed').toBeUndefined();
   });
 
   /**

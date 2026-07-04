@@ -27,7 +27,7 @@ export default function DesignSystemPage() {
           href="/storybook/index.html"
           target="_blank"
           rel="noreferrer"
-          className="rounded-control bg-accent px-rui-4 py-rui-2 text-sm font-heading text-ink"
+          className="rounded-square bg-accent px-rui-4 py-rui-2 text-sm font-heading text-ink"
         >
           Open Storybook ↗
         </a>

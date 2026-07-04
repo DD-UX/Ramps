@@ -23,7 +23,7 @@ export function Skeleton({ className, circle = false }: SkeletonProps) {
       aria-hidden
       className={clsx(
         'block animate-pulse bg-bone',
-        circle ? 'rounded-pill' : 'rounded-control',
+        circle ? 'rounded-pill' : 'rounded-square',
         className,
       )}
     />

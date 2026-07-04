@@ -105,7 +105,7 @@ export function Menu({ items, label = 'More actions', trigger, align = 'end', cl
           id={menuId}
           role="menu"
           className={clsx(
-            'absolute top-full z-20 mt-rui-1 min-w-44 overflow-hidden rounded-surface border border-bone bg-white py-rui-1 shadow-lg',
+            'absolute top-full z-20 mt-rui-1 min-w-44 overflow-hidden rounded-square border border-bone bg-white py-rui-1 shadow-lg',
             align === 'end' ? 'right-0' : 'left-0',
           )}
         >

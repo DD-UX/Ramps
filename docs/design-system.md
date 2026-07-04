@@ -117,7 +117,7 @@ sparingly, always with near-black foreground.
 | TWK Lausanne, logo derived from it; Burgess serif in brand (Fonts In Use) | **Validated** for Lausanne (font files confirmed); Burgess not seen in product — brand-only, ignore for app |
 | "ss01 is non-negotiable" (Refero) | **Validated** — shipped with `"ss01" on` |
 | "Inter is an acceptable substitute" (Refero) | **Validated and upgraded** — Inter is literally Ramp's own fallback in Ryu's token sheet |
-| "Strict two-radius system 4px/12px" (Refero) | **Partially validated** — 4 and 12 dominate but 8px and full-round exist; treat as "small radii, 4px controls / 12px surfaces" heuristic |
+| "Strict two-radius system 4px/12px" (Refero) | **Rejected by the frames** — corner crops at 5-7x zoom (does-ramp-live-up §06/07: "Create bill" button, Invoice # input, line-item selects, Incomplete badge, toast edge) show **0px everywhere**; the only round shape is the avatar/pill. Tokens: `--rui-radius-square: 0px` + `--rui-radius-pill` — nothing in between |
 | "No drop shadows; warm surface layering" (Refero) | **Mostly validated** — Ryu has an elevation scale but it's subtle; layering via warm neutrals is the primary depth cue |
 | "Weight 400 carries everything, 500 for emphasis" (Refero) | **Corrected by primary source** — actual tokens: body **300**, headings/interactive **400**, bold 700. No 500 in the token sheet |
 

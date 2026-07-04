@@ -49,7 +49,7 @@ function PopoverTrigger({ children, delay, closeDelay, className }: PopoverTrigg
       delay={delay}
       closeDelay={closeDelay}
       className={clsx(
-        'cursor-default rounded-control underline-offset-2 outline-none',
+        'cursor-default rounded-square underline-offset-2 outline-none',
         'focus-visible:ring-2 focus-visible:ring-control-ring',
         className,
       )}

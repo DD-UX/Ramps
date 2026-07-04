@@ -51,7 +51,7 @@ export function Banner({
     <div
       role="status"
       className={clsx(
-        'flex items-start gap-rui-3 rounded-surface px-rui-4 py-rui-3',
+        'flex items-start gap-rui-3 rounded-square px-rui-4 py-rui-3',
         TONE_STYLE[tone],
         className,
       )}
@@ -71,7 +71,7 @@ export function Banner({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="-mr-rui-1 shrink-0 rounded-control px-rui-1 leading-none opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-control-ring"
+          className="-mr-rui-1 shrink-0 rounded-square px-rui-1 leading-none opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-control-ring"
         >
           ×
         </button>

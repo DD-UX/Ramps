@@ -18,14 +18,14 @@ function storyUrl(id: string): string {
 }
 
 test.describe('token fidelity', () => {
-  test('Button/primary uses accent surface + ink text + control radius', async ({ page }) => {
+  test('Button/primary uses accent surface + ink text + square corners', async ({ page }) => {
     await page.goto(storyUrl('primitives-button--primary'));
     const btn = page.getByRole('button', { name: 'Pay bill' });
     await expect(btn).toBeVisible();
 
     await expect(btn).toHaveCSS('background-color', hexToRgb(RUI['--rui-accent']));
     await expect(btn).toHaveCSS('color', hexToRgb(RUI['--rui-ink']));
-    await expect(btn).toHaveCSS('border-top-left-radius', RUI['--rui-radius-control']);
+    await expect(btn).toHaveCSS('border-top-left-radius', RUI['--rui-radius-square']);
     // Heading weight token (400) drives the label.
     await expect(btn).toHaveCSS('font-weight', RUI['--rui-font-weight-heading']);
   });
@@ -58,11 +58,11 @@ test.describe('token fidelity', () => {
     await expect(input).toHaveCSS('border-top-color', hexToRgb(RUI['--rui-destructive']));
   });
 
-  test('Toast is a white, near-square card with a bone border (snapshot 3)', async ({ page }) => {
+  test('Toast is a white, square-cornered card with a bone border (snapshot 3)', async ({ page }) => {
     await page.goto(storyUrl('primitives-toast--uploading'));
     const toast = page.getByRole('status');
     // Reworked from the dark-ink slab to the Ramp toast: white fill, thin bone
-    // border, near-square corners (never the soft surface radius).
+    // border, sharp square corners (the frames show no rounding anywhere).
     await expect(toast).toHaveCSS('background-color', 'rgb(255, 255, 255)');
     await expect(toast).toHaveCSS('border-top-color', hexToRgb(RUI['--rui-bone']));
     await expect(toast).toHaveCSS('border-top-left-radius', RUI['--rui-radius-square']);
@@ -82,7 +82,7 @@ test.describe('token fidelity', () => {
     const badge = page.getByText('Overdue', { exact: true });
     await expect(badge).toHaveCSS('background-color', hexToRgb(RUI['--rui-destructive']));
     await expect(badge).not.toHaveCSS('background-color', 'rgb(255, 0, 0)');
-    await expect(badge).toHaveCSS('border-top-left-radius', RUI['--rui-radius-control']);
+    await expect(badge).toHaveCSS('border-top-left-radius', RUI['--rui-radius-square']);
   });
 
   test('Banner/critical uses the critical (orange) tone surface, not red', async ({ page }) => {
@@ -90,6 +90,6 @@ test.describe('token fidelity', () => {
     const banner = page.getByRole('status');
     await expect(banner).toHaveCSS('background-color', hexToRgb(RUI['--rui-tone-critical-surface']));
     await expect(banner).not.toHaveCSS('background-color', 'rgb(255, 0, 0)');
-    await expect(banner).toHaveCSS('border-top-left-radius', RUI['--rui-radius-surface']);
+    await expect(banner).toHaveCSS('border-top-left-radius', RUI['--rui-radius-square']);
   });
 });

@@ -49,7 +49,7 @@ export function Badge({ children, tone = 'neutral', variant = 'subtle', icon, cl
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-rui-1 rounded-control px-rui-2 py-0.5 text-xs font-heading whitespace-nowrap',
+        'inline-flex items-center gap-rui-1 rounded-square px-rui-2 py-0.5 text-xs font-heading whitespace-nowrap',
         style,
         className,
       )}

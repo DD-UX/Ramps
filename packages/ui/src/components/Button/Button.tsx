@@ -8,7 +8,7 @@ import { Spinner } from '../Spinner/Spinner';
  *
  * Tokens only: colours/radii resolve through the Tailwind theme bridge
  * (theme.css maps `--rui-*` → semantic utilities like `bg-accent`,
- * `rounded-control`), never hardcoded hex/size values. Variant + size resolve
+ * `rounded-square`), never hardcoded hex/size values. Variant + size resolve
  * through lookup maps, never ternary chains.
  *
  * Reworked against the AP-agent frames:
@@ -57,7 +57,7 @@ const VARIANT_STYLE: Record<ButtonVariant, string> = {
     'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-control-ring',
 };
 
-/** Height / padding / text scale. Both sizes stay near-square (control radius). */
+/** Height / padding / text scale. Both sizes are sharp-cornered (square radius). */
 const SIZE_STYLE: Record<ButtonSize, string> = {
   sm: 'h-8 gap-1.5 px-rui-2 text-sm',
   md: 'h-10 gap-2 px-rui-3 text-sm',
@@ -83,8 +83,8 @@ export function Button({
       disabled={isDisabled}
       aria-busy={loading || undefined}
       className={clsx(
-        // Layout + shape: control radius (4px), heading weight, inline icon rows.
-        'inline-flex items-center justify-center rounded-control font-heading whitespace-nowrap',
+        // Layout + shape: square corners (0px, per the frames), heading weight, inline icon rows.
+        'inline-flex items-center justify-center rounded-square font-heading whitespace-nowrap',
         'outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2',
         // The real disabled affordance — dimmed + not-allowed, never the base.
         'disabled:cursor-not-allowed disabled:opacity-50',
@@ -98,7 +98,7 @@ export function Button({
       {children}
       {trailingIcon}
       {keyChip ? (
-        <kbd className="ml-1 inline-flex items-center rounded-control bg-black/10 px-1.5 py-0.5 font-sans text-xs text-current/80">
+        <kbd className="ml-1 inline-flex items-center rounded-square bg-black/10 px-1.5 py-0.5 font-sans text-xs text-current/80">
           {keyChip}
         </kbd>
       ) : null}

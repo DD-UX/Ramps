@@ -27,7 +27,7 @@ const ALIGN: Record<CellAlign, string> = {
 
 function Root({ className, ...props }: TableHTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="overflow-hidden rounded-surface border border-bone bg-white">
+    <div className="overflow-hidden rounded-square border border-bone bg-white">
       <table className={clsx('w-full border-collapse text-sm', className)} {...props} />
     </div>
   );

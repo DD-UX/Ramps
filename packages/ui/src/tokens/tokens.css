@@ -20,14 +20,12 @@
   --rui-font-weight-heading: 400;
   --rui-font-weight-bold: 700;
 
-  /* Radii — verified against the AP-agent frames (snapshots 6/8/9). Ramp's
-     surfaces are *barely* rounded: line-item controls, tables and cards read
-     ~6px, not the 12px a generic "card" radius implies. `square` is the corner
-     the product actually uses for stacked controls/panels; `surface` is retained
-     for the few genuinely soft containers (toasts, menus). */
-  --rui-radius-control: 4px; /* buttons, inputs, small controls */
-  --rui-radius-square: 6px; /* line-item selects, table shell, detail cards */
-  --rui-radius-surface: 12px; /* soft containers only (menu/toast popovers) */
+  /* Radii — measured from the frames at 5-7x zoom (does-ramp-live-up §06/07:
+     "Create bill" button, Invoice # input, line-item selects, Incomplete badge,
+     toast edge). The design has NO round corners: every rectangle — buttons,
+     inputs, badges, cards, tables, menus, toasts — is a sharp 0px `square`.
+     Only avatars/pills are round (`pill`). There is no in-between radius. */
+  --rui-radius-square: 0px; /* every rectangular component */
   --rui-radius-pill: 100vmin;
 
   /* Elevation — Ramp leans on soft, low-contrast shadows, not hard borders.

@@ -4,7 +4,7 @@
  * tokens.css is the raw SSoT (verified Ramp/Ryu `--rui-*` custom properties).
  * This file is the Tailwind layer: it pulls Tailwind in and re-exposes those
  * exact token values through `@theme`, so components use *semantic* utilities
- * (`bg-accent`, `text-ink`, `rounded-control`, `font-heading`) instead of
+ * (`bg-accent`, `text-ink`, `rounded-square`, `font-heading`) instead of
  * arbitrary `[var(--rui-*)]` classes. One source of truth, two consumers
  * (Storybook via @tailwindcss/vite, web via @tailwindcss/postcss).
  *
@@ -49,10 +49,8 @@
   --font-weight-heading: var(--rui-font-weight-heading);
   --font-weight-bold: var(--rui-font-weight-bold);
 
-  /* Radii — `square` is Ramp's near-zero corner for controls/tables/cards. */
-  --radius-control: var(--rui-radius-control);
+  /* Radii — `square` (0px) is THE corner for every rectangle; `pill` for avatars. */
   --radius-square: var(--rui-radius-square);
-  --radius-surface: var(--rui-radius-surface);
   --radius-pill: var(--rui-radius-pill);
 
   /* Elevation — soft shadows over hard borders (see snapshot 8 glow card). */

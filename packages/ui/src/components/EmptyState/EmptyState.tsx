@@ -24,7 +24,7 @@ export function EmptyState({ title, description, icon, action, className }: Empt
   return (
     <div
       className={clsx(
-        'flex flex-col items-center justify-center gap-rui-2 rounded-surface border border-dashed border-bone bg-limestone px-rui-6 py-rui-8 text-center',
+        'flex flex-col items-center justify-center gap-rui-2 rounded-square border border-dashed border-bone bg-limestone px-rui-6 py-rui-8 text-center',
         className,
       )}
     >

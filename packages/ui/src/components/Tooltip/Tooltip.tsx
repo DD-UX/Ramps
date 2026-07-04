@@ -21,7 +21,7 @@ export function Tooltip({ label, children, className }: TooltipProps) {
         role="tooltip"
         className={clsx(
           'pointer-events-none absolute bottom-full left-1/2 z-10 mb-rui-2 -translate-x-1/2',
-          'whitespace-nowrap rounded-control bg-ink px-rui-3 py-rui-1 text-xs font-body text-limestone',
+          'whitespace-nowrap rounded-square bg-ink px-rui-3 py-rui-1 text-xs font-body text-limestone',
           'opacity-0 transition-opacity duration-100',
           'group-hover:opacity-100 group-focus-within:opacity-100',
         )}

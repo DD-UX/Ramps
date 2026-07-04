@@ -137,7 +137,7 @@ export function Select({
                     key={opt.value}
                     value={opt.value}
                     className={clsx(
-                      'flex cursor-pointer items-center gap-2 rounded-control px-2 py-1.5 text-sm font-body text-ink',
+                      'flex cursor-pointer items-center gap-2 rounded-square px-2 py-1.5 text-sm font-body text-ink',
                       'data-[highlighted]:bg-limestone data-[selected]:font-heading outline-none select-none',
                     )}
                   >
