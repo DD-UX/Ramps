@@ -51,10 +51,19 @@ bash .claude/skills/design-system-validate/validate.sh   # token-fidelity gate +
 A change that skips `sync:web` is **not done**, no matter how green the tests are —
 the gate validates the kit, but the *app* serves the stale copy.
 
+## Component prop conventions
+
+- **`children` → use `PropsWithChildren`, never a hand-written `children: ReactNode`.**
+  Wrap the props interface: `type FooProps = PropsWithChildren<{ tone?: Tone }>`
+  (or `PropsWithChildren` alone when there are no other props). This keeps the
+  `children` typing consistent (optional `ReactNode`) across the kit and avoids
+  drift. Import it from `react`: `import type { PropsWithChildren } from 'react'`.
+- Still export a named props interface/type for every component (docs + reuse).
+
 ## Adding a component (checklist)
 
 1. `src/components/<Name>/<Name>.tsx` — tokens-only, `clsx`, variant lookup maps,
-   JSDoc citing the Ramp frame it came from.
+   `PropsWithChildren` for any `children`, JSDoc citing the Ramp frame it came from.
 2. `src/components/<Name>/<Name>.stories.tsx` — `title: 'Primitives/<Name>'`,
    default/hover/focus/disabled/loading where relevant. No stories → not done.
 3. Add the subpath export to `package.json` (`"./<Name>": { types, import }`).

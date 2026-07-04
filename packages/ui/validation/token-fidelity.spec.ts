@@ -58,11 +58,14 @@ test.describe('token fidelity', () => {
     await expect(input).toHaveCSS('border-top-color', hexToRgb(RUI['--rui-destructive']));
   });
 
-  test('Toast surface is ink with the surface radius', async ({ page }) => {
+  test('Toast is a white, near-square card with a bone border (snapshot 3)', async ({ page }) => {
     await page.goto(storyUrl('primitives-toast--uploading'));
     const toast = page.getByRole('status');
-    await expect(toast).toHaveCSS('background-color', hexToRgb(RUI['--rui-ink']));
-    await expect(toast).toHaveCSS('border-top-left-radius', RUI['--rui-radius-surface']);
+    // Reworked from the dark-ink slab to the Ramp toast: white fill, thin bone
+    // border, near-square corners (never the soft surface radius).
+    await expect(toast).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect(toast).toHaveCSS('border-top-color', hexToRgb(RUI['--rui-bone']));
+    await expect(toast).toHaveCSS('border-top-left-radius', RUI['--rui-radius-square']);
   });
 
   test('Money formats integer cents and renders tabular numerals', async ({ page }) => {

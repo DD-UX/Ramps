@@ -20,10 +20,23 @@
   --rui-font-weight-heading: 400;
   --rui-font-weight-bold: 700;
 
-  /* Radii */
-  --rui-radius-control: 4px;
-  --rui-radius-surface: 12px;
+  /* Radii — verified against the AP-agent frames (snapshots 6/8/9). Ramp's
+     surfaces are *barely* rounded: line-item controls, tables and cards read
+     ~6px, not the 12px a generic "card" radius implies. `square` is the corner
+     the product actually uses for stacked controls/panels; `surface` is retained
+     for the few genuinely soft containers (toasts, menus). */
+  --rui-radius-control: 4px; /* buttons, inputs, small controls */
+  --rui-radius-square: 6px; /* line-item selects, table shell, detail cards */
+  --rui-radius-surface: 12px; /* soft containers only (menu/toast popovers) */
   --rui-radius-pill: 100vmin;
+
+  /* Elevation — Ramp leans on soft, low-contrast shadows, not hard borders.
+     `card` is the neutral resting elevation for detail panels/popovers; `glow`
+     is the signature tinted halo on the "Ready to approve" card (snapshot 8),
+     built from the positive tone so it reads as a calm success cue, never red. */
+  --rui-shadow-card: 0 1px 2px rgba(26, 25, 25, 0.06), 0 8px 24px rgba(26, 25, 25, 0.06);
+  --rui-shadow-glow: 0 0 0 1px rgba(31, 122, 68, 0.24), 0 8px 32px rgba(31, 122, 68, 0.18);
+  --rui-shadow-popover: 0 2px 4px rgba(26, 25, 25, 0.08), 0 12px 32px rgba(26, 25, 25, 0.12);
 
   /* Spacing base (4px scale) */
   --rui-space-1: 4px;

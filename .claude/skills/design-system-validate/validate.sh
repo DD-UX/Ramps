@@ -5,9 +5,13 @@
 # Order of operations (fail fast on the HARD steps):
 #   1. build-storybook        — the suite runs against the STATIC build, so this
 #                               is what actually ships to /storybook. HARD.
-#   2. token-fidelity         — computed styles must resolve to the verified
-#                               --rui-* token values (parsed from tokens.css).
-#                               HARD. A drift here blocks the push.
+#   2. token+structure fidelity — HARD gate, two spec families:
+#                               token-fidelity: computed styles resolve to the
+#                                 verified --rui-* values (parsed from tokens.css).
+#                               structure-fidelity: the measured look & feel from
+#                                 the Ramp frames (near-square radii, disabled
+#                                 affordance, soft-glow, floating label, shared
+#                                 tab underline). A drift in either blocks the push.
 #   3. visual-advisory        — gallery capture + side-by-side with the Ramp
 #                               video frames. ADVISORY: reported, never blocks.
 #

@@ -49,10 +49,16 @@
   --font-weight-heading: var(--rui-font-weight-heading);
   --font-weight-bold: var(--rui-font-weight-bold);
 
-  /* Radii */
+  /* Radii — `square` is Ramp's near-zero corner for controls/tables/cards. */
   --radius-control: var(--rui-radius-control);
+  --radius-square: var(--rui-radius-square);
   --radius-surface: var(--rui-radius-surface);
   --radius-pill: var(--rui-radius-pill);
+
+  /* Elevation — soft shadows over hard borders (see snapshot 8 glow card). */
+  --shadow-card: var(--rui-shadow-card);
+  --shadow-glow: var(--rui-shadow-glow);
+  --shadow-popover: var(--rui-shadow-popover);
 
   /* Spacing (4px scale) — additive to Tailwind's default numeric scale. */
   --spacing-rui-1: var(--rui-space-1);

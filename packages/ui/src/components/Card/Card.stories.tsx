@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { HelpCircle, ThumbsDown, ThumbsUp } from 'lucide-react';
 
 import { Badge } from '../Badge/Badge';
+import { IconButton } from '../IconButton/IconButton';
 import { Card } from './Card';
 
 const meta = {
@@ -13,7 +15,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** A form section in the bill-detail drawer. */
+/** A resting form section in the bill-detail drawer — white, soft card shadow. */
 export const Section: Story = {
   render: () => (
     <Card className="max-w-md">
@@ -27,24 +29,46 @@ export const Section: Story = {
   ),
 };
 
-/** The approval recommendation card — tone carries the verdict. */
-export const ReadyToApprove: Story = {
+/**
+ * The signature "Ready to approve" panel (snapshot 8): white surface, positive
+ * tinted border, soft green **glow**, thumbs up/down on the header, and the
+ * passed-checks list.
+ */
+export const Glow: Story = {
   render: () => (
-    <Card tone="positive" className="max-w-md">
-      <Card.Header action={<Badge tone="positive">Ready to approve</Badge>}>
-        Approval checks
+    <Card tone="positive" elevation="glow" className="max-w-lg">
+      <Card.Header
+        action={
+          <div className="flex items-center gap-1">
+            <IconButton label="Approve" icon={<ThumbsUp size={16} />} />
+            <IconButton label="Reject" icon={<ThumbsDown size={16} />} />
+          </div>
+        }
+      >
+        <span className="inline-flex items-center gap-1.5">
+          Ready to approve
+          <HelpCircle size={14} className="text-hushed" />
+        </span>
       </Card.Header>
       <Card.Body>
+        <p className="mb-3 text-sm text-ink">
+          This $6,442.46 bill for <span className="font-heading">W.B. Mason</span> is for office
+          supplies for the Boston office for December.
+        </p>
+        <p className="mb-1 text-sm font-heading text-ink">Checks passed:</p>
         <ul className="space-y-1 text-sm text-ink">
-          <li>✓ Vendor verified</li>
-          <li>✓ Amount within policy</li>
-          <li>✓ No duplicate detected</li>
+          <li>✓ Coding appears consistent with bill memo and similar bills</li>
+          <li>✓ Memo and line items clearly state the bill contents</li>
+          <li>✓ Bill amount is similar to recent W.B. Mason bills</li>
+          <li>✓ All expected line item categories are present</li>
+          <li>✓ Payment is scheduled to arrive on time</li>
         </ul>
       </Card.Body>
     </Card>
   ),
 };
 
+/** Review-recommended — warning tint, resting card elevation. */
 export const ReviewRecommended: Story = {
   render: () => (
     <Card tone="warning" className="max-w-md">

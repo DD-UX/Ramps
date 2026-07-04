@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 
 /**
  * Badge — the compact metadata/count label for everything that ISN'T a bill
@@ -36,14 +36,13 @@ const SOLID_STYLE: Record<BadgeTone, string> = {
   critical: 'bg-destructive text-limestone',
 };
 
-export interface BadgeProps {
-  children: ReactNode;
+export type BadgeProps = PropsWithChildren<{
   tone?: BadgeTone;
   variant?: BadgeVariant;
   /** Optional leading glyph (icon/dot). */
   icon?: ReactNode;
   className?: string;
-}
+}>;
 
 export function Badge({ children, tone = 'neutral', variant = 'subtle', icon, className }: BadgeProps) {
   const style = variant === 'solid' ? SOLID_STYLE[tone] : SUBTLE_STYLE[tone];

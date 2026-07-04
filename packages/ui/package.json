@@ -59,6 +59,10 @@
       "types": "./dist/components/Divider/Divider.d.ts",
       "import": "./dist/components/Divider/Divider.js"
     },
+    "./DraggablePanel": {
+      "types": "./dist/components/DraggablePanel/DraggablePanel.d.ts",
+      "import": "./dist/components/DraggablePanel/DraggablePanel.js"
+    },
     "./EmptyState": {
       "types": "./dist/components/EmptyState/EmptyState.d.ts",
       "import": "./dist/components/EmptyState/EmptyState.js"
@@ -70,6 +74,10 @@
     "./Menu": {
       "types": "./dist/components/Menu/Menu.d.ts",
       "import": "./dist/components/Menu/Menu.js"
+    },
+    "./Popover": {
+      "types": "./dist/components/Popover/Popover.d.ts",
+      "import": "./dist/components/Popover/Popover.js"
     },
     "./Money": {
       "types": "./dist/components/Money/Money.d.ts",
@@ -86,6 +94,10 @@
     "./Table": {
       "types": "./dist/components/Table/Table.d.ts",
       "import": "./dist/components/Table/Table.js"
+    },
+    "./UserAvatars": {
+      "types": "./dist/components/UserAvatars/UserAvatars.d.ts",
+      "import": "./dist/components/UserAvatars/UserAvatars.js"
     }
   },
   "files": [
@@ -106,7 +118,10 @@
     "clean": "rm -rf dist .turbo storybook-static test-results validation/report *.tsbuildinfo"
   },
   "dependencies": {
+    "@base-ui-components/react": "1.0.0-rc.0",
     "clsx": "2.1.1",
+    "lucide-react": "1.23.0",
+    "motion": "12.42.2",
     "tailwind-merge": "3.6.0"
   },
   "peerDependencies": {

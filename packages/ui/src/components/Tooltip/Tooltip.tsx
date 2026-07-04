@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 
 /**
  * Tooltip — a lightweight hover/focus label. Used for truncated table cells and
@@ -8,11 +8,10 @@ import type { ReactNode } from 'react';
  * show/hide via group-hover/focus-within so it stays dependency-free and easy
  * to snapshot; ink surface, limestone text.
  */
-export interface TooltipProps {
+export type TooltipProps = PropsWithChildren<{
   label: ReactNode;
-  children: ReactNode;
   className?: string;
-}
+}>;
 
 export function Tooltip({ label, children, className }: TooltipProps) {
   return (
