@@ -47,6 +47,12 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * decorative — wire the real shortcut separately.
    */
   keys?: string[];
+  /**
+   * Pill shape — the table TOOLBAR treatment (snapshot 1: "Options ▾" is a
+   * fully rounded white pill while the lime "New bill" beside it stays
+   * square). Off by default; the frames show square everywhere else.
+   */
+  rounded?: boolean;
   /** Swaps the leading icon for a spinner and disables the button. */
   loading?: boolean;
 }
@@ -82,6 +88,7 @@ export function Button({
   leadingIcon,
   trailingIcon,
   keys,
+  rounded = false,
   loading = false,
   disabled,
   className,
@@ -96,8 +103,10 @@ export function Button({
       disabled={isDisabled}
       aria-busy={loading || undefined}
       className={clsx(
-        // Layout + shape: square corners (0px, per the frames), heading weight, inline icon rows.
-        'inline-flex items-center justify-center rounded-square font-heading whitespace-nowrap',
+        // Layout + shape: square corners (0px, per the frames) — except the
+        // toolbar pills (snapshot 1) — heading weight, inline icon rows.
+        'inline-flex items-center justify-center font-heading whitespace-nowrap',
+        rounded ? 'rounded-pill' : 'rounded-square',
         'outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2',
         // Real interactive affordances: pointer when enabled, dimmed +
         // not-allowed when disabled — never pixel-identical to the base.

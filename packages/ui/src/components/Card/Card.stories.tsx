@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Check, HelpCircle, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Check, FileText, HelpCircle, ThumbsDown, ThumbsUp } from 'lucide-react';
 
 import { Badge } from '../Badge/Badge';
+import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { Card } from './Card';
 
 const meta = {
@@ -29,11 +31,23 @@ export const Section: Story = {
   ),
 };
 
+/** The frame-8 checklist — the third row carries the source-document chip. */
+const CHECKS: ReadonlyArray<{ text: string; docs?: number }> = [
+  { text: 'Coding appears consistent with bill memo, line item descriptions, and similar bills' },
+  { text: 'Memo and line items clearly state the bill contents' },
+  { text: 'Bill amount is similar to recent W.B. Mason bills.', docs: 1 },
+  { text: 'All expected line item categories are present' },
+  { text: 'Payment is scheduled to arrive on time' },
+  { text: 'Payment method matches previous bills' },
+];
+
 /**
  * The signature "Ready to approve" panel (snapshot 8): ONE white padded
  * surface — no divider under the title — pale positive border, wide soft
- * green **glow**, the green title with its "?" hint, thumbs up/down on the
- * right, and the gap-spaced passed-checks list.
+ * green **glow**, the green title with its green "?" hint (tooltip explains
+ * the agent), thumbs up/down on the right, the vendor rendered as a neutral
+ * inline chip, the gap-spaced passed-checks list with a doc-count chip on the
+ * amount check, and the "Show less" underline link closing the card.
  */
 export const Glow: Story = {
   render: () => (
@@ -46,37 +60,51 @@ export const Glow: Story = {
           </div>
         }
       >
-        {/* Frame 8: the title itself is the positive green, a step larger than body copy. */}
+        {/* Frame 8: the title AND its "?" hint are the same positive green,
+            a step larger than body copy. The tooltip carries the "how". */}
         <span className="inline-flex items-center gap-1.5 text-base text-tone-positive-on">
           Ready to approve
-          <HelpCircle size={14} className="text-hushed" />
+          <Tooltip label="Ramp's agent checked this bill's coding, amount and timing against similar bills.">
+            <HelpCircle size={14} className="cursor-help" />
+          </Tooltip>
         </span>
       </Card.Header>
       <Card.Body className="flex flex-col gap-rui-3 text-sm text-ink">
         <p>
-          This $6,442.46 bill for <span className="font-heading">W.B. Mason</span> is for office
-          supplies for the Boston office for December.
+          This $6,442.46 bill for{' '}
+          <Badge tone="neutral" className="text-sm">
+            W.B. Mason
+          </Badge>{' '}
+          is for office supplies for the Boston office for December.
         </p>
         <div className="flex flex-col gap-1">
           <p className="font-heading">Checks passed:</p>
           <ul className="flex flex-col gap-1">
-            {[
-              'Coding appears consistent with bill memo and similar bills',
-              'Memo and line items clearly state the bill contents',
-              'Bill amount is similar to recent W.B. Mason bills',
-              'All expected line item categories are present',
-              'Payment is scheduled to arrive on time',
-            ].map((check) => (
-              <li key={check} className="flex items-start gap-rui-2">
+            {CHECKS.map(({ text, docs }) => (
+              <li key={text} className="flex items-start gap-rui-2">
                 {/* h-5 box matches the text-sm 20px line so the check pins to line one. */}
                 <span className="flex h-5 shrink-0 items-center" aria-hidden>
                   <Check size={14} className="text-tone-positive-on" />
                 </span>
-                {check}
+                <span>
+                  {text}
+                  {docs !== undefined && (
+                    <Badge
+                      tone="neutral"
+                      icon={<FileText size={12} />}
+                      className="ml-rui-2 bg-white align-middle shadow-key"
+                    >
+                      {docs}
+                    </Badge>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
         </div>
+        <Button variant="underline" className="self-start">
+          Show less
+        </Button>
       </Card.Body>
     </Card>
   ),

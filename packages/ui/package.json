@@ -83,6 +83,10 @@
       "types": "./dist/components/Menu/Menu.d.ts",
       "import": "./dist/components/Menu/Menu.js"
     },
+    "./Modal": {
+      "types": "./dist/components/Modal/Modal.d.ts",
+      "import": "./dist/components/Modal/Modal.js"
+    },
     "./Popover": {
       "types": "./dist/components/Popover/Popover.d.ts",
       "import": "./dist/components/Popover/Popover.js"
@@ -106,6 +110,10 @@
     "./UserAvatars": {
       "types": "./dist/components/UserAvatars/UserAvatars.d.ts",
       "import": "./dist/components/UserAvatars/UserAvatars.js"
+    },
+    "./useClickAway": {
+      "types": "./dist/hooks/useClickAway.d.ts",
+      "import": "./dist/hooks/useClickAway.js"
     }
   },
   "files": [

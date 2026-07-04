@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Search } from 'lucide-react';
 
 import { Input } from './Input';
 
@@ -38,3 +39,15 @@ export const Invalid: Story = {
 
 /** Disabled/locked field. */
 export const Disabled: Story = { args: { disabled: true, defaultValue: 'Locked field' } };
+
+/**
+ * The toolbar search pill (snapshot 1): "Search or filter…" is the one fully
+ * ROUNDED input in the frames — white fill, bone border, hushed search glyph.
+ */
+export const Rounded: Story = {
+  args: {
+    rounded: true,
+    placeholder: 'Search or filter...',
+    leadingIcon: <Search size={14} />,
+  },
+};

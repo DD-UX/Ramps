@@ -71,7 +71,12 @@
   --rui-tone-accent-surface: var(--rui-accent);
   --rui-tone-accent-on: var(--rui-ink);
   --rui-tone-positive-surface: #e6f4ea; /* muted green — paid/approved */
-  --rui-tone-positive-on: #1f7a44;
+  /* Green TEXT on tinted surfaces — Ryu's verified deep constructive #26763B
+     (docs/design-system.md §2.3). Re-vetted against ap-agent snapshot 8: the
+     "Ready to approve" title's darkest stroke pixels sample ~#0c6428 (JPEG
+     ringing overshoots dark), which sits on #26763B — the old #1f7a44 was an
+     invented blend, visibly bluer and lighter than the frame. */
+  --rui-tone-positive-on: #26763b;
   --rui-tone-warning-surface: #fdeede; /* muted amber — needs attention */
   --rui-tone-warning-on: #9a5b12;
   --rui-tone-critical-surface: #ffe9df; /* destructive family tint — never red */

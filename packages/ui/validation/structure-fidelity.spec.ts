@@ -90,7 +90,7 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
    * defaults buttons to `cursor: default`, so this is an explicit contract).
    */
   test('Button/underline is the "Save draft" text link (frame 9)', async ({ page }) => {
-    await page.goto(storyUrl('primitives-button--with-icon'));
+    await page.goto(storyUrl('primitives-button--underline'));
     const btn = page.getByRole('button', { name: /Save draft/ });
     await expect(btn).toBeVisible();
     const styles = await btn.evaluate((el) => {
@@ -238,12 +238,13 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   });
 
   /**
-   * Snapshot 8 — the split-view grip is a CIRCULAR white chip (soft shadow,
-   * ink dots) riding the hairline rail: one of the kit's few vetted-round
-   * elements. Assert it is a true circle (square box + >= half-width radius),
-   * white, and borderless.
+   * Snapshot 7 at 10x — the split-view grip is a CIRCULAR **limestone** chip
+   * (soft shadow, ink dots) riding the hairline rail: one of the kit's few
+   * vetted-round elements, and it reads a step darker than the white panes it
+   * separates. Assert a true circle (square box + >= half-width radius),
+   * limestone fill, and borderless.
    */
-  test('DraggablePanel grip is the circular white chip from frame 8', async ({ page }) => {
+  test('DraggablePanel grip is the circular limestone chip from frame 7', async ({ page }) => {
     await page.goto(storyUrl('primitives-draggablepanel--bill-detail'));
     const grip = page.getByTestId('drag-grip');
     await expect(grip).toBeVisible();
@@ -260,7 +261,9 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     });
     expect(Math.abs(m.w - m.h), 'grip box is square').toBeLessThanOrEqual(1);
     expect(m.radius, 'radius >= half width — a circle').toBeGreaterThanOrEqual(m.w / 2 - 1);
-    expect(m.bg, 'white chip').toBe('rgb(255, 255, 255)');
+    expect(m.bg, 'limestone chip — a step darker than the panes').toBe(
+      hexToRgb(RUI['--rui-limestone']),
+    );
     expect(m.borderW, 'no border — the shadow does the lifting').toBe(0);
   });
 
@@ -288,6 +291,105 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     await expect(page.getByRole('tablist').first()).toBeVisible();
     const indicators = page.getByTestId('tab-underline');
     await expect(indicators).toHaveCount(1);
+  });
+
+  /**
+   * Snapshot 1 — the toolbar pair: "Search or filter…" and "Options ▾" are the
+   * two fully ROUNDED (pill) controls in the frames, opted in via the boolean
+   * `rounded` prop. Assert the pill: radius >= half the rendered height.
+   */
+  test('Button/rounded and Input/rounded are the frame-1 toolbar pills', async ({ page }) => {
+    await page.goto(storyUrl('primitives-button--rounded'));
+    const btn = page.getByRole('button', { name: /Options/ });
+    await expect(btn).toBeVisible();
+    const b = await btn.evaluate((el) => ({
+      h: el.getBoundingClientRect().height,
+      r: Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    }));
+    expect(b.r, 'rounded button is a pill').toBeGreaterThanOrEqual(b.h / 2 - 1);
+
+    await page.goto(storyUrl('primitives-input--rounded'));
+    const input = page.getByRole('textbox').first();
+    await expect(input).toBeVisible();
+    const i = await input.evaluate((el) => ({
+      // The pill skin lives on the <input> itself; the wrapper only positions
+      // the adornment.
+      h: el.getBoundingClientRect().height,
+      r: Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    }));
+    expect(i.r, 'rounded input is a pill').toBeGreaterThanOrEqual(i.h / 2 - 1);
+  });
+
+  /**
+   * The click-mode Popover contract (default trigger): clicking the trigger
+   * pins the card open; it STAYS open until a click lands outside or Esc is
+   * pressed (`useClickAway`). Hover mode remains the frame-7 hovercard.
+   */
+  test('Popover/click opens on click and dismisses on click-away and Esc', async ({ page }) => {
+    await page.goto(storyUrl('primitives-popover--on-click'));
+    const trigger = page.getByRole('button', { name: 'Staples' });
+    const popover = page.getByTestId('popover');
+
+    await trigger.click();
+    await expect(popover).toBeVisible();
+
+    // Click-away dismisses.
+    await page.mouse.click(600, 400);
+    await expect(popover).toBeHidden();
+
+    // Esc dismisses too.
+    await trigger.click();
+    await expect(popover).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(popover).toBeHidden();
+  });
+
+  /**
+   * Frame 13 ("When do you want to pay this bill?") — the Modal is ONE white
+   * padded panel over a LIGHT scrim (sampled ~#f8f4f5 — a whitish wash, never
+   * a dark dim): near-square corner, real dialog semantics, ✕ in the header.
+   */
+  test('Modal is the frame-13 dialog: light scrim, square white panel', async ({ page }) => {
+    await page.goto(storyUrl('primitives-modal--when-to-pay'));
+    const modal = page.getByTestId('modal');
+    await expect(modal).toBeVisible();
+    await expect(modal).toHaveRole('dialog');
+    await expect(modal.getByRole('button', { name: 'Close' })).toBeVisible();
+
+    const r = await modal.evaluate((el) => Number.parseFloat(getComputedStyle(el).borderTopLeftRadius));
+    expect(r, 'panel corner is near-square').toBeLessThanOrEqual(px(RUI['--rui-radius-square']) + 1);
+
+    // Tailwind v4 emits `bg-white/75` via color-mix, so the computed value is
+    // an oklab() white in Chromium. Assert the two facts that matter: the veil
+    // is (near-)white and 75% opaque — never a dark dim.
+    const overlayBg = await page
+      .getByTestId('modal-overlay')
+      .evaluate((el) => getComputedStyle(el).backgroundColor);
+    const isWhiteVeil =
+      /^rgba\(255, 255, 255, 0\.75\)$/.test(overlayBg) ||
+      /^oklab\(0\.99\d*\b[^)]*\/ 0\.75\)$/.test(overlayBg);
+    expect(isWhiteVeil, `scrim is a light whitish veil at 75% (got: ${overlayBg})`).toBe(true);
+  });
+
+  /**
+   * Modal dismissal inherits the same `useClickAway` contract: Esc and a
+   * click on the scrim both close it (Interactive story owns real state).
+   */
+  test('Modal dismisses on Esc and on scrim click', async ({ page }) => {
+    await page.goto(storyUrl('primitives-modal--interactive'));
+    const openBtn = page.getByRole('button', { name: 'Pay bill' });
+    const modal = page.getByTestId('modal');
+
+    await openBtn.click();
+    await expect(modal).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(modal).toBeHidden();
+
+    await openBtn.click();
+    await expect(modal).toBeVisible();
+    // Click the scrim near the viewport corner — well outside the panel.
+    await page.mouse.click(8, 8);
+    await expect(modal).toBeHidden();
   });
 
   /**

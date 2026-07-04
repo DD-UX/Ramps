@@ -20,12 +20,19 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   leadingIcon?: ReactNode;
   /** Adornment after the field (e.g. a unit suffix or clear affordance). */
   trailingIcon?: ReactNode;
+  /**
+   * Pill shape — the table TOOLBAR treatment (snapshot 1: the "Search or
+   * filter…" field is a fully rounded pill). Off by default; the form fields
+   * in the frames are square.
+   */
+  rounded?: boolean;
 }
 
 export function Input({
   invalid,
   leadingIcon,
   trailingIcon,
+  rounded = false,
   className,
   type,
   ...props
@@ -36,7 +43,9 @@ export function Input({
       aria-invalid={invalid || undefined}
       className={clsx(
         // White fill, near-square corners, thin border — the snapshot-9 field.
-        'w-full rounded-square border bg-white text-sm font-body text-ink',
+        // The toolbar search (snapshot 1) is the pill exception.
+        'w-full border bg-white text-sm font-body text-ink',
+        rounded ? 'rounded-pill' : 'rounded-square',
         'h-10 px-rui-3 py-rui-2',
         'placeholder:text-control-placeholder',
         'focus:outline-none focus:ring-2 focus:ring-control-ring',

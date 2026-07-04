@@ -19,7 +19,10 @@ export type BadgeTone = 'neutral' | 'info' | 'accent' | 'positive' | 'warning' |
 export type BadgeVariant = 'subtle' | 'solid';
 
 const SUBTLE_STYLE: Record<BadgeTone, string> = {
-  neutral: 'bg-tone-neutral-surface text-tone-neutral-on',
+  // ap-agent frames 7/8: the neutral chips — the inline vendor tag
+  // ("W.B. Mason"/"Staples") and the doc-count chips on the check rows — are
+  // INK text on the light gray surface, not the hushed gray the seed used.
+  neutral: 'bg-tone-neutral-surface text-ink',
   info: 'bg-tone-info-surface text-tone-info-on',
   accent: 'bg-tone-accent-surface text-tone-accent-on',
   positive: 'bg-tone-positive-surface text-tone-positive-on',

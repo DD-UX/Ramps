@@ -24,14 +24,19 @@ export function EmptyState({ title, description, icon, action, className }: Empt
   return (
     <div
       className={clsx(
-        'flex flex-col items-center justify-center gap-rui-2 rounded-square border border-dashed border-bone bg-limestone px-rui-6 py-rui-8 text-center',
+        // Two-level rhythm, gaps only: the outer gap-rui-4 airs out the three
+        // zones (icon / text / action) while the inner gap-rui-1 keeps title
+        // and description reading as one block — the flat single-gap stack
+        // read cluttered.
+        'flex flex-col items-center justify-center gap-rui-4 rounded-square border border-dashed border-bone bg-limestone px-rui-6 py-rui-8 text-center',
         className,
       )}
     >
       {icon && <span className="text-hushed" aria-hidden>{icon}</span>}
-      <p className="font-heading text-ink">{title}</p>
-      {description && <p className="max-w-sm text-sm font-body text-hushed">{description}</p>}
-      {/* gap, not margin: the stack's gap owns the rhythm however many rows render. */}
+      <div className="flex flex-col items-center gap-rui-1">
+        <p className="font-heading text-ink">{title}</p>
+        {description && <p className="max-w-sm text-sm font-body text-hushed">{description}</p>}
+      </div>
       {action && <div>{action}</div>}
     </div>
   );

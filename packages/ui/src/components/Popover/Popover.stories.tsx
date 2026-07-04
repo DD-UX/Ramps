@@ -14,7 +14,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** The vendor hovercard body from snapshot 7 — logo + name, blurb, meta footer. */
+/** The vendor card body from snapshot 7 — logo + name, blurb, meta footer. */
 function VendorCard() {
   return (
     <Popover.Content>
@@ -40,11 +40,11 @@ function VendorCard() {
 
 /**
  * Open state (snapshot 7) — controlled `open` so the card is visible in the
- * gallery. In the app it opens on hover/focus of the vendor name.
+ * gallery. Default trigger is click.
  */
 export const VendorHovercard: Story = {
   render: () => (
-    <div className="p-8">
+    <div className="p-8 pb-56">
       <Popover open>
         <Popover.Trigger>
           <span className="text-sm font-heading text-ink">Staples</span>
@@ -55,11 +55,28 @@ export const VendorHovercard: Story = {
   ),
 };
 
-/** Interactive — hover the vendor name to reveal the card (Base UI intent). */
+/**
+ * The DEFAULT trigger — click the vendor name to pin the card open; it stays
+ * until you click away or press Esc (`useClickAway`).
+ */
+export const OnClick: Story = {
+  render: () => (
+    <div className="p-8 pb-56">
+      <Popover>
+        <Popover.Trigger>
+          <span className="text-sm font-heading text-ink underline decoration-dotted">Staples</span>
+        </Popover.Trigger>
+        <VendorCard />
+      </Popover>
+    </div>
+  ),
+};
+
+/** Hover mode — the frame-7 hovercard intent (Base UI open/close delays). */
 export const OnHover: Story = {
   render: () => (
-    <div className="p-8">
-      <Popover>
+    <div className="p-8 pb-56">
+      <Popover trigger="hover">
         <Popover.Trigger>
           <span className="text-sm font-heading text-ink underline decoration-dotted">Staples</span>
         </Popover.Trigger>

@@ -34,10 +34,30 @@ export const Disabled: Story = { args: { disabled: true } };
 
 /**
  * The underline link action — "Save draft" (snapshot 9 at 6x): floppy-disk
- * icon + underlined ink label, no fill, no border.
+ * icon + underlined ink label, no fill, no border. Frame 8's "Show less"
+ * is the same variant without the icon.
  */
-export const WithIcon: Story = {
+export const Underline: Story = {
   args: { variant: 'underline', leadingIcon: <Save size={16} />, children: 'Save draft' },
+};
+
+/**
+ * The toolbar pill (snapshot 1): "Options ▾" is a fully ROUNDED white
+ * secondary — the only rounded button in the frames; the lime "New bill"
+ * beside it stays square.
+ */
+export const Rounded: Story = {
+  args: {
+    variant: 'secondary',
+    rounded: true,
+    trailingIcon: <ChevronDown size={16} />,
+    children: 'Options',
+  },
+};
+
+/** Leading icon — the "+ New bill" lime CTA (snapshot 1). */
+export const WithIcon: Story = {
+  args: { variant: 'primary', leadingIcon: <Plus size={16} />, children: 'New bill' },
 };
 
 /** Trailing chevron — the "New bill" dropdown trigger (snapshot 6). */
@@ -78,6 +98,9 @@ export const Catalogue: Story = {
         </Button>
         <Button variant="ink">Pay bill</Button>
         <Button variant="destructive">Delete</Button>
+        <Button variant="secondary" rounded trailingIcon={<ChevronDown size={16} />}>
+          Options
+        </Button>
       </div>
       <div className="flex items-center gap-3">
         <Button variant="primary" disabled leadingIcon={<Plus size={16} />}>

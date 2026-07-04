@@ -85,9 +85,24 @@ const CATALOGUE: ReadonlyArray<{
     ref: 'ramp-bill-pay-series-ap-agent/snapshots/8.jpeg',
   },
   {
-    id: 'primitives-button--with-icon',
+    id: 'primitives-button--underline',
     gallery: 'button-underline-save-draft',
     ref: 'ramp-bill-pay-series-ap-agent/snapshots/9.jpeg',
+  },
+  {
+    id: 'primitives-button--rounded',
+    gallery: 'button-rounded-options',
+    ref: 'ramp-bill-pay-series-ap-agent/snapshots/1.jpeg',
+  },
+  {
+    id: 'primitives-input--rounded',
+    gallery: 'input-rounded-search',
+    ref: 'ramp-bill-pay-series-ap-agent/snapshots/1.jpeg',
+  },
+  {
+    id: 'primitives-modal--when-to-pay',
+    gallery: 'modal-when-to-pay',
+    ref: 'does-ramp-live-up-to-the-hype-testing-accounts-payable-in-ra/snapshots/13-when-to-pay-modal.jpeg',
   },
 ];
 
