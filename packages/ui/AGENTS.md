@@ -1,0 +1,63 @@
+# AGENTS.md — `@ramps/ui` (the design system)
+
+Scoped rules for working **inside `packages/ui`**. Augments the root
+[AGENTS.md](../../AGENTS.md); the design-system section there (tokens-only,
+identity invariants, one-folder-per-component, stories-or-not-done) still applies.
+
+## The golden rule: the kit is served, not just built
+
+`/design-system` in the web app embeds a **static Storybook copy** at
+`apps/web/public/storybook`. That copy is a *build artifact* — it does NOT update
+when you edit a component. If you add/rename/remove a component or story and don't
+rebuild it, the running app shows a **stale** design system (e.g. a new `Avatar`
+is invisible at `/design-system` even though its story exists).
+
+**Therefore: any change under `packages/ui/src` — new component, new/edited story,
+token change, export change — MUST be followed by rebuilding the embedded
+Storybook before you consider the change done or commit it.**
+
+```bash
+# from the repo root (canonical):
+pnpm --filter @ramps/ui sync:web        # rebuild the copy the web app serves
+
+# equivalently, the web prebuild does the same on a full build:
+pnpm --filter web build                 # runs prebuild → build:storybook
+```
+
+`sync:web` writes to `../../apps/web/public/storybook`. After it, reload
+`/design-system` and confirm your component appears.
+
+> Dev note: `pnpm --filter web dev` serves whatever is *currently* in
+> `public/storybook`. It does not regenerate it. Run `sync:web` after kit edits
+> even in dev, or run `pnpm --filter @ramps/ui storybook` (port 6006) for a live
+> workbench while iterating.
+
+## Definition of done for a kit change
+
+Run these, in order, and only stop when all pass:
+
+```bash
+pnpm --filter @ramps/ui lint
+pnpm --filter @ramps/ui typecheck
+pnpm --filter @ramps/ui sync:web        # ← the easy-to-forget step
+bash .claude/skills/design-system-validate/validate.sh   # token-fidelity gate + advisory
+```
+
+- **lint + typecheck** — clean (`noUncheckedIndexedAccess` is on; guard array access).
+- **sync:web** — the embedded `/design-system` Storybook is rebuilt.
+- **validate gate** — `build-storybook` (HARD) → token-fidelity (HARD) →
+  visual-advisory (advisory). Exit 0 = safe. Never bypass the hard gate.
+
+A change that skips `sync:web` is **not done**, no matter how green the tests are —
+the gate validates the kit, but the *app* serves the stale copy.
+
+## Adding a component (checklist)
+
+1. `src/components/<Name>/<Name>.tsx` — tokens-only, `clsx`, variant lookup maps,
+   JSDoc citing the Ramp frame it came from.
+2. `src/components/<Name>/<Name>.stories.tsx` — `title: 'Primitives/<Name>'`,
+   default/hover/focus/disabled/loading where relevant. No stories → not done.
+3. Add the subpath export to `package.json` (`"./<Name>": { types, import }`).
+4. Extend `validation/token-fidelity.spec.ts` if the component asserts an identity
+   invariant (e.g. destructive/critical must be the **orange** token, never red).
+5. Run the **definition of done** block above (including `sync:web`).

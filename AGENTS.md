@@ -161,7 +161,17 @@ Deep dive: [ANALYSIS §4 — contract flow & data model](docs/ANALYSIS.md#4-arch
 
 ### `packages/ui` — the design system
 
-Deep dive: [docs/design-system.md](docs/design-system.md) — tokens §2, Storybook playbook §6
+Package rulebook: [packages/ui/AGENTS.md](packages/ui/AGENTS.md) — **read it before
+editing the kit.** Deep dive: [docs/design-system.md](docs/design-system.md) — tokens §2,
+Storybook playbook §6
+
+- **The kit is served, not just built.** `/design-system` embeds a static Storybook
+  copy at `apps/web/public/storybook`. It does **not** auto-update. After ANY change
+  under `packages/ui/src`, rebuild it — otherwise the app shows a stale design system:
+
+  ```bash
+  pnpm --filter @ramps/ui sync:web    # then reload /design-system to confirm
+  ```
 
 - **Tokens only.** Components consume `--rui-*` custom properties (from the verified
   Ryu sheet). Zero hardcoded colors/sizes/radii:
