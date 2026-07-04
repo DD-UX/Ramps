@@ -75,6 +75,10 @@
       "types": "./dist/components/IconButton/IconButton.d.ts",
       "import": "./dist/components/IconButton/IconButton.js"
     },
+    "./Kbd": {
+      "types": "./dist/components/Kbd/Kbd.d.ts",
+      "import": "./dist/components/Kbd/Kbd.js"
+    },
     "./Menu": {
       "types": "./dist/components/Menu/Menu.d.ts",
       "import": "./dist/components/Menu/Menu.js"

@@ -47,7 +47,9 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={clsx(
-        'inline-flex items-center justify-center rounded-square transition-colors focus:outline-none focus:ring-2 focus:ring-control-ring disabled:opacity-40',
+        'inline-flex items-center justify-center rounded-square transition-colors focus:outline-none focus:ring-2 focus:ring-control-ring',
+        // Interactive affordance: pointer when enabled, dimmed + not-allowed when disabled.
+        'cursor-pointer disabled:cursor-not-allowed disabled:opacity-40',
         VARIANT_STYLE[variant],
         SIZE_STYLE[size],
         className,

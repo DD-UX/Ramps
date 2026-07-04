@@ -46,7 +46,7 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
             aria-selected={active}
             onClick={() => onValueChange?.(tab.value)}
             className={clsx(
-              'relative -mb-px inline-flex items-center gap-rui-2 px-rui-1 py-rui-3 text-sm font-heading',
+              'relative -mb-px inline-flex cursor-pointer items-center gap-rui-2 px-rui-1 py-rui-3 text-sm font-heading',
               active ? 'text-ink' : 'text-hushed hover:text-ink',
             )}
           >

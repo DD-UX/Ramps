@@ -87,9 +87,11 @@ export function DraggablePanel({
         {left}
       </div>
 
-      {/* The drag handle — a slim bone rail with the ⋮⋮ grip, like the frame. A
-          native <button> carries the separator semantics so it's focusable and
-          keyboard-operable without fighting the a11y linter. */}
+      {/* The drag handle — a slim bone rail carrying the frame-8 grip: a small
+          **white circle** with a soft card shadow and the dark ⋮⋮ dots (one of
+          the few vetted-round elements in the kit). A native <button> carries
+          the separator semantics so it's focusable and keyboard-operable
+          without fighting the a11y linter. */}
       <button
         type="button"
         data-testid="drag-handle"
@@ -105,10 +107,12 @@ export function DraggablePanel({
         )}
       >
         <span
+          data-testid="drag-grip"
           className={clsx(
-            'absolute flex h-8 w-4 items-center justify-center rounded-pill border border-bone bg-white text-hushed',
-            'shadow-card transition-colors group-hover:text-ink',
-            dragging && 'text-ink',
+            // Frame 8: a circular white chip, soft shadow, ink dots — no border.
+            'absolute flex size-7 items-center justify-center rounded-pill bg-white text-ink',
+            'shadow-card transition-shadow group-hover:shadow-popover',
+            dragging && 'shadow-popover',
           )}
         >
           <GripVertical size={14} />

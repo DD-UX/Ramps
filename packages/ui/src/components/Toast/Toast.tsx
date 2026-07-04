@@ -59,13 +59,17 @@ export function Toast({
         className,
       )}
     >
-      <span className="mt-0.5 shrink-0" aria-hidden>
+      {/* The icon box matches the title's 20px line so a single-line toast
+          reads centred; with a description it stays pinned to the first line. */}
+      <span className="flex h-5 shrink-0 items-center" aria-hidden>
         {loading ? <Spinner size="sm" className="text-hushed" /> : TONE_ICON[tone]}
       </span>
 
-      <div className="min-w-0 flex-1">
+      {/* gap, not margins: the column owns the rhythm whether the toast is one
+          line (title only) or two (title + description). */}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <p className="text-sm font-heading text-ink">{title}</p>
-        {description && <p className="mt-0.5 text-xs font-body text-hushed">{description}</p>}
+        {description && <p className="text-xs font-body text-hushed">{description}</p>}
       </div>
 
       {onDismiss && (
@@ -74,7 +78,9 @@ export function Toast({
           size="sm"
           icon={<X size={16} />}
           onClick={onDismiss}
-          className="-mr-rui-1 shrink-0"
+          // -my-1 recentres the 28px button on the 20px first line without
+          // inflating the toast's height.
+          className="-my-1 -mr-rui-1 shrink-0"
         />
       )}
     </div>

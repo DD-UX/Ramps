@@ -20,7 +20,7 @@ export function Checkbox({ label, className, id, ...props }: CheckboxProps) {
         id={id}
         type="checkbox"
         className={clsx(
-          'peer size-4 appearance-none rounded-square border border-control-border bg-white',
+          'peer size-4 cursor-pointer appearance-none rounded-square border border-control-border bg-white',
           'checked:border-positive checked:bg-positive',
           'focus:outline-none focus:ring-2 focus:ring-control-ring',
           'disabled:cursor-not-allowed disabled:opacity-60',
@@ -42,7 +42,13 @@ export function Checkbox({ label, className, id, ...props }: CheckboxProps) {
   if (!label) return control;
 
   return (
-    <label htmlFor={id} className="inline-flex items-center gap-rui-2 text-sm font-body text-ink">
+    <label
+      htmlFor={id}
+      // The WHOLE label is the hit area: pointer when enabled, and when the
+      // input is disabled the not-allowed cursor covers the label text too —
+      // clicking "Tax details (W-9)" must feel as inert as the box itself.
+      className="inline-flex cursor-pointer items-center gap-rui-2 text-sm font-body text-ink has-[input:disabled]:cursor-not-allowed"
+    >
       {control}
       {label}
     </label>

@@ -5,11 +5,15 @@ import type { PropsWithChildren, ReactNode } from 'react';
  * Card — the sectioned content container that structures Bill Pay's forms and
  * summaries.
  *
- * Reworked against snapshot 8 (the bill-detail "Ready to approve" panel): the
- * Ramp card is a **white, near-square, soft-shadowed** surface — not the tinted,
- * softly-rounded limestone box the seed used. The signature approval card adds a
- * **soft glow** (the green positive-tone halo) via `elevation="glow"`; a `tone`
- * still lets a card carry calm meaning through a tinted border.
+ * Re-vetted against snapshot 8 (the "Ready to approve" panel) at 10x corner
+ * zoom: the Ramp card is ONE white, sharp-cornered, uniformly padded surface —
+ * there is NO hairline divider between the title row and the body, the title
+ * and content share the same left edge, and the edge itself is a single pale
+ * tinted border with a wide soft halo (`elevation="glow"`; the old extra
+ * shadow ring doubled that edge and is gone from the token).
+ *
+ * Rhythm is gap-driven, not margin-driven: the card is a flex column and the
+ * gap owns the spacing whether a caller renders a header, a body, or both.
  *
  * Composed of Card + Card.Header + Card.Body so callers assemble their own
  * content; tokens only.
@@ -45,8 +49,9 @@ export function Card({ children, tone = 'default', elevation = 'card', className
     <div
       data-testid="card"
       className={clsx(
-        // White, near-square surface on a thin border — the snapshot-8 panel.
-        'rounded-square border bg-white',
+        // One white, square, uniformly padded surface on a thin tinted border
+        // (snapshot 8). The column gap — not margins — spaces header and body.
+        'flex flex-col gap-rui-3 rounded-square border bg-white p-rui-4',
         TONE_BORDER[tone],
         ELEVATION_STYLE[elevation],
         className,
@@ -63,14 +68,13 @@ export type CardHeaderProps = PropsWithChildren<{
   className?: string;
 }>;
 
+/**
+ * The title row — no divider, no padding of its own (snapshot 8 shows the
+ * title sitting directly on the card's padded surface, flush with the body).
+ */
 function CardHeader({ children, action, className }: CardHeaderProps) {
   return (
-    <div
-      className={clsx(
-        'flex items-center justify-between gap-rui-3 border-b border-bone px-rui-4 py-rui-3',
-        className,
-      )}
-    >
+    <div className={clsx('flex items-center justify-between gap-rui-3', className)}>
       <div className="min-w-0 text-sm font-heading text-ink">{children}</div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
@@ -82,7 +86,7 @@ export type CardBodyProps = PropsWithChildren<{
 }>;
 
 function CardBody({ children, className }: CardBodyProps) {
-  return <div className={clsx('px-rui-4 py-rui-3 font-body text-ink', className)}>{children}</div>;
+  return <div className={clsx('font-body text-ink', className)}>{children}</div>;
 }
 
 Card.Header = CardHeader;

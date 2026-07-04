@@ -90,7 +90,7 @@ export function Select({
         aria-invalid={invalid || undefined}
         className={clsx(
           // Sharp square white field with room for the floated label on top.
-          'h-12 w-full appearance-none rounded-square border bg-white pl-3 pr-8 text-sm font-body text-ink',
+          'h-12 w-full cursor-pointer appearance-none rounded-square border bg-white pl-3 pr-8 text-sm font-body text-ink',
           labelText ? 'pt-4 pb-1' : undefined,
           'outline-none focus-visible:ring-2 focus-visible:ring-control-ring',
           invalid ? 'border-destructive' : 'border-control-border focus:border-control-border-focus',

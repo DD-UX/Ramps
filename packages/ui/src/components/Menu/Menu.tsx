@@ -76,6 +76,7 @@ export function Menu({ items, label = 'More actions', trigger, align = 'end', cl
         <span
           role="button"
           tabIndex={0}
+          className="cursor-pointer"
           aria-haspopup="menu"
           aria-expanded={open}
           aria-controls={open ? menuId : undefined}
@@ -121,7 +122,7 @@ export function Menu({ items, label = 'More actions', trigger, align = 'end', cl
                 item.onSelect?.();
               }}
               className={clsx(
-                'flex w-full items-center gap-rui-2 px-rui-3 py-rui-2 text-left text-sm font-body transition-colors',
+                'flex w-full cursor-pointer items-center gap-rui-2 px-rui-3 py-rui-2 text-left text-sm font-body transition-colors',
                 'focus:outline-none focus:bg-limestone disabled:opacity-40 disabled:pointer-events-none',
                 ITEM_TONE[item.tone ?? 'default'],
               )}

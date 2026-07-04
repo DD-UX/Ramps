@@ -85,6 +85,21 @@ test.describe('token fidelity', () => {
     await expect(badge).toHaveCSS('border-top-left-radius', RUI['--rui-radius-square']);
   });
 
+  test('Kbd is a raised white key chip: square corner, ink glyph (frame 9)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-kbd--command-return'));
+    const keys = page.locator('kbd');
+    // Frame 9's "Create bill" shows TWO separate chips (⌘ then ↵), never one
+    // fused "⌘↵" slab.
+    await expect(keys).toHaveCount(2);
+    const key = keys.first();
+    await expect(key).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect(key).toHaveCSS('color', hexToRgb(RUI['--rui-ink']));
+    await expect(key).toHaveCSS('border-top-left-radius', RUI['--rui-radius-square']);
+    // The raised look is the shadow-key token, not a border.
+    const shadow = await key.evaluate((el) => getComputedStyle(el).boxShadow);
+    expect(shadow, 'kbd carries the raised key shadow').not.toBe('none');
+  });
+
   test('Banner/critical uses the critical (orange) tone surface, not red', async ({ page }) => {
     await page.goto(storyUrl('primitives-banner--missing-info'));
     const banner = page.getByRole('status');

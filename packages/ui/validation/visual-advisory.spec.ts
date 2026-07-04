@@ -74,6 +74,21 @@ const CATALOGUE: ReadonlyArray<{
     ref: 'does-ramp-live-up-to-the-hype-testing-accounts-payable-in-ra/snapshots/03-uploading-3-invoices-toast.jpeg',
   },
   { id: 'primitives-tooltip--on-button', gallery: 'tooltip-on-button' },
+  {
+    id: 'primitives-kbd--on-accent',
+    gallery: 'kbd-on-accent',
+    ref: 'ramp-bill-pay-series-ap-agent/snapshots/9.jpeg',
+  },
+  {
+    id: 'primitives-card--glow',
+    gallery: 'card-glow',
+    ref: 'ramp-bill-pay-series-ap-agent/snapshots/8.jpeg',
+  },
+  {
+    id: 'primitives-button--with-icon',
+    gallery: 'button-underline-save-draft',
+    ref: 'ramp-bill-pay-series-ap-agent/snapshots/9.jpeg',
+  },
 ];
 
 test.describe('visual advisory (never blocks)', () => {

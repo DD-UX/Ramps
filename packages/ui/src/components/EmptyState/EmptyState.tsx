@@ -31,7 +31,8 @@ export function EmptyState({ title, description, icon, action, className }: Empt
       {icon && <span className="text-hushed" aria-hidden>{icon}</span>}
       <p className="font-heading text-ink">{title}</p>
       {description && <p className="max-w-sm text-sm font-body text-hushed">{description}</p>}
-      {action && <div className="mt-rui-2">{action}</div>}
+      {/* gap, not margin: the stack's gap owns the rhythm however many rows render. */}
+      {action && <div>{action}</div>}
     </div>
   );
 }

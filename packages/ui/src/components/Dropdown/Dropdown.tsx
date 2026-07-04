@@ -160,7 +160,7 @@ export function Dropdown({
           aria-invalid={invalid || undefined}
           className={clsx(
             // The sharp square coding cell from the line-item grid.
-            'flex h-12 w-full items-center gap-2 rounded-square border bg-white px-3 text-left',
+            'flex h-12 w-full cursor-pointer items-center gap-2 rounded-square border bg-white px-3 text-left',
             'text-sm font-body text-ink outline-none',
             'focus-visible:ring-2 focus-visible:ring-control-ring',
             invalid
@@ -199,7 +199,7 @@ export function Dropdown({
         {clearable ? (
           <Combobox.Clear
             aria-label="Clear selection"
-            className="absolute right-8 rounded-square p-0.5 text-hushed outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-control-ring"
+            className="absolute right-8 cursor-pointer rounded-square p-0.5 text-hushed outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-control-ring"
           >
             <X size={14} />
           </Combobox.Clear>

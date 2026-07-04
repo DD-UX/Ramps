@@ -20,11 +20,11 @@ export const Primary: Story = { args: { variant: 'primary' } };
 /** White + bone border — the row "Approve" buttons (snapshot 6). */
 export const Secondary: Story = { args: { variant: 'secondary', children: 'Approve' } };
 
-/** Transparent, limestone hover — "Options ▾" / "Save draft" (snapshots 6/9). */
+/** Transparent, limestone hover — "Options ▾" (snapshot 6). */
 export const Subtle: Story = { args: { variant: 'subtle', children: 'Options' } };
 
-/** Dark ink fill — the submit CTA "Create bill" (snapshot 9). */
-export const Ink: Story = { args: { variant: 'ink', children: 'Create bill' } };
+/** Dark ink fill — the high-emphasis dark submit. */
+export const Ink: Story = { args: { variant: 'ink' } };
 
 /** Orange destructive family — never red. */
 export const Destructive: Story = { args: { variant: 'destructive' } };
@@ -32,9 +32,12 @@ export const Destructive: Story = { args: { variant: 'destructive' } };
 /** Real disabled affordance: dimmed + not-allowed, visibly distinct from base. */
 export const Disabled: Story = { args: { disabled: true } };
 
-/** Leading Lucide icon — "Save draft" with `<Save />` (snapshot 9). */
+/**
+ * The underline link action — "Save draft" (snapshot 9 at 6x): floppy-disk
+ * icon + underlined ink label, no fill, no border.
+ */
 export const WithIcon: Story = {
-  args: { variant: 'subtle', leadingIcon: <Save size={16} />, children: 'Save draft' },
+  args: { variant: 'underline', leadingIcon: <Save size={16} />, children: 'Save draft' },
 };
 
 /** Trailing chevron — the "New bill" dropdown trigger (snapshot 6). */
@@ -42,9 +45,12 @@ export const WithTrailingIcon: Story = {
   args: { variant: 'primary', trailingIcon: <ChevronDown size={16} />, children: 'New bill' },
 };
 
-/** Submit CTA with the ⌘↵ keyboard chip — "Create bill" (snapshot 9). */
-export const WithKeyChip: Story = {
-  args: { variant: 'ink', children: 'Create bill', keyChip: '⌘↵' },
+/**
+ * The submit CTA "Create bill" (snapshot 9 at 6x): LIME primary with two
+ * separate raised keycaps — ⌘ then ↵ — one `Kbd` chip per key.
+ */
+export const WithKeys: Story = {
+  args: { variant: 'primary', children: 'Create bill', keys: ['⌘', '↵'] },
 };
 
 /** In-flight action: spinner replaces the leading icon, button disables. */
@@ -64,12 +70,13 @@ export const Catalogue: Story = {
           New bill
         </Button>
         <Button variant="secondary">Approve</Button>
-        <Button variant="subtle" leadingIcon={<Save size={16} />}>
+        <Button variant="underline" leadingIcon={<Save size={16} />}>
           Save draft
         </Button>
-        <Button variant="ink" keyChip="⌘↵">
+        <Button variant="primary" keys={['⌘', '↵']}>
           Create bill
         </Button>
+        <Button variant="ink">Pay bill</Button>
         <Button variant="destructive">Delete</Button>
       </div>
       <div className="flex items-center gap-3">

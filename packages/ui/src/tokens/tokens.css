@@ -36,10 +36,16 @@
   /* Elevation — Ramp leans on soft, low-contrast shadows, not hard borders.
      `card` is the neutral resting elevation for detail panels/popovers; `glow`
      is the signature tinted halo on the "Ready to approve" card (snapshot 8),
-     built from the positive tone so it reads as a calm success cue, never red. */
+     built from the positive tone so it reads as a calm success cue, never red.
+     Glow re-vetted against ap-agent snapshot 8 at 10x corner zoom: the card's
+     edge is a SINGLE pale-green hairline (the tone border) with a wide, soft
+     halo around it — the old 1px shadow ring doubled that edge, so it's gone.
+     `key` is the tiny keycap lift under the ⌘/↵ chips on the "Create bill"
+     submit (snapshot 9 at 6x): a hairline ring + 1px drop, no diffuse blur. */
   --rui-shadow-card: 0 1px 2px rgba(26, 25, 25, 0.06), 0 8px 24px rgba(26, 25, 25, 0.06);
-  --rui-shadow-glow: 0 0 0 1px rgba(31, 122, 68, 0.24), 0 8px 32px rgba(31, 122, 68, 0.18);
+  --rui-shadow-glow: 0 0 20px rgba(31, 122, 68, 0.1), 0 10px 40px rgba(31, 122, 68, 0.16);
   --rui-shadow-popover: 0 2px 4px rgba(26, 25, 25, 0.08), 0 12px 32px rgba(26, 25, 25, 0.12);
+  --rui-shadow-key: 0 0 0 1px rgba(26, 25, 25, 0.06), 0 1px 1px rgba(26, 25, 25, 0.14);
 
   /* Spacing base (4px scale) */
   --rui-space-1: 4px;

@@ -84,6 +84,37 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   });
 
   /**
+   * Snapshot 9 — "Save draft" is an UNDERLINED ink text link (floppy icon +
+   * underline), not a filled or bordered button. And like every enabled
+   * control, it reads clickable: cursor pointer (Tailwind v4's preflight
+   * defaults buttons to `cursor: default`, so this is an explicit contract).
+   */
+  test('Button/underline is the "Save draft" text link (frame 9)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-button--with-icon'));
+    const btn = page.getByRole('button', { name: /Save draft/ });
+    await expect(btn).toBeVisible();
+    const styles = await btn.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { deco: s.textDecorationLine, bg: s.backgroundColor, cursor: s.cursor };
+    });
+    expect(styles.deco, 'label is underlined').toContain('underline');
+    expect(styles.bg, 'no fill — a bare text link').toBe('rgba(0, 0, 0, 0)');
+    expect(styles.cursor, 'enabled buttons read clickable').toBe('pointer');
+  });
+
+  /**
+   * Snapshot 9 — the lime "Create bill" primary carries its shortcut as TWO
+   * separate raised chips (⌘ then ↵), rendered as real <kbd> elements.
+   */
+  test('Button/with-keys renders two separate <kbd> chips and a pointer cursor', async ({ page }) => {
+    await page.goto(storyUrl('primitives-button--with-keys'));
+    const btn = page.getByRole('button', { name: /Create bill/ });
+    await expect(btn).toBeVisible();
+    await expect(btn).toHaveCSS('cursor', 'pointer');
+    await expect(btn.locator('kbd')).toHaveCount(2);
+  });
+
+  /**
    * Snapshot 9 — the line-item Input is near-square, thin bone border, white
    * fill. Assert the corner is the square token, not the soft surface radius.
    */
@@ -167,6 +198,70 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     expect(styles.bg, 'checked fill is the solid positive green').toBe(
       hexToRgb(RUI['--rui-positive']),
     );
+  });
+
+  /**
+   * The disabled affordance covers the whole hit area: clicking the LABEL of a
+   * disabled checkbox must read not-allowed too, not just the box itself
+   * (`has-[input:disabled]` on the label).
+   */
+  test('Checkbox/disabled label reads not-allowed across the whole hit area', async ({ page }) => {
+    await page.goto(storyUrl('primitives-checkbox--disabled'));
+    const label = page.locator('label', { hasText: 'Tax details' }).first();
+    await expect(label).toBeVisible();
+    await expect(label).toHaveCSS('cursor', 'not-allowed');
+  });
+
+  /**
+   * Snapshot 3 — a single-line toast (title only, no description) centres its
+   * spinner, title and dismiss on ONE axis. The fix is gap-driven: the icon box
+   * matches the 20px title line and the dismiss button recentres with -my-1,
+   * so the three vertical centres coincide.
+   */
+  test('Toast/single-line centres icon, title and dismiss on one axis', async ({ page }) => {
+    await page.goto(storyUrl('primitives-toast--uploading'));
+    const toast = page.getByTestId('toast');
+    await expect(toast).toBeVisible();
+    const rows = [
+      toast.locator('span[aria-hidden]').first(),
+      toast.getByText('Uploading 3 invoices'),
+      toast.getByRole('button', { name: 'Dismiss' }),
+    ];
+    const centres: number[] = [];
+    for (const loc of rows) {
+      const box = await loc.boundingBox();
+      expect(box).not.toBeNull();
+      if (box) centres.push(box.y + box.height / 2);
+    }
+    const spread = Math.max(...centres) - Math.min(...centres);
+    expect(spread, 'icon/title/dismiss centres align').toBeLessThanOrEqual(1.5);
+  });
+
+  /**
+   * Snapshot 8 — the split-view grip is a CIRCULAR white chip (soft shadow,
+   * ink dots) riding the hairline rail: one of the kit's few vetted-round
+   * elements. Assert it is a true circle (square box + >= half-width radius),
+   * white, and borderless.
+   */
+  test('DraggablePanel grip is the circular white chip from frame 8', async ({ page }) => {
+    await page.goto(storyUrl('primitives-draggablepanel--bill-detail'));
+    const grip = page.getByTestId('drag-grip');
+    await expect(grip).toBeVisible();
+    const m = await grip.evaluate((el) => {
+      const s = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      return {
+        w: r.width,
+        h: r.height,
+        radius: Number.parseFloat(s.borderTopLeftRadius),
+        bg: s.backgroundColor,
+        borderW: Number.parseFloat(s.borderTopWidth),
+      };
+    });
+    expect(Math.abs(m.w - m.h), 'grip box is square').toBeLessThanOrEqual(1);
+    expect(m.radius, 'radius >= half width — a circle').toBeGreaterThanOrEqual(m.w / 2 - 1);
+    expect(m.bg, 'white chip').toBe('rgb(255, 255, 255)');
+    expect(m.borderW, 'no border — the shadow does the lifting').toBe(0);
   });
 
   /**

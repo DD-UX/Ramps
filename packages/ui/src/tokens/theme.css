@@ -58,6 +58,7 @@
   --shadow-card: var(--rui-shadow-card);
   --shadow-glow: var(--rui-shadow-glow);
   --shadow-popover: var(--rui-shadow-popover);
+  --shadow-key: var(--rui-shadow-key);
 
   /* Spacing (4px scale) — additive to Tailwind's default numeric scale. */
   --spacing-rui-1: var(--rui-space-1);

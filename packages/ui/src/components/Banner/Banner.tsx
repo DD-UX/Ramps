@@ -56,14 +56,18 @@ export function Banner({
         className,
       )}
     >
+      {/* The icon box matches the title's 20px line so a single-line banner
+          reads centred; with a description it stays pinned to the first line. */}
       {icon && (
-        <span aria-hidden className="mt-0.5 shrink-0">
+        <span aria-hidden className="flex h-5 shrink-0 items-center">
           {icon}
         </span>
       )}
-      <div className="min-w-0 flex-1">
+      {/* gap, not margins: the column owns the rhythm whether the banner is
+          one line (title only) or two (title + description). */}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <p className="text-sm font-heading">{title}</p>
-        {description && <p className="mt-0.5 text-xs font-body opacity-80">{description}</p>}
+        {description && <p className="text-xs font-body opacity-80">{description}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
       {onDismiss && (
@@ -71,7 +75,7 @@ export function Banner({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="-mr-rui-1 shrink-0 rounded-square px-rui-1 leading-none opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-control-ring"
+          className="-mr-rui-1 shrink-0 cursor-pointer rounded-square px-rui-1 leading-none opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-control-ring"
         >
           ×
         </button>
