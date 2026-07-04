@@ -118,6 +118,36 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   });
 
   /**
+   * The Select is a STANDARD control — a real native `<select>` element, not
+   * a custom listbox. The rich, searchable option rows belong to Dropdown.
+   */
+  test('Select renders a real native <select> element', async ({ page }) => {
+    await page.goto(storyUrl('primitives-select--filled'));
+    const control = page.getByRole('combobox').first();
+    await expect(control).toBeVisible();
+    const tag = await control.evaluate((el) => el.tagName);
+    expect(tag, 'the standard Select is a native <select>').toBe('SELECT');
+  });
+
+  /**
+   * 1099-s frames 07/08 — the tailored line-item Dropdown opens a square
+   * popup with a search input on top and rich option rows (title + hushed
+   * secondary line like "Box 1").
+   */
+  test('Dropdown opens a searchable popup with rich option rows', async ({ page }) => {
+    await page.goto(storyUrl('primitives-dropdown--box-mapping'));
+    await page.getByRole('combobox').click();
+    const popup = page.getByTestId('dropdown');
+    await expect(popup).toBeVisible();
+    await expect(popup.getByPlaceholder('Search…')).toBeVisible();
+    const rows = page.getByTestId('dropdown-option');
+    expect(await rows.count(), 'multiple rich rows render').toBeGreaterThan(3);
+    await expect(popup.getByText('Box 2', { exact: true })).toBeVisible();
+    // The pinned footer row is separated below the list (frame 07).
+    await expect(popup.getByText('Not reportable', { exact: true })).toBeVisible();
+  });
+
+  /**
    * Snapshot 8 — the "Ready to approve" Card is a soft-glow tinted panel:
    * near-square corner + a real box-shadow (the green halo), not a hard border.
    */

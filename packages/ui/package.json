@@ -59,6 +59,10 @@
       "types": "./dist/components/Divider/Divider.d.ts",
       "import": "./dist/components/Divider/Divider.js"
     },
+    "./Dropdown": {
+      "types": "./dist/components/Dropdown/Dropdown.d.ts",
+      "import": "./dist/components/Dropdown/Dropdown.js"
+    },
     "./DraggablePanel": {
       "types": "./dist/components/DraggablePanel/DraggablePanel.d.ts",
       "import": "./dist/components/DraggablePanel/DraggablePanel.js"

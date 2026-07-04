@@ -1,46 +1,42 @@
-'use client';
-
-import { Select as BaseSelect } from '@base-ui-components/react/select';
 import { clsx } from 'clsx';
-import { Check, ChevronDown } from 'lucide-react';
-import { useId, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import type { ChangeEvent, SelectHTMLAttributes } from 'react';
+import { useState } from 'react';
 
 /**
- * Select — the MUI-style dimension picker behind the line-item coding grid
- * (snapshot 9: "Accounting Category / Tax Code / Location / Department / Class").
+ * Select — the STANDARD form select for bill-detail fields ("Payment method",
+ * "Terms", …). It is a styled **native `<select>`** on purpose: standard
+ * element, standard keyboard/assistive behaviour, native option list.
  *
- * Reworked from the native `<select>` seed into a **custom listbox** on Base UI
- * headless primitives, matching the frame:
- *  - the placeholder is a **floating label** that rises to the top edge once a
- *    value is chosen (or the popup opens) — exactly like Material's outlined
- *    field;
- *  - options are **custom rows** with a check on the selected one, not native
- *    `<option>` tags (so we can render the ✳ dimension glyph, secondary text,
- *    etc.);
- *  - near-square corners, white fill, thin bone border, accent focus ring.
+ * The vetted skin (does-ramp-live-up §06): white fill, thin bone border,
+ * sharp square corners, and the floating label — centred like a placeholder
+ * when empty ("State (required)"), risen to the top edge when filled
+ * ("Invoice date*" over "Dec 17, 2025").
  *
- * Tokens only. Base UI drives focus/keyboard/positioning/portalling; we own the
- * skin. `"use client"` — it holds open/label state.
+ * Rich option rows (glyphs, secondary text, search) are NOT this component's
+ * job — that's the tailored `Dropdown` used by the line-item coding grid.
+ * Tokens only.
  */
 export interface SelectOption {
   label: string;
   value: string;
-  /** Optional leading glyph, e.g. the ✳ accounting-dimension mark from the frame. */
-  glyph?: string;
+  disabled?: boolean;
 }
 
-export interface SelectProps {
+export interface SelectProps
+  extends Omit<
+    SelectHTMLAttributes<HTMLSelectElement>,
+    'children' | 'value' | 'defaultValue' | 'multiple' | 'size' | 'onChange'
+  > {
   options: SelectOption[];
   /** The floating label (rises when filled). Falls back to `placeholder`. */
   label?: string;
-  /** Placeholder shown centred when empty; also the label text if `label` is unset. */
+  /** Label text if `label` is unset (kept for API symmetry with Input). */
   placeholder?: string;
   value?: SelectOption['value'];
   defaultValue?: SelectOption['value'];
-  onValueChange?: (value: SelectOption['value'] | null) => void;
+  onValueChange?: (value: SelectOption['value']) => void;
   invalid?: boolean;
-  disabled?: boolean;
-  name?: string;
   className?: string;
 }
 
@@ -53,108 +49,70 @@ export function Select({
   onValueChange,
   invalid,
   disabled,
-  name,
   className,
+  ...props
 }: SelectProps) {
-  const id = useId();
-  const labelId = `${id}-label`;
-  const [open, setOpen] = useState(false);
-  // Track the current value so the floating label knows whether it should rise
-  // (controlled value wins; otherwise mirror the uncontrolled default).
-  const [internal, setInternal] = useState<SelectOption['value'] | null>(defaultValue ?? null);
+  // Controlled value wins; otherwise mirror the uncontrolled default so the
+  // floating label knows whether it should rise.
+  const [internal, setInternal] = useState<SelectOption['value']>(defaultValue ?? '');
   const current = value ?? internal;
-  const hasValue = current != null && current !== '';
-  const floated = hasValue || open;
+  const hasValue = current !== '';
   const labelText = label ?? placeholder ?? '';
 
-  return (
-    <BaseSelect.Root
-      items={options}
-      value={value}
-      defaultValue={defaultValue}
-      disabled={disabled}
-      name={name}
-      onOpenChange={setOpen}
-      onValueChange={(next) => {
-        setInternal(next);
-        onValueChange?.(next);
-      }}
-    >
-      <div className={clsx('relative inline-flex w-full', className)}>
-        {/* Floating label — rises to the top edge when the field is filled/open. */}
-        {labelText ? (
-          <span
-            id={labelId}
-            data-testid="select-label"
-            data-floated={floated || undefined}
-            className={clsx(
-              'pointer-events-none absolute left-3 z-10 origin-left font-body transition-all duration-150',
-              floated
-                ? 'top-1 text-xs text-hushed'
-                : 'top-1/2 -translate-y-1/2 text-sm text-control-placeholder',
-            )}
-          >
-            {labelText}
-          </span>
-        ) : null}
+  function handleChange(event: ChangeEvent<HTMLSelectElement>) {
+    setInternal(event.target.value);
+    onValueChange?.(event.target.value);
+  }
 
-        <BaseSelect.Trigger
-          aria-labelledby={labelText ? labelId : undefined}
-          aria-invalid={invalid || undefined}
+  return (
+    <label className={clsx('relative inline-flex w-full', className)}>
+      {/* Floating label — centred as a placeholder when empty, top edge when filled. */}
+      {labelText ? (
+        <span
+          data-testid="select-label"
+          data-floated={hasValue || undefined}
           className={clsx(
-            // Near-square white field with room for the floated label on top.
-            'flex h-12 w-full items-center justify-between gap-2 rounded-square border bg-white text-left',
-            'pr-3 pl-3 text-sm font-body text-ink',
-            labelText ? 'pt-4 pb-1' : undefined,
-            'outline-none focus-visible:ring-2 focus-visible:ring-control-ring',
-            invalid
-              ? 'border-destructive'
-              : 'border-control-border data-[popup-open]:border-control-border-focus',
-            'disabled:cursor-not-allowed disabled:opacity-60',
+            'pointer-events-none absolute left-3 z-10 origin-left font-body transition-all duration-150',
+            hasValue
+              ? 'top-1 text-xs text-hushed'
+              : 'top-1/2 -translate-y-1/2 text-sm text-control-placeholder',
           )}
         >
-          <BaseSelect.Value className="truncate" />
-          <BaseSelect.Icon className="shrink-0 text-hushed">
-            <ChevronDown size={16} />
-          </BaseSelect.Icon>
-        </BaseSelect.Trigger>
+          {labelText}
+        </span>
+      ) : null}
 
-        <BaseSelect.Portal>
-          <BaseSelect.Positioner sideOffset={6} className="z-50 outline-none">
-            <BaseSelect.Popup
-              className={clsx(
-                'max-h-72 min-w-[var(--anchor-width)] overflow-auto rounded-square border border-bone bg-white p-1',
-                'shadow-popover',
-                // Base UI enter/exit state hooks — a quick, GPU-friendly fade+lift.
-                'origin-top transition-[opacity,transform] duration-150',
-                'data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
-                'data-[ending-style]:scale-95 data-[ending-style]:opacity-0',
-              )}
-            >
-              <BaseSelect.List>
-                {options.map((opt) => (
-                  <BaseSelect.Item
-                    key={opt.value}
-                    value={opt.value}
-                    className={clsx(
-                      'flex cursor-pointer items-center gap-2 rounded-square px-2 py-1.5 text-sm font-body text-ink',
-                      'data-[highlighted]:bg-limestone data-[selected]:font-heading outline-none select-none',
-                    )}
-                  >
-                    {opt.glyph ? <span className="text-hushed">{opt.glyph}</span> : null}
-                    <BaseSelect.ItemText className="flex-1 truncate">
-                      {opt.label}
-                    </BaseSelect.ItemText>
-                    <BaseSelect.ItemIndicator className="text-ink">
-                      <Check size={16} />
-                    </BaseSelect.ItemIndicator>
-                  </BaseSelect.Item>
-                ))}
-              </BaseSelect.List>
-            </BaseSelect.Popup>
-          </BaseSelect.Positioner>
-        </BaseSelect.Portal>
-      </div>
-    </BaseSelect.Root>
+      <select
+        value={value !== undefined ? value : undefined}
+        defaultValue={value === undefined ? (defaultValue ?? '') : undefined}
+        onChange={handleChange}
+        disabled={disabled}
+        aria-invalid={invalid || undefined}
+        className={clsx(
+          // Sharp square white field with room for the floated label on top.
+          'h-12 w-full appearance-none rounded-square border bg-white pl-3 pr-8 text-sm font-body text-ink',
+          labelText ? 'pt-4 pb-1' : undefined,
+          'outline-none focus-visible:ring-2 focus-visible:ring-control-ring',
+          invalid ? 'border-destructive' : 'border-control-border focus:border-control-border-focus',
+          'disabled:cursor-not-allowed disabled:opacity-60',
+        )}
+        {...props}
+      >
+        {/* Hidden empty option so the field can render blank under the label. */}
+        <option value="" disabled hidden />
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+
+      {/* Native selects can't render inline icons — overlay the chevron. */}
+      <ChevronDown
+        size={16}
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-hushed"
+      />
+    </label>
   );
 }
