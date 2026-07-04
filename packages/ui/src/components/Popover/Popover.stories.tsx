@@ -26,8 +26,8 @@ function VendorCard() {
         Staples Inc. is an American office supply retail company headquartered in Framingham,
         Massachusetts.
       </p>
+      {/* Frame 7's footer is a plain single-line text meta row — no avatar. */}
       <div className="mt-rui-3 flex items-center gap-rui-2 border-t border-bone pt-rui-3 text-xs text-hushed">
-        <Avatar name="David Wallace" size="sm" />
         <span>David Wallace &amp; 0 more</span>
         <span aria-hidden>·</span>
         <span className="inline-flex items-center gap-1">

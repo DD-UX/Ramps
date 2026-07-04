@@ -13,6 +13,11 @@
   --rui-hushed: #6e6a68;
   --rui-accent: #e4f222; /* lime — always paired with ink */
   --rui-destructive: #ff7a36; /* orange family — never red */
+  /* Solid success green — Ryu's verified `constructive` fill (#01A741, from
+     Ramp's shipped CSS, docs/design-system.md §2.3); confirmed on-screen by
+     the checked checkboxes in does-ramp-live-up §15 at 8x zoom (~#16b64a
+     after JPEG noise): green fill + white tick, sharp corner. */
+  --rui-positive: #01a741;
 
   /* Typography */
   --rui-font-sans: 'Inter', 'Lausanne', 'Roboto', Arial, sans-serif;

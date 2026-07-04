@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { RUI } from './tokens.fixture';
+import { hexToRgb, RUI } from './tokens.fixture';
 
 /**
  * STRUCTURE-FIDELITY — the second half of the hard gate ("mocks", not just
@@ -145,6 +145,28 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     await expect(popup.getByText('Box 2', { exact: true })).toBeVisible();
     // The pinned footer row is separated below the list (frame 07).
     await expect(popup.getByText('Not reportable', { exact: true })).toBeVisible();
+  });
+
+  /**
+   * does-ramp-live-up §15 at 8x zoom — the checked checkbox is a SOLID
+   * success-green square (sharp corner, no rounding) with a white tick,
+   * not the accent lime and not a rounded chip.
+   */
+  test('Checkbox/checked is a sharp positive-green square', async ({ page }) => {
+    await page.goto(storyUrl('primitives-checkbox--checked'));
+    const box = page.getByRole('checkbox').first();
+    await expect(box).toBeVisible();
+    await expect(box).toBeChecked();
+    const styles = await box.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { radius: Number.parseFloat(s.borderTopLeftRadius), bg: s.backgroundColor };
+    });
+    expect(styles.radius, 'checkbox corner is sharp').toBeLessThanOrEqual(
+      px(RUI['--rui-radius-square']) + 1,
+    );
+    expect(styles.bg, 'checked fill is the solid positive green').toBe(
+      hexToRgb(RUI['--rui-positive']),
+    );
   });
 
   /**

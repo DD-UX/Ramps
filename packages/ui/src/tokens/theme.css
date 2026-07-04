@@ -22,6 +22,7 @@
   --color-hushed: var(--rui-hushed);
   --color-accent: var(--rui-accent);
   --color-destructive: var(--rui-destructive);
+  --color-positive: var(--rui-positive);
 
   /* Form controls — shared border/ring/placeholder colours. */
   --color-control-border: var(--rui-control-border);
