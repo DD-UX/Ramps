@@ -88,8 +88,10 @@ export function DraggablePanel({
       </div>
 
       {/* The drag handle — a slim bone rail carrying the frame-7/8 grip: a
-          small **light-gray (limestone) circle** with a soft card shadow and
-          the dark ⋮⋮ dots (one of the few vetted-round elements in the kit).
+          small **stone-gray circle** with a soft card shadow and the dark ⋮⋮
+          dots (one of the few vetted-round elements in the kit). Re-sampled
+          frame 7 at 1px: the face is #dcdbd6–#e6e2df — the stone token —
+          NOT limestone, which had no contrast against the panes.
           A native <button> carries the separator semantics so it's focusable
           and keyboard-operable without fighting the a11y linter. */}
       <button
@@ -109,10 +111,10 @@ export function DraggablePanel({
         <span
           data-testid="drag-grip"
           className={clsx(
-            // Frame 7 at 10x: a circular LIMESTONE chip, soft shadow, ink dots
-            // — no border, and not white (it reads a step darker than the
-            // panes it separates).
-            'absolute flex size-7 items-center justify-center rounded-pill bg-limestone text-ink',
+            // Frame 7 at 10x + 1px sampling: a circular STONE chip, soft
+            // shadow, ink dots — no border; a full step darker than the
+            // panes so it keeps contrast on the limestone canvas too.
+            'absolute flex size-7 items-center justify-center rounded-pill bg-stone text-ink',
             'shadow-card transition-shadow group-hover:shadow-popover',
             dragging && 'shadow-popover',
           )}
@@ -121,7 +123,10 @@ export function DraggablePanel({
         </span>
       </button>
 
-      <div className="min-w-0 flex-1 overflow-auto">{right}</div>
+      {/* Right pane = the preview CANVAS. Frames 7/8/10 sample #f6f5f1–#fbfaf6
+          out there — the warm limestone wash the white invoice sheet floats
+          on — never the same white as the form pane. */}
+      <div className="min-w-0 flex-1 overflow-auto bg-limestone">{right}</div>
     </div>
   );
 }

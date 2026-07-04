@@ -40,6 +40,12 @@ export interface MenuProps {
   label?: string;
   /** Override the trigger entirely (still gets the click handler wired). */
   trigger?: ReactNode;
+  /**
+   * Pill-shaped default trigger — forwarded to the built-in overflow
+   * IconButton (same contract as Button/IconButton `rounded`). Ignored when a
+   * custom `trigger` is supplied; shape that trigger yourself.
+   */
+  rounded?: boolean;
   align?: MenuAlign;
   className?: string;
 }
@@ -49,7 +55,14 @@ const ITEM_TONE: Record<MenuItemTone, string> = {
   destructive: 'text-destructive hover:bg-tone-critical-surface',
 };
 
-export function Menu({ items, label = 'More actions', trigger, align = 'end', className }: MenuProps) {
+export function Menu({
+  items,
+  label = 'More actions',
+  trigger,
+  rounded = false,
+  align = 'end',
+  className,
+}: MenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -94,6 +107,7 @@ export function Menu({ items, label = 'More actions', trigger, align = 'end', cl
         <IconButton
           label={label}
           icon={DotsIcon}
+          rounded={rounded}
           aria-haspopup="menu"
           aria-expanded={open}
           aria-controls={open ? menuId : undefined}

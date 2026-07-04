@@ -21,6 +21,9 @@ type Story = StoryObj<typeof meta>;
 
 export const RowOverflow: Story = {};
 
+/** `rounded` flows into the built-in overflow IconButton — the toolbar-pill trigger. */
+export const RoundedTrigger: Story = { args: { rounded: true } };
+
 export const BillActions: Story = {
   args: {
     items: [

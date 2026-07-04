@@ -55,6 +55,23 @@ export const Rounded: Story = {
   },
 };
 
+/**
+ * `outline` is a boolean like `rounded`: transparent fill, the variant's
+ * colour on border + label, hover still swaps in a background.
+ */
+export const Outline: Story = { args: { variant: 'primary', outline: true } };
+
+/** The two booleans coexist — an outlined pill. */
+export const OutlineRounded: Story = {
+  args: {
+    variant: 'primary',
+    outline: true,
+    rounded: true,
+    trailingIcon: <ChevronDown size={16} />,
+    children: 'Options',
+  },
+};
+
 /** Leading icon — the "+ New bill" lime CTA (snapshot 1). */
 export const WithIcon: Story = {
   args: { variant: 'primary', leadingIcon: <Plus size={16} />, children: 'New bill' },

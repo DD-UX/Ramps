@@ -89,10 +89,12 @@ export const Glow: Story = {
                 <span>
                   {text}
                   {docs !== undefined && (
+                    // Same neutral chip treatment as the "Optional" badge —
+                    // gray surface, ink text, no white fill or key shadow.
                     <Badge
                       tone="neutral"
                       icon={<FileText size={12} />}
-                      className="ml-rui-2 bg-white align-middle shadow-key"
+                      className="ml-rui-2 align-middle"
                     >
                       {docs}
                     </Badge>

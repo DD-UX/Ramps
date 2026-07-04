@@ -18,6 +18,7 @@
   --color-ink: var(--rui-ink);
   --color-ink-strong: var(--rui-ink-strong);
   --color-limestone: var(--rui-limestone);
+  --color-stone: var(--rui-stone);
   --color-bone: var(--rui-bone);
   --color-hushed: var(--rui-hushed);
   --color-accent: var(--rui-accent);
@@ -65,4 +66,7 @@
   --spacing-rui-2: var(--rui-space-2);
   --spacing-rui-3: var(--rui-space-3);
   --spacing-rui-4: var(--rui-space-4);
+  --spacing-rui-5: var(--rui-space-5);
+  --spacing-rui-6: var(--rui-space-6);
+  --spacing-rui-8: var(--rui-space-8);
 }

@@ -2,6 +2,7 @@
 
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   createContext,
   type PropsWithChildren,
@@ -32,6 +33,10 @@ import { IconButton } from '../IconButton/IconButton';
  * Compound (`Modal.Header` / `Modal.Body` / `Modal.Footer`) so callers own
  * the content; the panel is labelled by the Header title for a11y.
  * `"use client"` — it locks body scroll and listens for dismissal.
+ *
+ * Animated: the scrim fades while the panel pops (scale 0.96 + 8px rise —
+ * the popCenter recipe; a centred surface has no edge to slide from), and
+ * `AnimatePresence` plays the mirrored exit when `open` flips false.
  */
 type ModalContextValue = { onClose: () => void; titleId: string };
 
@@ -67,32 +72,46 @@ export function Modal({ open, onClose, className, children }: ModalProps) {
     };
   }, [open]);
 
-  if (!open) return null;
-
   return (
     <ModalContext.Provider value={{ onClose, titleId }}>
-      {/* Frame 13's scrim: a LIGHT whitish wash (~#f8f4f5 sampled over the
-          page), never a dark dim. */}
-      <div
-        data-testid="modal-overlay"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-white/75 p-rui-4"
-      >
-        <div
-          ref={panelRef}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={titleId}
-          data-testid="modal"
-          className={clsx(
-            // One padded surface — no divider rows; the gap carries the rhythm.
-            'flex w-full max-w-md flex-col gap-rui-4 rounded-square border border-bone bg-white p-rui-6',
-            'shadow-popover',
-            className,
-          )}
-        >
-          {children}
-        </div>
-      </div>
+      {/* AnimatePresence lets the exit phase play while `open` flips false.
+          The scrim below is frame 13's LIGHT whitish wash (~#f8f4f5 sampled
+          over the page), never a dark dim — and it fades… */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            data-testid="modal-overlay"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-white/75 p-rui-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.15, ease: 'easeIn' } }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
+            {/* …while the panel pops: the same quiet scale+fade as the
+                popCenter toast preset (a centred surface has no edge to
+                slide from). */}
+            <motion.div
+              ref={panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
+              data-testid="modal"
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8, transition: { duration: 0.15, ease: 'easeIn' } }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className={clsx(
+                // One padded surface — no divider rows; the gap carries the rhythm.
+                'flex w-full max-w-md flex-col gap-rui-4 rounded-square border border-bone bg-white p-rui-6',
+                'shadow-popover',
+                className,
+              )}
+            >
+              {children}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </ModalContext.Provider>
   );
 }

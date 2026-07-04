@@ -9,6 +9,10 @@
   --rui-ink: #1a1919;
   --rui-ink-strong: #0c0a08;
   --rui-limestone: #f4f2f0;
+  /* Stone — the mid gray between limestone and bone. Vetted on the frame-7
+     split grip at 1px sampling: the handle's face reads #dcdbd6–#e6e2df,
+     a full step darker than limestone (which vanished against the panes). */
+  --rui-stone: #e3e0dd;
   --rui-bone: #d2cecb;
   --rui-hushed: #6e6a68;
   --rui-accent: #e4f222; /* lime — always paired with ink */
@@ -47,11 +51,17 @@
   --rui-shadow-popover: 0 2px 4px rgba(26, 25, 25, 0.08), 0 12px 32px rgba(26, 25, 25, 0.12);
   --rui-shadow-key: 0 0 0 1px rgba(26, 25, 25, 0.06), 0 1px 1px rgba(26, 25, 25, 0.14);
 
-  /* Spacing base (4px scale) */
+  /* Spacing base (4px scale). 5/6/8 exist because real surfaces use them —
+     the Modal panel pads p-rui-6, EmptyState px-rui-6 py-rui-8; without the
+     bridge entries those utilities silently emit NOTHING and content lands
+     flush on the edges. */
   --rui-space-1: 4px;
   --rui-space-2: 8px;
   --rui-space-3: 12px;
   --rui-space-4: 16px;
+  --rui-space-5: 20px;
+  --rui-space-6: 24px;
+  --rui-space-8: 32px;
 
   /* Form controls — shared borders/focus for Input, Select, Checkbox. Border
      is bone at rest, ink on focus; the focus ring is the accent lime. */

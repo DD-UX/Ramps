@@ -1,9 +1,15 @@
+'use client';
+
 import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
 
 import { IconButton } from '../IconButton/IconButton';
 import { Spinner } from '../Spinner/Spinner';
+import type { ToastMotionPreset } from './toastVariants';
+
+export { TOAST_VARIANTS, type ToastMotionPreset, type ToastVariantName } from './toastVariants';
 
 /**
  * Toast — the transient feedback surface for async actions: "Uploading 3
@@ -37,6 +43,18 @@ export interface ToastProps {
   /** Show a Spinner instead of the tone icon (e.g. the "Uploading…" state). */
   loading?: boolean;
   onDismiss?: () => void;
+  /**
+   * Enter/exit motion — spread one of the `TOAST_VARIANTS` presets
+   * (`slideBottomRight`, `slideTop`, `popCenter`, … all 9 positions):
+   *
+   * ```tsx
+   * <Toast transition={TOAST_VARIANTS.slideBottomRight} title="…" />
+   * ```
+   *
+   * Omit it for a static toast. Wrap in `<AnimatePresence>` if you want the
+   * exit phase to play on unmount.
+   */
+  transition?: ToastMotionPreset;
   className?: string;
 }
 
@@ -46,12 +64,14 @@ export function Toast({
   tone = 'neutral',
   loading,
   onDismiss,
+  transition,
   className,
 }: ToastProps) {
   return (
-    <div
+    <motion.div
       role="status"
       data-testid="toast"
+      {...transition}
       className={clsx(
         // White, near-square card on a thin border with a soft popover shadow —
         // the snapshot-3 surface.
@@ -83,6 +103,6 @@ export function Toast({
           className="-my-1 -mr-rui-1 shrink-0"
         />
       )}
-    </div>
+    </motion.div>
   );
 }

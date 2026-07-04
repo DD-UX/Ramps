@@ -30,6 +30,11 @@ export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
   icon: ReactNode;
   variant?: IconButtonVariant;
   size?: IconButtonSize;
+  /**
+   * Pill shape — same contract as Button's `rounded` (the frame-1 toolbar
+   * treatment). Off by default; the frames show square everywhere else.
+   */
+  rounded?: boolean;
 }
 
 export function IconButton({
@@ -37,6 +42,7 @@ export function IconButton({
   icon,
   variant = 'ghost',
   size = 'md',
+  rounded = false,
   className,
   type,
   ...props
@@ -47,7 +53,8 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={clsx(
-        'inline-flex items-center justify-center rounded-square transition-colors focus:outline-none focus:ring-2 focus:ring-control-ring',
+        'inline-flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-control-ring',
+        rounded ? 'rounded-pill' : 'rounded-square',
         // Interactive affordance: pointer when enabled, dimmed + not-allowed when disabled.
         'cursor-pointer disabled:cursor-not-allowed disabled:opacity-40',
         VARIANT_STYLE[variant],

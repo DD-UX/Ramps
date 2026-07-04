@@ -33,6 +33,11 @@ export const Ghost: Story = { args: { label: 'More actions', icon: DotsIcon } };
 export const Subtle: Story = { args: { label: 'Download invoice', icon: DownloadIcon, variant: 'subtle' } };
 export const Small: Story = { args: { label: 'More actions', icon: DotsIcon, size: 'sm' } };
 
+/** Pill shape — same `rounded` contract as Button (the frame-1 toolbar treatment). */
+export const Rounded: Story = {
+  args: { label: 'More actions', icon: DotsIcon, variant: 'subtle', rounded: true },
+};
+
 /** The row toolbar vocabulary: quiet ghost controls, the three-dot overflow last. */
 export const RowToolbar: StoryObj = {
   render: () => (

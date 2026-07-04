@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+// Runtime-safe: toastVariants.ts only type-imports from motion/react.
+import { TOAST_VARIANTS } from '../src/components/Toast/toastVariants';
 import { hexToRgb, RUI } from './tokens.fixture';
 
 /**
@@ -238,13 +240,16 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   });
 
   /**
-   * Snapshot 7 at 10x — the split-view grip is a CIRCULAR **limestone** chip
-   * (soft shadow, ink dots) riding the hairline rail: one of the kit's few
-   * vetted-round elements, and it reads a step darker than the white panes it
-   * separates. Assert a true circle (square box + >= half-width radius),
-   * limestone fill, and borderless.
+   * Snapshot 7 at 10x + 1px sampling — the split-view grip is a CIRCULAR
+   * **stone** chip (face samples #dcdbd6–#e6e2df: a full step darker than
+   * limestone, which had no contrast against the panes), soft shadow, ink
+   * dots, borderless. And the RIGHT pane is the preview CANVAS: the warm
+   * limestone wash (#f6f5f1–#fbfaf6 in frames 7/8/10) the white invoice
+   * sheet floats on — never the same white as the form pane.
    */
-  test('DraggablePanel grip is the circular limestone chip from frame 7', async ({ page }) => {
+  test('DraggablePanel grip is the stone chip and the right pane is the limestone canvas', async ({
+    page,
+  }) => {
     await page.goto(storyUrl('primitives-draggablepanel--bill-detail'));
     const grip = page.getByTestId('drag-grip');
     await expect(grip).toBeVisible();
@@ -261,10 +266,18 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     });
     expect(Math.abs(m.w - m.h), 'grip box is square').toBeLessThanOrEqual(1);
     expect(m.radius, 'radius >= half width — a circle').toBeGreaterThanOrEqual(m.w / 2 - 1);
-    expect(m.bg, 'limestone chip — a step darker than the panes').toBe(
-      hexToRgb(RUI['--rui-limestone']),
+    expect(m.bg, 'stone chip — a full step darker than the panes').toBe(
+      hexToRgb(RUI['--rui-stone']),
     );
     expect(m.borderW, 'no border — the shadow does the lifting').toBe(0);
+
+    // Right pane canvas: the grip's parent rail's next sibling.
+    const rightBg = await page
+      .getByTestId('drag-handle')
+      .evaluate((el) => getComputedStyle(el.nextElementSibling as Element).backgroundColor);
+    expect(rightBg, 'right pane is the limestone preview canvas').toBe(
+      hexToRgb(RUI['--rui-limestone']),
+    );
   });
 
   /**
@@ -397,6 +410,149 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
    * second avatar starts before the first one ends (negative overlap), proving
    * the stack, not a plain row.
    */
+  /**
+   * The Toast motion contract: 9 spreadable presets — one per screen
+   * position — each a classic three-phase variant object (initial/animate/
+   * exit) plus a transition, so `<Toast transition={TOAST_VARIANTS.x}>` is
+   * all a developer needs.
+   */
+  test('TOAST_VARIANTS ships 9 positional presets with initial/animate/exit', () => {
+    const names = Object.keys(TOAST_VARIANTS);
+    expect(names, 'exactly 9 positions').toHaveLength(9);
+    expect(names.sort()).toEqual(
+      [
+        'popCenter',
+        'slideBottom',
+        'slideBottomLeft',
+        'slideBottomRight',
+        'slideLeft',
+        'slideRight',
+        'slideTop',
+        'slideTopLeft',
+        'slideTopRight',
+      ].sort(),
+    );
+    for (const [name, preset] of Object.entries(TOAST_VARIANTS)) {
+      expect(preset.initial, `${name}.initial`).toBeDefined();
+      expect(preset.animate, `${name}.animate`).toBeDefined();
+      expect(preset.exit, `${name}.exit`).toBeDefined();
+      expect(preset.transition, `${name}.transition`).toBeDefined();
+    }
+  });
+
+  /**
+   * An animated toast SETTLES: after the enter phase the card must sit at
+   * full opacity with an identity transform — the preset moves it, it never
+   * parks it off-position.
+   */
+  test('Toast/slide-bottom-right animates in and settles at rest', async ({ page }) => {
+    await page.goto(storyUrl('primitives-toast--slide-bottom-right'));
+    const toast = page.getByTestId('toast');
+    await expect(toast).toBeVisible();
+    await expect
+      .poll(
+        () =>
+          toast.evaluate((el) => {
+            const s = getComputedStyle(el);
+            return { opacity: Number(s.opacity), transform: s.transform };
+          }),
+        { message: 'toast settles at opacity 1, identity transform' },
+      )
+      .toEqual({ opacity: 1, transform: expect.stringMatching(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/) });
+  });
+
+  /**
+   * Long tooltips stay BOUNDED (user report: they offset the app view):
+   * the bubble caps at max-w-64 (256px) and wraps to multiple lines.
+   * (CSS-only tooltip: the element exists at opacity 0, so it measures
+   * without hovering.)
+   */
+  test('Tooltip long label wraps inside its 256px boundary', async ({ page }) => {
+    await page.goto(storyUrl('primitives-tooltip--long-label-wraps'));
+    await page.getByRole('button', { name: 'Why?' }).hover();
+    const tip = page.getByRole('tooltip');
+    await expect(tip).toBeVisible();
+    const m = await tip.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const line = Number.parseFloat(getComputedStyle(el).lineHeight);
+      return { width: r.width, height: r.height, line };
+    });
+    expect(m.width, 'bubble respects the max-width boundary').toBeLessThanOrEqual(256.5);
+    expect(m.height, 'copy wraps onto multiple lines').toBeGreaterThan(m.line * 1.9);
+  });
+
+  /**
+   * IconButton mirrors Button's `rounded` boolean — the toolbar-pill shape —
+   * and Menu forwards it to its built-in overflow trigger.
+   */
+  test('IconButton/rounded and Menu rounded trigger are pills', async ({ page }) => {
+    await page.goto(storyUrl('primitives-iconbutton--rounded'));
+    const btn = page.getByRole('button').first();
+    await expect(btn).toBeVisible();
+    const b = await btn.evaluate((el) => ({
+      h: el.getBoundingClientRect().height,
+      r: Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    }));
+    expect(b.r, 'rounded icon button is a pill').toBeGreaterThanOrEqual(b.h / 2 - 1);
+
+    await page.goto(storyUrl('primitives-menu--rounded-trigger'));
+    const trigger = page.getByRole('button', { name: 'More actions' });
+    await expect(trigger).toBeVisible();
+    const t = await trigger.evaluate((el) => ({
+      h: el.getBoundingClientRect().height,
+      r: Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    }));
+    expect(t.r, 'menu forwards rounded to its trigger').toBeGreaterThanOrEqual(t.h / 2 - 1);
+  });
+
+  /**
+   * Button `outline` is a boolean like `rounded` (they coexist): transparent
+   * fill with the variant's colour moved into the border — and hovering still
+   * swaps in an alternative background so the affordance never disappears.
+   */
+  test('Button/outline drops the fill into an accent border and keeps a hover bg', async ({
+    page,
+  }) => {
+    await page.goto(storyUrl('primitives-button--outline'));
+    const btn = page.getByRole('button').first();
+    await expect(btn).toBeVisible();
+    const rest = await btn.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { bg: s.backgroundColor, borderColor: s.borderTopColor, borderW: Number.parseFloat(s.borderTopWidth) };
+    });
+    expect(rest.bg, 'outline rest is transparent').toBe('rgba(0, 0, 0, 0)');
+    expect(rest.borderColor, 'border carries the variant (accent) colour').toBe(
+      hexToRgb(RUI['--rui-accent']),
+    );
+    expect(rest.borderW, 'a real 1px border').toBeGreaterThanOrEqual(1);
+
+    await btn.hover();
+    await expect
+      .poll(() => btn.evaluate((el) => getComputedStyle(el).backgroundColor), {
+        message: 'hover swaps in an alternative background',
+      })
+      .not.toBe(rest.bg);
+  });
+
+  /**
+   * The spacing bridge is COMPLETE for every step components actually use:
+   * rui-5/6/8 exist (Modal pads p-rui-6, EmptyState px-rui-6 py-rui-8) —
+   * without them the utilities silently emit nothing and content lands flush
+   * on the panel edges (the reported bug). Assert the Modal panel's real
+   * computed padding.
+   */
+  test('Modal panel really pads 24px (spacing tokens 5/6/8 exist)', async ({ page }) => {
+    expect(RUI['--rui-space-5'], 'space-5 token').toBe('20px');
+    expect(RUI['--rui-space-6'], 'space-6 token').toBe('24px');
+    expect(RUI['--rui-space-8'], 'space-8 token').toBe('32px');
+
+    await page.goto(storyUrl('primitives-modal--when-to-pay'));
+    const modal = page.getByTestId('modal');
+    await expect(modal).toBeVisible();
+    const pad = await modal.evaluate((el) => getComputedStyle(el).paddingLeft);
+    expect(pad, 'panel padding is the rui-6 step, not 0').toBe('24px');
+  });
+
   test('UserAvatars overlaps stacked avatars', async ({ page }) => {
     await page.goto(storyUrl('primitives-useravatars--approval-chain'));
     const avatars = page.getByTestId('stacked-avatar');

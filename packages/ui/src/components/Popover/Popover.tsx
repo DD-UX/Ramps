@@ -2,6 +2,7 @@
 
 import { PreviewCard } from '@base-ui-components/react/preview-card';
 import { clsx } from 'clsx';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   createContext,
   type PropsWithChildren,
@@ -185,17 +186,26 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
     );
   }
 
-  if (!open) return null;
-
+  // Click mode mounts/unmounts the card itself, so it animates with motion —
+  // the SAME fade+lift the hover mode gets from Base UI's style hooks
+  // (opacity+scale, 150ms) — instead of abruptly appearing.
   return (
-    <div
-      data-testid="popover"
-      role="dialog"
-      className={clsx('absolute left-0 top-full z-50', surface)}
-      style={{ marginTop: sideOffset }}
-    >
-      {children}
-    </div>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          data-testid="popover"
+          role="dialog"
+          className={clsx('absolute left-0 top-full z-50 origin-top', surface)}
+          style={{ marginTop: sideOffset }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1, ease: 'easeIn' } }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

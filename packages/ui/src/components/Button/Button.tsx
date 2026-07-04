@@ -53,6 +53,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    * square). Off by default; the frames show square everywhere else.
    */
   rounded?: boolean;
+  /**
+   * Outline treatment — a boolean like `rounded` (and they coexist: an
+   * outlined pill is `rounded outline`). Drops the variant's fill for a
+   * transparent surface and moves its colour into the border + label; hover
+   * still swaps in an alternative background so the affordance never
+   * disappears.
+   */
+  outline?: boolean;
   /** Swaps the leading icon for a spinner and disables the button. */
   loading?: boolean;
 }
@@ -76,6 +84,23 @@ const VARIANT_STYLE: Record<ButtonVariant, string> = {
     'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-control-ring',
 };
 
+/**
+ * `outline` counterpart per variant: transparent fill, the variant's colour on
+ * border + label, and an alternative hover background (accent/ink tint via
+ * limestone or the tone surface) so hover always reads.
+ */
+const OUTLINE_STYLE: Record<ButtonVariant, string> = {
+  primary: 'bg-transparent text-ink border border-accent hover:bg-accent/15 focus-visible:ring-control-ring',
+  secondary:
+    'bg-transparent text-ink border border-bone hover:bg-limestone focus-visible:ring-control-ring',
+  subtle: 'bg-transparent text-ink border border-bone hover:bg-limestone focus-visible:ring-control-ring',
+  ink: 'bg-transparent text-ink border border-ink hover:bg-limestone focus-visible:ring-control-ring',
+  underline:
+    'bg-transparent text-ink border border-bone underline decoration-1 underline-offset-2 hover:bg-limestone focus-visible:ring-control-ring',
+  destructive:
+    'bg-transparent text-destructive border border-destructive hover:bg-tone-critical-surface focus-visible:ring-control-ring',
+};
+
 /** Height / padding / text scale. Both sizes are sharp-cornered (square radius). */
 const SIZE_STYLE: Record<ButtonSize, string> = {
   sm: 'h-8 gap-1.5 px-rui-2 text-sm',
@@ -89,6 +114,7 @@ export function Button({
   trailingIcon,
   keys,
   rounded = false,
+  outline = false,
   loading = false,
   disabled,
   className,
@@ -112,7 +138,7 @@ export function Button({
         // not-allowed when disabled — never pixel-identical to the base.
         'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
         SIZE_STYLE[size],
-        VARIANT_STYLE[variant],
+        outline ? OUTLINE_STYLE[variant] : VARIANT_STYLE[variant],
         className,
       )}
       {...props}
