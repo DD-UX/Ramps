@@ -102,9 +102,12 @@ export function Popover({
 }
 
 export type PopoverTriggerProps = PropsWithChildren<{
-  /** Hover mode only — open delay in ms (Base UI default 600). */
+  /**
+   * Hover mode only — open delay in ms. Defaults to 100: Base UI's stock
+   * 600ms reads as pure lag on the vendor card, not hover intent.
+   */
   delay?: number;
-  /** Hover mode only — close delay in ms (Base UI default 300). */
+  /** Hover mode only — close delay in ms (default 150, enough to reach the card). */
   closeDelay?: number;
   className?: string;
 }>;
@@ -113,7 +116,7 @@ export type PopoverTriggerProps = PropsWithChildren<{
  * The trigger. In click mode it's a real `<button>` (toggle, `aria-expanded`);
  * in hover mode it's Base UI's hover/focus target. Wrap the vendor name/logo.
  */
-function PopoverTrigger({ children, delay, closeDelay, className }: PopoverTriggerProps) {
+function PopoverTrigger({ children, delay = 100, closeDelay = 150, className }: PopoverTriggerProps) {
   const { mode, open, setOpen } = usePopoverContext('Trigger');
 
   if (mode === 'hover') {
@@ -188,18 +191,22 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
 
   // Click mode mounts/unmounts the card itself, so it animates with motion —
   // the SAME fade+lift the hover mode gets from Base UI's style hooks
-  // (opacity+scale, 150ms) — instead of abruptly appearing.
+  // (opacity+scale, 150ms) — instead of abruptly appearing. It also lands in
+  // the SAME spot: centered under the trigger, matching the hover Positioner's
+  // default `align="center"` (it used to hang off the trigger's left edge).
+  // The -50% centering rides in the motion values because motion owns
+  // `transform` — a Tailwind -translate-x-1/2 would be overwritten.
   return (
     <AnimatePresence>
       {open && (
         <motion.div
           data-testid="popover"
           role="dialog"
-          className={clsx('absolute left-0 top-full z-50 origin-top', surface)}
+          className={clsx('absolute left-1/2 top-full z-50 origin-top', surface)}
           style={{ marginTop: sideOffset }}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1, ease: 'easeIn' } }}
+          initial={{ opacity: 0, scale: 0.95, x: '-50%' }}
+          animate={{ opacity: 1, scale: 1, x: '-50%' }}
+          exit={{ opacity: 0, scale: 0.95, x: '-50%', transition: { duration: 0.1, ease: 'easeIn' } }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
         >
           {children}

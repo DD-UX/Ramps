@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
+import { clsx } from 'clsx';
 import { AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 
@@ -9,26 +10,31 @@ const meta = {
   title: 'Primitives/Toast',
   component: Toast,
   parameters: { layout: 'centered' },
-  decorators: [
-    (Story) => (
-      <div style={{ width: 340 }}>
-        <Story />
-      </div>
-    ),
-  ],
 } satisfies Meta<typeof Toast>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+/**
+ * Card-width wrapper for the single-toast stories. Applied per-story (not on
+ * meta) so the AllNinePositions stage can take the room it needs.
+ */
+const inCard: Decorator = (Story) => (
+  <div style={{ width: 340 }}>
+    <Story />
+  </div>
+);
+
 /** The signature upload toast (snapshot 3): white card, spinner + title, × dismiss. */
 export const Uploading: Story = {
+  decorators: [inCard],
   args: { title: 'Uploading 3 invoices', loading: true, onDismiss: () => {} },
 };
 
 /** Success — positive check icon, arrival copy. */
 export const PaymentScheduled: Story = {
+  decorators: [inCard],
   args: {
     title: 'Payment scheduled',
     description: 'Arrives in 2 business days',
@@ -39,6 +45,7 @@ export const PaymentScheduled: Story = {
 
 /** Failure — critical (orange, never red), retry hint. */
 export const PaymentFailed: Story = {
+  decorators: [inCard],
   args: {
     title: 'Payment failed',
     description: 'Insufficient funds — retry from the drawer',
@@ -52,6 +59,7 @@ export const PaymentFailed: Story = {
  * — the toast slides in from the bottom-right on mount.
  */
 export const SlideBottomRight: Story = {
+  decorators: [inCard],
   args: {
     title: 'Payment scheduled',
     description: 'Arrives in 2 business days',
@@ -69,9 +77,28 @@ const PRESET_GRID: ReadonlyArray<ReadonlyArray<ToastVariantName>> = [
 ];
 
 /**
+ * Where each preset's toast LIVES on screen — the flex alignment of a
+ * stage-filling layer. Placement comes from this wrapper (not the toast)
+ * because motion owns the toast's `transform` for the slide itself.
+ */
+const PLACEMENT: Record<ToastVariantName, string> = {
+  slideTopLeft: 'items-start justify-start',
+  slideTop: 'items-start justify-center',
+  slideTopRight: 'items-start justify-end',
+  slideLeft: 'items-center justify-start',
+  popCenter: 'items-center justify-center',
+  slideRight: 'items-center justify-end',
+  slideBottomLeft: 'items-end justify-start',
+  slideBottom: 'items-end justify-center',
+  slideBottomRight: 'items-end justify-end',
+};
+
+/**
  * Stateful demo extracted as a component (lint: no hooks in render functions).
- * `key={preset + seq}` remounts the toast so the enter phase replays, and
- * `AnimatePresence` lets the exit phase play when it's dismissed or swapped.
+ * The toast plays on an app-sized limestone STAGE and mounts in the preset's
+ * home corner/edge — a bottom-right slide actually enters at the bottom right,
+ * instead of replaying every preset in a toast-sized box. `key={preset + seq}`
+ * remounts so the enter phase replays; `AnimatePresence` plays the exit.
  */
 function AnimatedDemo() {
   const [preset, setPreset] = useState<ToastVariantName>('slideBottomRight');
@@ -79,7 +106,7 @@ function AnimatedDemo() {
   const [shown, setShown] = useState(true);
 
   return (
-    <div className="flex w-[340px] flex-col items-center gap-rui-6">
+    <div className="flex flex-col items-center gap-rui-4">
       <div className="grid grid-cols-3 gap-rui-2">
         {PRESET_GRID.flat().map((name) => (
           <Button
@@ -96,20 +123,26 @@ function AnimatedDemo() {
           </Button>
         ))}
       </div>
-      <div className="flex h-20 w-full items-center">
-        <AnimatePresence>
-          {shown && (
-            <Toast
-              key={`${preset}-${seq}`}
-              title="Payment scheduled"
-              description="Arrives in 2 business days"
-              tone="positive"
-              transition={TOAST_VARIANTS[preset]}
-              onDismiss={() => setShown(false)}
-              className="w-full"
-            />
-          )}
-        </AnimatePresence>
+      {/* The stage — a stand-in app viewport. overflow-hidden clips the
+          off-stage start of each slide so entries read as arrivals. */}
+      <div className="relative h-96 w-[720px] overflow-hidden border border-bone bg-limestone">
+        <div
+          className={clsx('pointer-events-none absolute inset-0 flex p-rui-4', PLACEMENT[preset])}
+        >
+          <AnimatePresence>
+            {shown && (
+              <Toast
+                key={`${preset}-${seq}`}
+                title="Payment scheduled"
+                description="Arrives in 2 business days"
+                tone="positive"
+                transition={TOAST_VARIANTS[preset]}
+                onDismiss={() => setShown(false)}
+                className="pointer-events-auto w-80"
+              />
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

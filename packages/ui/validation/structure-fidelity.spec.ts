@@ -336,7 +336,9 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   /**
    * The click-mode Popover contract (default trigger): clicking the trigger
    * pins the card open; it STAYS open until a click lands outside or Esc is
-   * pressed (`useClickAway`). Hover mode remains the frame-7 hovercard.
+   * pressed (`useClickAway`). Hover mode remains the frame-7 hovercard —
+   * and the click card must land in the SAME spot hover's Positioner puts
+   * it: centered under the trigger (it used to hang off the left edge).
    */
   test('Popover/click opens on click and dismisses on click-away and Esc', async ({ page }) => {
     await page.goto(storyUrl('primitives-popover--on-click'));
@@ -345,6 +347,16 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
 
     await trigger.click();
     await expect(popover).toBeVisible();
+
+    // Centered under the trigger, matching hover mode's align="center".
+    await expect
+      .poll(async () => {
+        const t = await trigger.boundingBox();
+        const p = await popover.boundingBox();
+        if (!t || !p) return Number.POSITIVE_INFINITY;
+        return Math.abs(t.x + t.width / 2 - (p.x + p.width / 2));
+      })
+      .toBeLessThan(1.5);
 
     // Click-away dismisses.
     await page.mouse.click(600, 400);
