@@ -64,4 +64,29 @@ test.describe('token fidelity', () => {
     await expect(toast).toHaveCSS('background-color', hexToRgb(RUI['--rui-ink']));
     await expect(toast).toHaveCSS('border-top-left-radius', RUI['--rui-radius-surface']);
   });
+
+  test('Money formats integer cents and renders tabular numerals', async ({ page }) => {
+    await page.goto(storyUrl('primitives-money--default'));
+    const money = page.getByText('$1,297.55', { exact: true });
+    await expect(money).toBeVisible();
+    // The whole point of Money: digits must be tabular so columns line up.
+    await expect(money).toHaveCSS('font-variant-numeric', 'tabular-nums');
+    await expect(money).toHaveCSS('color', hexToRgb(RUI['--rui-ink']));
+  });
+
+  test('Badge/critical-solid uses the destructive token, never a raw red', async ({ page }) => {
+    await page.goto(storyUrl('primitives-badge--catalogue'));
+    const badge = page.getByText('Overdue', { exact: true });
+    await expect(badge).toHaveCSS('background-color', hexToRgb(RUI['--rui-destructive']));
+    await expect(badge).not.toHaveCSS('background-color', 'rgb(255, 0, 0)');
+    await expect(badge).toHaveCSS('border-top-left-radius', RUI['--rui-radius-control']);
+  });
+
+  test('Banner/critical uses the critical (orange) tone surface, not red', async ({ page }) => {
+    await page.goto(storyUrl('primitives-banner--missing-info'));
+    const banner = page.getByRole('status');
+    await expect(banner).toHaveCSS('background-color', hexToRgb(RUI['--rui-tone-critical-surface']));
+    await expect(banner).not.toHaveCSS('background-color', 'rgb(255, 0, 0)');
+    await expect(banner).toHaveCSS('border-top-left-radius', RUI['--rui-radius-surface']);
+  });
 });

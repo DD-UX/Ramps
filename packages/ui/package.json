@@ -38,6 +38,54 @@
     "./Toast": {
       "types": "./dist/components/Toast/Toast.d.ts",
       "import": "./dist/components/Toast/Toast.js"
+    },
+    "./Avatar": {
+      "types": "./dist/components/Avatar/Avatar.d.ts",
+      "import": "./dist/components/Avatar/Avatar.js"
+    },
+    "./Badge": {
+      "types": "./dist/components/Badge/Badge.d.ts",
+      "import": "./dist/components/Badge/Badge.js"
+    },
+    "./Banner": {
+      "types": "./dist/components/Banner/Banner.d.ts",
+      "import": "./dist/components/Banner/Banner.js"
+    },
+    "./Card": {
+      "types": "./dist/components/Card/Card.d.ts",
+      "import": "./dist/components/Card/Card.js"
+    },
+    "./Divider": {
+      "types": "./dist/components/Divider/Divider.d.ts",
+      "import": "./dist/components/Divider/Divider.js"
+    },
+    "./EmptyState": {
+      "types": "./dist/components/EmptyState/EmptyState.d.ts",
+      "import": "./dist/components/EmptyState/EmptyState.js"
+    },
+    "./IconButton": {
+      "types": "./dist/components/IconButton/IconButton.d.ts",
+      "import": "./dist/components/IconButton/IconButton.js"
+    },
+    "./Menu": {
+      "types": "./dist/components/Menu/Menu.d.ts",
+      "import": "./dist/components/Menu/Menu.js"
+    },
+    "./Money": {
+      "types": "./dist/components/Money/Money.d.ts",
+      "import": "./dist/components/Money/Money.js"
+    },
+    "./Skeleton": {
+      "types": "./dist/components/Skeleton/Skeleton.d.ts",
+      "import": "./dist/components/Skeleton/Skeleton.js"
+    },
+    "./Spinner": {
+      "types": "./dist/components/Spinner/Spinner.d.ts",
+      "import": "./dist/components/Spinner/Spinner.js"
+    },
+    "./Table": {
+      "types": "./dist/components/Table/Table.d.ts",
+      "import": "./dist/components/Table/Table.js"
     }
   },
   "files": [

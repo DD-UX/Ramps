@@ -1,0 +1,62 @@
+import { clsx } from 'clsx';
+import type { ReactNode } from 'react';
+
+/**
+ * Badge — the compact metadata/count label for everything that ISN'T a bill
+ * lifecycle state (that's StatusPill's job).
+ *
+ * Across Bill Pay these carry provenance and counts rather than status:
+ * "Optional" beside a form section, "Coded by Ramp" on auto-filled GL codes,
+ * "Recommended"/"New" callouts, "Batched" grouping, and the little counters on
+ * tabs ("Needs review (2)") — see docs/watch-youtube/README.md §2 and the
+ * bill-detail drawer frame (…/snapshots/09-inline-payment-details-overdue-banner.jpeg,
+ * the "Optional" tag next to Payment details).
+ *
+ * Tones reuse the shared tone families (tokens only); `subtle` keeps it quiet
+ * for inline metadata, `solid` for a stronger callout.
+ */
+export type BadgeTone = 'neutral' | 'info' | 'accent' | 'positive' | 'warning' | 'critical';
+export type BadgeVariant = 'subtle' | 'solid';
+
+const SUBTLE_STYLE: Record<BadgeTone, string> = {
+  neutral: 'bg-tone-neutral-surface text-tone-neutral-on',
+  info: 'bg-tone-info-surface text-tone-info-on',
+  accent: 'bg-tone-accent-surface text-tone-accent-on',
+  positive: 'bg-tone-positive-surface text-tone-positive-on',
+  warning: 'bg-tone-warning-surface text-tone-warning-on',
+  critical: 'bg-tone-critical-surface text-tone-critical-on',
+};
+
+const SOLID_STYLE: Record<BadgeTone, string> = {
+  neutral: 'bg-hushed text-limestone',
+  info: 'bg-tone-info-on text-limestone',
+  accent: 'bg-accent text-ink',
+  positive: 'bg-tone-positive-on text-limestone',
+  warning: 'bg-tone-warning-on text-limestone',
+  critical: 'bg-destructive text-limestone',
+};
+
+export interface BadgeProps {
+  children: ReactNode;
+  tone?: BadgeTone;
+  variant?: BadgeVariant;
+  /** Optional leading glyph (icon/dot). */
+  icon?: ReactNode;
+  className?: string;
+}
+
+export function Badge({ children, tone = 'neutral', variant = 'subtle', icon, className }: BadgeProps) {
+  const style = variant === 'solid' ? SOLID_STYLE[tone] : SUBTLE_STYLE[tone];
+  return (
+    <span
+      className={clsx(
+        'inline-flex items-center gap-rui-1 rounded-control px-rui-2 py-0.5 text-xs font-heading whitespace-nowrap',
+        style,
+        className,
+      )}
+    >
+      {icon && <span aria-hidden>{icon}</span>}
+      {children}
+    </span>
+  );
+}
