@@ -58,6 +58,26 @@ in lockstep.
 
 ## Developer tooling
 
+### Static analysis (fallow)
+
+The same philosophy that keeps the design system honest — verify, don't trust —
+applies to the code itself. We run [**fallow**](https://docs.fallow.tools)
+(`npx -y fallow`) as the consistency check:
+
+- **`fallow dupes`** — suffix-array clone detection. Used to hunt repetition the
+  way the token gate hunts color drift: it caught 396 duplicated lines (6 clone
+  groups) of copy-pasted story fixtures in `Table.stories.tsx`, which were
+  extracted into shared `makeBill()` / column-builder helpers. Production
+  components stay at **zero duplication**.
+- **`fallow dead-code`** — unused dependencies and unreachable exports (it's how
+  we know what's actually wired up, not just declared).
+- **`fallow health`** — maintainability scoring and refactoring targets per file
+  (`packages/ui` sits at 96/100).
+
+Run from the package you're touching (e.g. `packages/ui`) before a push, the
+same way the design-system gate runs before a push: duplication and dead code
+are treated as drift, not decoration.
+
 ### AI skills
 
 Third-party agent skills are tracked by `skills-lock.json` (source + content hash),
