@@ -9,7 +9,7 @@ import type { ServerSupabase } from './server.js';
  * against `BillListItemSchema`. These tests mock the Supabase query builder so
  * we assert that contract without a live DB:
  *  - the vendor embed is flattened (and null-safe for vendor-less drafts),
- *  - the status filter is only applied when asked,
+ *  - the status-group filter (`status IN (…)`) is only applied when asked,
  *  - a DB error is normalized and thrown,
  *  - a row the schema rejects fails loudly (the boundary guard bites).
  */
@@ -45,7 +45,11 @@ function makeRow(overrides: Record<string, unknown> = {}) {
  * assert the status filter.
  */
 function makeSupabase(result: { data?: unknown; error?: unknown; count?: number }) {
-  const calls = { eq: [] as [string, unknown][], select: [] as string[] };
+  const calls = {
+    eq: [] as [string, unknown][],
+    in: [] as [string, unknown[]][],
+    select: [] as string[],
+  };
   const builder: Record<string, unknown> = {
     select(sel: string) {
       calls.select.push(sel);
@@ -53,6 +57,10 @@ function makeSupabase(result: { data?: unknown; error?: unknown; count?: number 
     },
     eq(col: string, val: unknown) {
       calls.eq.push([col, val]);
+      return builder;
+    },
+    in(col: string, vals: unknown[]) {
+      calls.in.push([col, vals]);
       return builder;
     },
     order() {
@@ -89,14 +97,24 @@ describe('listBills', () => {
     expect(bills[0].vendor_name).toBeNull();
   });
 
-  it('applies the status filter only when a status is given', async () => {
-    const withStatus = makeSupabase({ data: [], count: 0 });
-    await listBills(withStatus.supabase, { status: 'paid' });
-    expect(withStatus.calls.eq).toContainEqual(['status', 'paid']);
+  it('applies the status-group filter (status IN …) only when a group is given', async () => {
+    // A multi-status tab like "For payment" filters with `status IN (…)`.
+    const grouped = makeSupabase({ data: [], count: 0 });
+    await listBills(grouped.supabase, { statuses: ['approved', 'scheduled', 'partially_paid'] });
+    expect(grouped.calls.in).toContainEqual([
+      'status',
+      ['approved', 'scheduled', 'partially_paid'],
+    ]);
 
-    const without = makeSupabase({ data: [], count: 0 });
-    await listBills(without.supabase);
-    expect(without.calls.eq.some(([col]) => col === 'status')).toBe(false);
+    // Overview passes an empty group — no status filter at all.
+    const overview = makeSupabase({ data: [], count: 0 });
+    await listBills(overview.supabase, { statuses: [] });
+    expect(overview.calls.in.some(([col]) => col === 'status')).toBe(false);
+
+    // Omitting the option entirely is the same as Overview.
+    const omitted = makeSupabase({ data: [], count: 0 });
+    await listBills(omitted.supabase);
+    expect(omitted.calls.in.some(([col]) => col === 'status')).toBe(false);
   });
 
   it('throws a normalized error when the query fails', async () => {

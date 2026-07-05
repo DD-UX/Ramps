@@ -1,8 +1,4 @@
-import {
-  BillListResponseSchema,
-  type BillListResponseType,
-  type BillStatusType,
-} from '@ramps/schemas/bills';
+import { BillListResponseSchema, type BillListResponseType } from '@ramps/schemas/bills';
 import type { ZodType } from 'zod';
 
 /**
@@ -57,12 +53,13 @@ export function createRampsClient(options: RampsClientOptions) {
    * validated the moment it lands — the browser never sees unparsed JSON.
    */
   const bills = {
-    /** GET /bills — the Bill Pay table, optionally scoped to one lifecycle state. */
-    list(
-      params: { status?: BillStatusType } = {},
-      signal?: AbortSignal,
-    ): Promise<BillListResponseType> {
-      const query = params.status ? `?status=${encodeURIComponent(params.status)}` : '';
+    /**
+     * GET /bills — the Bill Pay table, optionally scoped to a lifecycle tab
+     * (`overview` | `drafts` | `for_approval` | `for_payment` | `history`). The
+     * server maps the tab to its status group; omitting it is the Overview view.
+     */
+    list(params: { tab?: string } = {}, signal?: AbortSignal): Promise<BillListResponseType> {
+      const query = params.tab ? `?tab=${encodeURIComponent(params.tab)}` : '';
       return request(`/bills${query}`, { schema: BillListResponseSchema, signal });
     },
   };

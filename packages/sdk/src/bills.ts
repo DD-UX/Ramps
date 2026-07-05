@@ -64,13 +64,17 @@ interface BillListRow {
 }
 
 export interface ListBillsOptions {
-  /** Restrict to a single lifecycle state (the active table tab). */
-  status?: BillStatusType;
+  /**
+   * Restrict to a set of lifecycle states — the active tab's status group (a
+   * tab like "For payment" rolls up approved/scheduled/partially_paid). Empty
+   * or omitted means the unfiltered Overview view.
+   */
+  statuses?: readonly BillStatusType[];
 }
 
 /**
- * List Bill Pay rows, newest due date first, optionally filtered to one
- * lifecycle state. Returns validated models + the total count for the tab.
+ * List Bill Pay rows, newest due date first, optionally filtered to the active
+ * tab's status group. Returns validated models + the total count for the tab.
  */
 export async function listBills(
   supabase: ServerSupabase,
@@ -84,8 +88,9 @@ export async function listBills(
     .eq('flags.dismissed', false)
     .order('due_date', { ascending: true, nullsFirst: false });
 
-  if (options.status) {
-    query = query.eq('status', options.status);
+  // A tab's status group → `status IN (…)`. Empty group = Overview = no filter.
+  if (options.statuses && options.statuses.length > 0) {
+    query = query.in('status', options.statuses as BillStatusType[]);
   }
 
   const { data, error, count } = await query;

@@ -2,7 +2,7 @@ import { countBillsByStatus, listBills } from '@ramps/sdk/bills';
 import { createServerSupabase } from '@ramps/sdk/server';
 
 import { BillsPageContent } from '@/features/bills/components/BillsPageContent';
-import { parseStatusParam } from '@/features/bills/constants/status-tabs.constants';
+import { parseTabParam, statusesForTab } from '@/features/bills/constants/status-tabs.constants';
 
 /**
  * /bills — Bill Pay, the product's spine.
@@ -11,32 +11,29 @@ import { parseStatusParam } from '@/features/bills/constants/status-tabs.constan
  * half: `createServerSupabase()` opens the admin client, `listBills` returns
  * rows already `.parse()`d against `BillListItemSchema` (the single Zod gate),
  * and `countBillsByStatus` feeds the tab badges. The active tab is the URL's
- * `?status=` param, so switching tabs is a navigation that re-runs this query —
- * no client fetch, and the URL stays shareable.
+ * `?tab=` param — one of the five product categories — so switching tabs is a
+ * navigation that re-runs this query; no client fetch, and the URL stays
+ * shareable.
  *
- * `parseStatusParam` hardens the param: any value that isn't a real lifecycle
- * state falls back to the unfiltered list, so a hand-typed URL can't 500.
+ * `parseTabParam` hardens the param: anything that isn't one of the five tabs
+ * falls back to Overview, so a hand-typed URL can't 500. The tab maps to a
+ * status GROUP (`statusesForTab`) that the facade filters with `status IN (…)`.
  */
 export default async function BillsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
-  const { status: rawStatus } = await searchParams;
-  const status = parseStatusParam(rawStatus);
+  const { tab: rawTab } = await searchParams;
+  const tab = parseTabParam(rawTab);
 
   const supabase = createServerSupabase();
   const [{ bills, total }, countsByStatus] = await Promise.all([
-    listBills(supabase, { status }),
+    listBills(supabase, { statuses: statusesForTab(tab) }),
     countBillsByStatus(supabase),
   ]);
 
   return (
-    <BillsPageContent
-      bills={bills}
-      total={total}
-      activeStatus={status ?? 'all'}
-      countsByStatus={countsByStatus}
-    />
+    <BillsPageContent bills={bills} total={total} activeTab={tab} countsByStatus={countsByStatus} />
   );
 }
