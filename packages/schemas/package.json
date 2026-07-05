@@ -8,6 +8,38 @@
     "./primitives": {
       "types": "./dist/primitives.d.ts",
       "import": "./dist/primitives.js"
+    },
+    "./policies": {
+      "types": "./dist/policies.d.ts",
+      "import": "./dist/policies.js"
+    },
+    "./users": {
+      "types": "./dist/users.d.ts",
+      "import": "./dist/users.js"
+    },
+    "./vendors": {
+      "types": "./dist/vendors.d.ts",
+      "import": "./dist/vendors.js"
+    },
+    "./dimensions": {
+      "types": "./dist/dimensions.d.ts",
+      "import": "./dist/dimensions.js"
+    },
+    "./bills": {
+      "types": "./dist/bills.d.ts",
+      "import": "./dist/bills.js"
+    },
+    "./approvals": {
+      "types": "./dist/approvals.d.ts",
+      "import": "./dist/approvals.js"
+    },
+    "./payments": {
+      "types": "./dist/payments.d.ts",
+      "import": "./dist/payments.js"
+    },
+    "./activity": {
+      "types": "./dist/activity.d.ts",
+      "import": "./dist/activity.js"
     }
   },
   "files": [
