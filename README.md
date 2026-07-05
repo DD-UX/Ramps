@@ -95,6 +95,23 @@ gitignored). Currently pinned:
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`supabase/server`](https://skills.sh/supabase/server) | Guardrails for server-side Supabase (`@supabase/server`): auth modes and the **new** API keys (`sb_publishable_…` / `sb_secret_…`), not the legacy `anon` / `service_role`. |
 
+### Knowledge graph (graphify)
+
+The repo carries a persistent knowledge graph in `graphify-out/` (gitignored)
+that agents query instead of re-reading the codebase. Git hooks keep it in
+sync automatically, but hooks live in `.git/hooks` and never travel with a
+clone — **run this once per fresh clone**:
+
+```bash
+graphify hook install   # post-commit + post-checkout auto-rebuild (AST-only, no LLM)
+```
+
+After that, every commit and branch switch rebuilds the graph in the
+background. Doc/frame changes still need a manual `/graphify --update`
+(that path uses an LLM; code extraction is free). One naming caveat, banned
+in [`packages/ui/AGENTS.md`](packages/ui/AGENTS.md): never name a file a bare
+`token(s)` word — graphify's secret-hygiene heuristic silently drops it.
+
 ### Hand-authored skills (built for this project)
 
 The rest of the skills live in-tree under `.claude/skills/` and are committed
