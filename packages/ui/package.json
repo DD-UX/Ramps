@@ -83,6 +83,10 @@
       "types": "./dist/components/Menu/Menu.d.ts",
       "import": "./dist/components/Menu/Menu.js"
     },
+    "./SideMenu": {
+      "types": "./dist/components/SideMenu/SideMenu.d.ts",
+      "import": "./dist/components/SideMenu/SideMenu.js"
+    },
     "./Modal": {
       "types": "./dist/components/Modal/Modal.d.ts",
       "import": "./dist/components/Modal/Modal.js"

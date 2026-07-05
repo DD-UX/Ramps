@@ -35,13 +35,15 @@ export default defineConfig({
   },
   projects: [
     {
-      // The HARD gate. Two spec families, both blocking:
-      //  - token-fidelity     — computed styles resolve to the --rui-* tokens.
-      //  - structure-fidelity — the measured *look & feel* from the Ramp frames
+      // The HARD gate. Every *fidelity spec is blocking:
+      //  - token-fidelity      — computed styles resolve to the --rui-* tokens.
+      //  - structure-fidelity  — the measured *look & feel* from the Ramp frames
       //    (near-square radii, disabled affordance, soft-glow elevation, floating
       //    label, animated underline anchor). Tokens AND mocks, per the brief.
+      //  - table-/sidemenu-… — per-component structure suites. The broad match
+      //    keeps new `<name>-fidelity.spec.ts` files in the gate automatically.
       name: 'token-fidelity',
-      testMatch: /(token-fidelity|structure-fidelity)\.spec\.ts/,
+      testMatch: /fidelity\.spec\.ts$/,
       use: { ...devices['Desktop Chrome'], channel: 'chromium' },
     },
     {
