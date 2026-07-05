@@ -1,3 +1,8 @@
+import {
+  BillListResponseSchema,
+  type BillListResponseType,
+  type BillStatusType,
+} from '@ramps/schemas/bills';
 import type { ZodType } from 'zod';
 
 /**
@@ -47,7 +52,22 @@ export function createRampsClient(options: RampsClientOptions) {
     return opts.schema.parse(json);
   }
 
-  return { request };
+  /**
+   * Resource methods. Each one names its result schema so the response is
+   * validated the moment it lands — the browser never sees unparsed JSON.
+   */
+  const bills = {
+    /** GET /bills — the Bill Pay table, optionally scoped to one lifecycle state. */
+    list(
+      params: { status?: BillStatusType } = {},
+      signal?: AbortSignal,
+    ): Promise<BillListResponseType> {
+      const query = params.status ? `?status=${encodeURIComponent(params.status)}` : '';
+      return request(`/bills${query}`, { schema: BillListResponseSchema, signal });
+    },
+  };
+
+  return { request, bills };
 }
 
 export type RampsClient = ReturnType<typeof createRampsClient>;
