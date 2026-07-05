@@ -8,12 +8,14 @@ import {
   Home,
   Plane,
   Receipt,
+  Sparkles,
   TrendingUp,
   Users,
   Wallet,
 } from 'lucide-react';
 
-import { SideMenu, SideMenuDivider, SideMenuItem } from './SideMenu';
+import { Logo } from '../Logo/Logo';
+import { SideMenu, SideMenuAction, SideMenuDivider, SideMenuItem } from './SideMenu';
 
 const meta = {
   title: 'Primitives/SideMenu',
@@ -50,12 +52,18 @@ type Story = StoryObj<typeof meta>;
  *  - Policy
  *  - Company (badge: 1)
  *
- * The workspace header (Clara Media LLC / ActionInc123) and Ask Ramp footer
- * are NOT part of this primitive — the app composes those separately.
+ * Top and bottom bands from product-overview/01-dashboard-drafts-tab.jpeg:
+ * the brand mark at the nav's top-left (`header` slot, our two-ramp Logo) and
+ * "Ask Ramp" pinned at the very bottom (`footer` slot, SideMenuAction with the
+ * spark glyph — text vetted ink, glyph vetted hushed).
  */
 export const RampBillPayReplica: Story = {
   render: () => (
-    <SideMenu aria-label="Bill Pay navigation">
+    <SideMenu
+      aria-label="Bill Pay navigation"
+      header={<Logo />}
+      footer={<SideMenuAction icon={<Sparkles size={16} />}>Ask Ramp</SideMenuAction>}
+    >
       <SideMenuItem icon={<Home size={16} />} badge={90}>
         Home
       </SideMenuItem>

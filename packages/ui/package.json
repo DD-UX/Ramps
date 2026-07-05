@@ -79,6 +79,10 @@
       "types": "./dist/components/Kbd/Kbd.d.ts",
       "import": "./dist/components/Kbd/Kbd.js"
     },
+    "./Logo": {
+      "types": "./dist/components/Logo/Logo.d.ts",
+      "import": "./dist/components/Logo/Logo.js"
+    },
     "./Menu": {
       "types": "./dist/components/Menu/Menu.d.ts",
       "import": "./dist/components/Menu/Menu.js"

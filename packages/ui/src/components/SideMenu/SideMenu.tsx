@@ -40,25 +40,43 @@ import { Badge } from '../Badge/Badge';
  *    show a faint hairline between Treasury and Accounting, visibly lighter than stone.
  *
  * STRUCTURE (observed in frames):
- *  - Workspace header at top (Clara Media LLC dropdown in does-ramp/01, ActionInc123 in
- *    product-overview/03) — NOT implemented here (out of scope; that's a separate HeaderNav
- *    or WorkspacePicker component the app composes above SideMenu).
+ *  - Brand mark at top (product-overview/01: the Ramp swoosh at the nav's top-left,
+ *    x14-28 y12-26, ink strokes on the limestone nav) — the `header` slot; the app
+ *    passes the Logo primitive (or a workspace picker) here.
  *  - Stacked menu items (Home, Insights, Manage spend, …, Bill Pay, …, Accounting, Vendors,
  *    Policy, Company) — some with trailing badges (Home: 90, Accounting: 383, Vendors: 3).
  *  - One divider visible between sections (Treasury ↔ Accounting in most frames).
- *  - Ask Ramp button at bottom (does-ramp/01 x50-70 y610 samples the canvas/limestone
- *    boundary) — also out of scope for this primitive; the app footer composes it.
+ *  - Ask Ramp pinned at the very bottom (product-overview/01 x14-80 y604-614: a spark
+ *    glyph + "Ask Ramp") — the `footer` slot, composed with SideMenuAction.
+ *
+ * FOOTER COLOR VETTING (product-overview/01, 1px sampling):
+ *  - "Ask Ramp" text: densest glyph junctions #4f4e4a–#575652 — DARKER than hushed
+ *    (#6e6a68), so the label is INK (thin small text JPEG-lightens dark strokes).
+ *  - Spark glyph: #7a7975–#8b8784 — the HUSHED family (thin strokes read light).
+ *  - Nav bg at footer level: #f0efeb–#f1f0ec — the same limestone, no separate band.
  *
  * COMPONENT CONTRACT:
- *  - Compound: SideMenu (container), SideMenuItem (interactive link/button), SideMenuDivider.
+ *  - Compound: SideMenu (container with `header`/`footer` slots), SideMenuItem
+ *    (interactive link/button), SideMenuDivider, SideMenuAction (footer button).
  *  - Active state via `active` boolean (controls stone background + ink text).
  *  - Badge count via `badge` number (renders accent pill if present).
  *  - Leading icon support (all items have an icon: home/graph/wallet/plane/receipt/etc.).
- *  - Semantic nav: wraps items in <nav><ul> with proper ARIA roles and current-page marking.
+ *  - Semantic nav: wraps items in <nav><ul> with proper ARIA roles and current-page
+ *    marking; header/footer render OUTSIDE the <ul> so list semantics stay clean.
  */
 
 export interface SideMenuProps {
   children: ReactNode;
+  /**
+   * Top slot — the brand area above the item list (the product shows the Ramp
+   * mark here; pass the Logo primitive). Renders outside the <ul>.
+   */
+  header?: ReactNode;
+  /**
+   * Bottom slot — pinned to the nav's bottom edge (the product's "Ask Ramp");
+   * compose with SideMenuAction. Renders outside the <ul>.
+   */
+  footer?: ReactNode;
   className?: string;
   /** Accessible label for the nav landmark (e.g. "Main navigation"). */
   'aria-label'?: string;
@@ -86,9 +104,10 @@ export interface SideMenuDividerProps {
 
 /**
  * SideMenu container — the full-height nav sidebar.
- * Renders a <nav> with limestone background and houses the item list.
+ * Renders a <nav> with limestone background and houses the item list, with
+ * optional header (logo) and footer (Ask Ramp) slots pinned outside the list.
  */
-export function SideMenu({ children, className, 'aria-label': ariaLabel }: SideMenuProps) {
+export function SideMenu({ children, header, footer, className, 'aria-label': ariaLabel }: SideMenuProps) {
   return (
     <nav
       aria-label={ariaLabel ?? 'Main navigation'}
@@ -96,14 +115,26 @@ export function SideMenu({ children, className, 'aria-label': ariaLabel }: SideM
         // overflow-auto: the nav is its own scroll container — when the item
         // list outgrows the parent, the items scroll WITHIN the limestone
         // background instead of spilling onto the white page canvas (which is
-        // what a plain h-full/min-h-full background pin allowed).
+        // what a plain h-full/min-h-full background pin allowed). With the
+        // header/footer slots the <ul> below is the PRIMARY scroll region
+        // (flex-1 min-h-0), so the logo and Ask Ramp stay pinned while the
+        // items scroll — this nav-level overflow remains the backstop.
         'flex w-48 overflow-auto flex-col bg-limestone',
         // Sharp 0px corners (vetted across all frames).
         'rounded-square',
         className,
       )}
     >
-      <ul className="flex flex-col gap-0.5 p-rui-2">{children}</ul>
+      {header !== undefined && (
+        // The brand band (product-overview/01: the mark at x14-28 y12-26).
+        <div className="flex flex-shrink-0 items-center px-rui-4 pb-rui-2 pt-rui-4">{header}</div>
+      )}
+      <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-auto p-rui-2">{children}</ul>
+      {footer !== undefined && (
+        // Pinned bottom band (product-overview/01: Ask Ramp at y604-614, on
+        // the same limestone — no divider or tint separates it in the frame).
+        <div className="mt-auto flex-shrink-0 p-rui-2">{footer}</div>
+      )}
     </nav>
   );
 }
@@ -187,5 +218,47 @@ export function SideMenuDivider({ className }: SideMenuDividerProps) {
     <li role="separator" aria-hidden className={clsx('my-rui-2', className)}>
       <hr className="border-t border-bone" />
     </li>
+  );
+}
+
+export interface SideMenuActionProps {
+  /** The action label (the product's is "Ask Ramp"). */
+  children: ReactNode;
+  /** Leading glyph — the product shows a spark; rendered in hushed (vetted). */
+  icon?: ReactNode;
+  onClick?: () => void;
+  className?: string;
+}
+
+/**
+ * SideMenuAction — the footer-slot button (the product's "Ask Ramp").
+ *
+ * NOT a nav item: it lives outside the <ul> (no li), triggers an action rather
+ * than navigating, and its colors differ from items — VETTED on
+ * product-overview/01 (1px): label junctions #4f4e4a (INK, darker than the
+ * hushed items), spark glyph #7a7975 (HUSHED). Hover/focus reuse the item
+ * conventions (limestone hover, control-ring focus) — INFERRED, no hover frame.
+ */
+export function SideMenuAction({ children, icon, onClick, className }: SideMenuActionProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        'flex w-full items-center gap-rui-2 rounded-square px-rui-3 py-rui-2',
+        'text-sm font-body text-ink transition-colors outline-none',
+        'hover:bg-limestone',
+        'focus-visible:ring-2 focus-visible:ring-control-ring focus-visible:ring-offset-2',
+        'cursor-pointer',
+        className,
+      )}
+    >
+      {icon && (
+        <span className="flex-shrink-0 text-hushed" aria-hidden>
+          {icon}
+        </span>
+      )}
+      <span className="flex-1 truncate text-left">{children}</span>
+    </button>
   );
 }

@@ -24,6 +24,10 @@ import { hexToRgb, RUI } from './tokens.fixture';
  *  - Corners: 0px (rounded-square) on nav container and items (vetted 5x zoom);
  *    badges are PILLS by design decision (matching the Tabs count badges).
  *  - Divider: bone hairline (INFERRED, standard neutral divider token).
+ *  - Header slot: the two-ramp Logo above the item list, ink fill (vetted
+ *    product-overview/01 x14-28 y12-26: stroke junctions #4e4d49–#565551).
+ *  - Footer slot: "Ask Ramp" pinned at the nav bottom — label INK (vetted
+ *    #4f4e4a junctions, darker than hushed), spark glyph HUSHED (#7a7975).
  */
 
 /** Storybook static: render a single story chrome-free. */
@@ -265,6 +269,68 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
     // Background should still be stone
     const bg = await activeItem.evaluate((el) => getComputedStyle(el).backgroundColor);
     expect(bg, 'active item hover bg stays stone').toBe(hexToRgb(RUI['--rui-stone']));
+  });
+
+  /**
+   * Header slot — the brand mark sits ABOVE the item list, exactly where the
+   * frames put it (product-overview/01: the swoosh at the nav's top-left,
+   * x14-28 y12-26). The replica passes the two-ramp Logo; it must render as an
+   * ink-filled SVG that ends before the <ul> begins.
+   */
+  test('Header slot renders the ink Logo above the item list', async ({ page }) => {
+    await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
+    const nav = page.locator('nav[aria-label*="navigation"]').first();
+    const logo = nav.locator('svg[aria-label="ramps"]').first();
+    await expect(logo).toBeVisible();
+
+    // currentColor resolves to ink (vetted #4e4d49–#565551 junctions = ink family).
+    const color = await logo.evaluate((el) => getComputedStyle(el).color);
+    expect(color, 'logo fill is ink').toBe(hexToRgb(RUI['--rui-ink']));
+
+    // Above the list — the header band renders OUTSIDE and before the <ul>.
+    const logoBox = await logo.boundingBox();
+    const ulBox = await nav.locator('ul').first().boundingBox();
+    expect(logoBox, 'logo has a box').not.toBeNull();
+    expect(ulBox, 'item list has a box').not.toBeNull();
+    expect(
+      logoBox!.y + logoBox!.height,
+      'logo sits above the item list',
+    ).toBeLessThanOrEqual(ulBox!.y + 1);
+  });
+
+  /**
+   * Footer slot — "Ask Ramp" pinned at the very bottom of the nav
+   * (product-overview/01 x14-80 y604-614). Label is INK (vetted #4f4e4a
+   * junctions — darker than the hushed items), the spark glyph is HUSHED
+   * (#7a7975–#8b8784), and the whole band renders below the item list,
+   * flush with the nav's bottom edge (within the p-rui-2 band padding).
+   */
+  test('Footer "Ask Ramp" is pinned at the nav bottom (ink label, hushed spark)', async ({
+    page,
+  }) => {
+    await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
+    const nav = page.locator('nav[aria-label*="navigation"]').first();
+    const action = nav.getByRole('button', { name: 'Ask Ramp' });
+    await expect(action).toBeVisible();
+
+    const color = await action.evaluate((el) => getComputedStyle(el).color);
+    expect(color, 'Ask Ramp label is ink').toBe(hexToRgb(RUI['--rui-ink']));
+
+    const icon = action.locator('span[aria-hidden]').first();
+    const iconColor = await icon.evaluate((el) => getComputedStyle(el).color);
+    expect(iconColor, 'spark glyph is hushed').toBe(hexToRgb(RUI['--rui-hushed']));
+
+    const navBox = await nav.boundingBox();
+    const ulBox = await nav.locator('ul').first().boundingBox();
+    const actionBox = await action.boundingBox();
+    expect(navBox && ulBox && actionBox, 'all boxes measurable').toBeTruthy();
+    // Below the item list…
+    expect(actionBox!.y, 'footer sits below the item list').toBeGreaterThanOrEqual(
+      ulBox!.y + ulBox!.height - 1,
+    );
+    // …and pinned to the nav's bottom edge (8px band padding + rounding slack).
+    const gap = navBox!.y + navBox!.height - (actionBox!.y + actionBox!.height);
+    expect(gap, 'footer is flush with the nav bottom').toBeLessThanOrEqual(9);
   });
 
   /**

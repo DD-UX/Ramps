@@ -817,4 +817,31 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     await page.getByRole('tab', { name: 'New card' }).click();
     await expect(panel).toContainText('Send card to vendor');
   });
+
+  /**
+   * Logo — the "ramps" brand mark: TWO Ramp marks (swoosh + landing bar each)
+   * concatenated in a strict 2:1 lockup. Every fill is `currentColor` and the
+   * default resolves to ink (vetted product-overview/01 x14-28 y12-26: the
+   * mark's stroke junctions sample #4e4d49–#565551 over limestone).
+   */
+  test('Logo is two currentColor Ramp marks in a 2:1 lockup', async ({ page }) => {
+    await page.goto(storyUrl('primitives-logo--default'));
+    const logo = page.locator('svg[aria-label="ramps"]').first();
+    await expect(logo).toBeVisible();
+
+    // Two marks × (bar + swoosh) = four paths, all riding currentColor.
+    const paths = logo.locator('path');
+    await expect(paths, 'two marks = four paths').toHaveCount(4);
+    for (const fill of await paths.evaluateAll((els) =>
+      els.map((el) => el.getAttribute('fill')),
+    )) {
+      expect(fill, 'every path fills with currentColor').toBe('currentColor');
+    }
+
+    // Default color is ink; the box is exactly 2:1 (32×16 viewBox).
+    await expect(logo).toHaveCSS('color', hexToRgb(RUI['--rui-ink']));
+    const box = await logo.boundingBox();
+    expect(box, 'logo has a box').not.toBeNull();
+    expect(Math.abs(box!.width - box!.height * 2), 'the lockup is 2:1').toBeLessThanOrEqual(1);
+  });
 });
