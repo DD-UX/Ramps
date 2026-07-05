@@ -89,7 +89,11 @@ export function SideMenu({ children, className, 'aria-label': ariaLabel }: SideM
     <nav
       aria-label={ariaLabel ?? 'Main navigation'}
       className={clsx(
-        'flex h-full w-48 flex-col bg-limestone',
+        // min-h-full (not h-full): the limestone must stretch to the parent
+        // on short pages AND keep growing with the item list — h-full pins
+        // the background to the parent's height, so overflowing items would
+        // scroll onto the white page background.
+        'flex min-h-full w-48 flex-col bg-limestone',
         // Sharp 0px corners (vetted across all frames).
         'rounded-square',
         className,

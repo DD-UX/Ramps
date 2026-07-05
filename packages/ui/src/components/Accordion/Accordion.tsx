@@ -14,10 +14,11 @@ import { type ReactNode,useId, useState } from 'react';
  * heading-weight ink title, a hushed one-line subtitle directly under it, a
  * thin caret on the far right (pointing up while open), and ONE full-width
  * hairline sitting BETWEEN the header row and its content (frame 13
- * y≈106–107; samples #e3e2de/#e4e4e4 → stone, not bone). There is NO
- * hairline above the first item and none after the content — so the border
- * lives on the header button, not the item wrapper. Sharp corners, no card
- * chrome — the row IS the surface.
+ * y≈106–107; samples #e3e2de/#e4e4e4 → stone, not bone). The item WRAPPER
+ * owns the stone box (1px all around); stacked items share a single
+ * hairline via `[&+&]:border-t-0`, and the header/content separation is the
+ * content region's own top border. Sharp corners, no card chrome — the row
+ * IS the surface.
  *
  * Compound: `<Accordion>` is the stack, `<AccordionItem>` owns one row + its
  * content. Content animates height 0 ↔ auto with Motion; `mode="wait"` per
@@ -51,21 +52,19 @@ export function AccordionItem({
 }: AccordionItemProps) {
   const [open, setOpen] = useState(defaultOpen);
   const regionId = useId();
-  const buttonClassName = clsx(
-    'flex w-full cursor-pointer items-center justify-between gap-rui-4 border border-stone px-rui-4 py-rui-3 text-left [&+&]:border-t-0]'
-  );
+  const wrapperClassName = clsx('border border-stone [&+&]:border-t-0', className);
 
   return (
-    <div className={className}>
-      {/* The vetted stone hairline separates the header from what follows —
-          it belongs to the header row itself (frame 13: the line runs between
-          the title block and the content, never after the content). */}
+    <div className={wrapperClassName}>
+      {/* The wrapper draws the stone box; the header button itself is
+          borderless — the hairline between header and content (frame 13)
+          is the region's own top border below. */}
       <button
         type="button"
         aria-expanded={open}
         aria-controls={regionId}
         onClick={() => setOpen((v) => !v)}
-        className={buttonClassName}
+        className="flex w-full cursor-pointer items-center justify-between gap-rui-4 px-rui-4 py-rui-3 text-left"
       >
         <span className="flex min-w-0 flex-col">
           <span className="font-heading text-sm text-ink">{title}</span>
@@ -94,7 +93,7 @@ export function AccordionItem({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0, transition: { duration: 0.15, ease: 'easeIn' } }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="overflow-hidden bg-canvas p-rui-3 border border-stone border-t-0"
+            className="overflow-hidden bg-canvas p-rui-3 border-t border-stone"
           >
             {children}
           </motion.div>

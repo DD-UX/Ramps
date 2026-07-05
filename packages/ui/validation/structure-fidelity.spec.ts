@@ -636,11 +636,11 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   /**
    * Product-overview snapshot 13 — the "Pay with Ramp Card" accordion row:
    * white surface, ink heading + hushed subtitle, thin caret on the right;
-   * the row toggles an aria-wired region. Design iteration: the item is a
-   * BOXED row — the header button carries a full stone border; while open
-   * its bottom edge drops (border-b-0) so the canvas content region (its own
-   * stone border, sans top) completes the box. Closed again, the header's
-   * bottom hairline returns.
+   * the row toggles an aria-wired region. Design iteration: the item
+   * WRAPPER owns the stone box (1px all around; stacked items share a
+   * hairline via [&+&]:border-t-0). The header button is borderless — the
+   * header/content separation is the canvas content region's own top
+   * border.
    */
   test('Accordion matches snapshot 13 (hushed subtitle, boxed stone border, toggling region)', async ({
     page,
@@ -659,50 +659,50 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
       hexToRgb(RUI['--rui-hushed']),
     );
 
-    // The header button owns the box: 1px stone on top/left/right, and while
-    // OPEN its bottom edge is dropped so the content region completes the
-    // frame with its own stone border (sans top). The wrapper draws nothing.
-    const openBorders = await row.evaluate((el) => {
+    // The item WRAPPER owns the box: 1px stone all around. The header
+    // button draws nothing of its own — the header/content hairline is the
+    // region's top border.
+    const borders = await row.evaluate((el) => {
       const s = getComputedStyle(el);
       const parent = getComputedStyle(el.parentElement as Element);
       return {
-        topColor: s.borderTopColor,
-        topWidth: Number.parseFloat(s.borderTopWidth),
-        leftWidth: Number.parseFloat(s.borderLeftWidth),
-        bottomWidth: Number.parseFloat(s.borderBottomWidth),
-        parentWidth: Number.parseFloat(parent.borderBottomWidth),
+        buttonBottom: Number.parseFloat(s.borderBottomWidth),
+        parentColor: parent.borderTopColor,
+        parentTop: Number.parseFloat(parent.borderTopWidth),
+        parentLeft: Number.parseFloat(parent.borderLeftWidth),
+        parentBottom: Number.parseFloat(parent.borderBottomWidth),
       };
     });
-    expect(openBorders.topColor, 'stone border frames the header row').toBe(
+    expect(borders.parentColor, 'stone box around the item wrapper').toBe(
       hexToRgb(RUI['--rui-stone']),
     );
-    expect(openBorders.topWidth, 'top border is 1px').toBe(1);
-    expect(openBorders.leftWidth, 'side border is 1px').toBe(1);
-    expect(openBorders.bottomWidth, 'open header hands its bottom edge to the content').toBe(0);
-    expect(openBorders.parentWidth, 'item wrapper draws no border of its own').toBe(0);
+    expect(borders.parentTop, 'wrapper top border is 1px').toBe(1);
+    expect(borders.parentLeft, 'wrapper side border is 1px').toBe(1);
+    expect(borders.parentBottom, 'wrapper bottom border is 1px').toBe(1);
+    expect(borders.buttonBottom, 'header button draws no border of its own').toBe(0);
 
-    // The open content region sits on the canvas tint and closes the box
-    // with its own stone border, minus the top edge (the header abuts it).
+    // The open content region sits on the canvas tint and draws the stone
+    // hairline that separates it from the header (its own top border).
     const region = page.getByRole('region');
     await expect(region, 'content region sits on the canvas tint').toHaveCSS(
       'background-color',
       hexToRgb(RUI['--rui-canvas']),
     );
-    await expect(region).toHaveCSS('border-bottom-color', hexToRgb(RUI['--rui-stone']));
-    await expect(region, 'no top border — the header abuts the content').toHaveCSS(
-      'border-top-width',
-      '0px',
+    await expect(region, 'stone hairline between header and content').toHaveCSS(
+      'border-top-color',
+      hexToRgb(RUI['--rui-stone']),
     );
+    await expect(region).toHaveCSS('border-top-width', '1px');
 
     await row.click();
     await expect(row).toHaveAttribute('aria-expanded', 'false');
     await expect(page.getByRole('region'), 'content unmounts after the exit').toBeHidden();
 
-    // Closed again, the header's bottom hairline returns to complete the box.
-    const closedBottom = await row.evaluate((el) =>
-      Number.parseFloat(getComputedStyle(el).borderBottomWidth),
+    // Closed, the wrapper's box stays intact (border never moves around).
+    const closedParentBottom = await row.evaluate((el) =>
+      Number.parseFloat(getComputedStyle(el.parentElement as Element).borderBottomWidth),
     );
-    expect(closedBottom, 'closed header restores its bottom hairline').toBe(1);
+    expect(closedParentBottom, 'closed item keeps its wrapper box').toBe(1);
   });
 
   /**
