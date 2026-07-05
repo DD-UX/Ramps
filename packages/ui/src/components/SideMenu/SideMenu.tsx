@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 
 import { Badge } from '../Badge/Badge';
 
@@ -66,8 +66,7 @@ import { Badge } from '../Badge/Badge';
  *    marking; header/footer render OUTSIDE the <ul> so list semantics stay clean.
  */
 
-export interface SideMenuProps {
-  children: ReactNode;
+export interface SideMenuProps extends PropsWithChildren {
   /**
    * Top slot — the brand area above the item list (the product shows the Ramp
    * mark here; pass the Logo primitive). Renders outside the <ul>.
@@ -84,9 +83,7 @@ export interface SideMenuProps {
   'aria-label'?: string;
 }
 
-export interface SideMenuItemProps {
-  /** The item label (e.g. "Bill Pay"). */
-  children: ReactNode;
+export interface SideMenuItemProps extends PropsWithChildren {
   /** Leading icon (Lucide icon or SVG, e.g. <Receipt />). */
   icon?: ReactNode;
   /** Badge count (e.g. 90, 383) — renders an accent pill at the trailing edge if present. */
@@ -109,7 +106,13 @@ export interface SideMenuDividerProps {
  * Renders a <nav> with limestone background and houses the item list, with
  * optional header (logo) and footer (Ask Ramp) slots pinned outside the list.
  */
-export function SideMenu({ children, header, footer, className, 'aria-label': ariaLabel }: SideMenuProps) {
+export function SideMenu({
+  children,
+  header,
+  footer,
+  className,
+  'aria-label': ariaLabel,
+}: SideMenuProps) {
   return (
     <nav
       aria-label={ariaLabel ?? 'Main navigation'}
@@ -121,7 +124,7 @@ export function SideMenu({ children, header, footer, className, 'aria-label': ar
         // header/footer slots the <ul> below is the PRIMARY scroll region
         // (flex-1 min-h-0), so the logo and Ask Ramp stay pinned while the
         // items scroll — this nav-level overflow remains the backstop.
-        'flex w-48 overflow-auto flex-col bg-limestone',
+        'w-48 bg-limestone flex flex-col overflow-auto',
         // Sharp 0px corners (vetted across all frames).
         'rounded-square',
         className,
@@ -129,13 +132,13 @@ export function SideMenu({ children, header, footer, className, 'aria-label': ar
     >
       {header !== undefined && (
         // The brand band (product-overview/01: the mark at x14-28 y12-26).
-        <div className="flex flex-shrink-0 items-center px-rui-4 pb-rui-2 pt-rui-4">{header}</div>
+        <div className="px-rui-4 pb-rui-2 pt-rui-4 flex flex-shrink-0 items-center">{header}</div>
       )}
-      <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-auto p-rui-2">{children}</ul>
+      <ul className="min-h-0 gap-0.5 p-rui-2 flex flex-1 flex-col overflow-auto">{children}</ul>
       {footer !== undefined && (
         // Pinned bottom band (product-overview/01: Ask Ramp at y604-614, on
         // the same limestone — no divider or tint separates it in the frame).
-        <div className="mt-auto flex-shrink-0 p-rui-2">{footer}</div>
+        <div className="p-rui-2 mt-auto flex-shrink-0">{footer}</div>
       )}
     </nav>
   );
@@ -165,7 +168,7 @@ export function SideMenuItem({
           {icon}
         </span>
       )}
-      <span className="flex-1 truncate text-left text-sm font-body">{children}</span>
+      <span className="text-sm font-body flex-1 truncate text-left">{children}</span>
       {badge !== undefined && badge > 0 && (
         // The Badge primitive in its accent/solid tone (bg-accent + text-ink).
         // shape="pill": DESIGN DECISION — nav counts are fully-rounded pills,
@@ -191,15 +194,15 @@ export function SideMenuItem({
         href={href}
         aria-current={active ? 'page' : undefined}
         className={clsx(
-          'flex w-full items-center gap-rui-2 rounded-square px-rui-3 py-rui-2',
+          'gap-rui-2 rounded-square px-rui-3 py-rui-2 flex w-full items-center',
           'transition-colors outline-none',
           // Active: stone background (vetted #e5e0dc) + ink text (vetted #0b0704–#2c2825).
           // Inactive: transparent + hushed text (vetted #6f6e6a).
           active
             ? 'bg-stone text-ink hover:bg-stone'
-            : 'bg-transparent text-hushed hover:bg-limestone hover:text-ink',
+            : 'text-hushed hover:bg-limestone hover:text-ink bg-transparent',
           // Focus ring: accent lime, 2px offset (control-ring standard).
-          'focus-visible:ring-2 focus-visible:ring-control-ring focus-visible:ring-offset-2',
+          'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
           // Pointer affordance.
           'cursor-pointer',
           className,
@@ -218,14 +221,12 @@ export function SideMenuItem({
 export function SideMenuDivider({ className }: SideMenuDividerProps) {
   return (
     <li role="separator" aria-hidden className={clsx('my-rui-2', className)}>
-      <hr className="border-t border-bone" />
+      <hr className="border-bone border-t" />
     </li>
   );
 }
 
-export interface SideMenuActionProps {
-  /** The action label (the product's is "Ask Ramp"; ours is "About DD"). */
-  children: ReactNode;
+export interface SideMenuActionProps extends PropsWithChildren {
   /** Leading glyph — the product shows a spark; rendered in hushed (vetted). */
   icon?: ReactNode;
   onClick?: () => void;
@@ -258,16 +259,16 @@ export function SideMenuAction({ children, icon, onClick, href, className }: Sid
       rel={href ? 'noreferrer' : undefined}
       onClick={onClick}
       className={clsx(
-        'flex w-full items-center gap-rui-2 rounded-square px-rui-3 py-rui-2',
+        'gap-rui-2 rounded-square px-rui-3 py-rui-2 flex w-full items-center',
         'text-sm font-body text-ink transition-colors outline-none',
         'hover:bg-limestone',
-        'focus-visible:ring-2 focus-visible:ring-control-ring focus-visible:ring-offset-2',
+        'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
         'cursor-pointer',
         className,
       )}
     >
       {icon && (
-        <span className="flex-shrink-0 text-hushed" aria-hidden>
+        <span className="text-hushed flex-shrink-0" aria-hidden>
           {icon}
         </span>
       )}

@@ -3,7 +3,7 @@
 import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { type ReactNode,useId, useState } from 'react';
+import { type PropsWithChildren, type ReactNode, useId, useState } from 'react';
 
 /**
  * Accordion — the expand/collapse rows from the virtual-card panel
@@ -24,22 +24,20 @@ import { type ReactNode,useId, useState } from 'react';
  * content. Content animates height 0 ↔ auto with Motion; `mode="wait"` per
  * the house rule.
  */
-export interface AccordionProps {
-  children: ReactNode;
+export interface AccordionProps extends PropsWithChildren {
   className?: string;
 }
 
 export function Accordion({ children, className }: AccordionProps) {
-  return <div className={clsx('flex flex-col bg-white', className)}>{children}</div>;
+  return <div className={clsx('bg-white flex flex-col', className)}>{children}</div>;
 }
 
-export interface AccordionItemProps {
+export interface AccordionItemProps extends PropsWithChildren {
   /** Heading-weight ink line — e.g. "Pay with Ramp Card · Pay automatically". */
   title: ReactNode;
   /** Hushed one-liner under the title (optional). */
   subtitle?: ReactNode;
   defaultOpen?: boolean;
-  children: ReactNode;
   className?: string;
 }
 
@@ -64,9 +62,9 @@ export function AccordionItem({
         aria-expanded={open}
         aria-controls={regionId}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full cursor-pointer items-center justify-between gap-rui-4 px-rui-4 py-rui-3 text-left"
+        className="gap-rui-4 px-rui-4 py-rui-3 flex w-full cursor-pointer items-center justify-between text-left"
       >
-        <span className="flex min-w-0 flex-col">
+        <span className="min-w-0 flex flex-col">
           <span className="font-heading text-sm text-ink">{title}</span>
           {subtitle && <span className="text-sm text-hushed">{subtitle}</span>}
         </span>
@@ -75,7 +73,7 @@ export function AccordionItem({
           aria-hidden
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="shrink-0 text-ink"
+          className="text-ink shrink-0"
         >
           <ChevronDown size={16} strokeWidth={1.5} />
         </motion.span>
@@ -93,7 +91,7 @@ export function AccordionItem({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0, transition: { duration: 0.15, ease: 'easeIn' } }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="overflow-hidden bg-canvas p-rui-3 border-t border-stone"
+            className="bg-canvas p-rui-3 border-stone overflow-hidden border-t"
           >
             {children}
           </motion.div>
