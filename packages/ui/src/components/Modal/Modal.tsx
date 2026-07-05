@@ -75,9 +75,12 @@ export function Modal({ open, onClose, className, children }: ModalProps) {
   return (
     <ModalContext.Provider value={{ onClose, titleId }}>
       {/* AnimatePresence lets the exit phase play while `open` flips false.
-          The scrim below is frame 13's LIGHT whitish wash (~#f8f4f5 sampled
-          over the page), never a dark dim — and it fades… */}
-      <AnimatePresence>
+          mode="wait" is the kit's house rule: if `open` flips back on
+          mid-exit, the re-enter waits for the exit to finish instead of both
+          playing on top of each other. The scrim below is frame 13's LIGHT
+          whitish wash (~#f8f4f5 sampled over the page), never a dark dim —
+          and it fades… */}
+      <AnimatePresence mode="wait">
         {open && (
           <motion.div
             data-testid="modal-overlay"

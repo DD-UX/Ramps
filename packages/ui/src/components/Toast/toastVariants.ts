@@ -11,10 +11,11 @@ import type { MotionProps } from 'motion/react';
  * <Toast transition={TOAST_VARIANTS.slideBottomRight} title="Payment scheduled" />
  * ```
  *
- * Naming = WHERE the toast lives on screen; each preset slides in FROM that
- * edge (a bottom-right toast enters from the bottom-right, a top toast drops
- * down from above). The centre position can't slide anywhere, so it pops:
- * a small scale + fade.
+ * Naming = WHERE the toast lives on screen. Motion is SINGLE-AXIS, never
+ * diagonal: anything on the left/right (sides AND corners) slides in
+ * horizontally from its vertical edge; the top/bottom-centre toasts drop
+ * down / rise up. The centre position can't slide anywhere, so it grows
+ * from the centre: a subtle scale (0.9 → 1) + fade.
  *
  * Exit mirrors the entry (back toward its edge, slightly faster ease-in) —
  * pair with Motion's `<AnimatePresence>` so unmounts play the exit.
@@ -50,20 +51,20 @@ function slide(x: number, y: number): ToastMotionPreset {
  *   slideBottomLeft  slideBottom   slideBottomRight
  */
 export const TOAST_VARIANTS = {
-  slideTopLeft: slide(-SLIDE_DISTANCE, -SLIDE_DISTANCE),
+  slideTopLeft: slide(-SLIDE_DISTANCE, 0),
   slideTop: slide(0, -SLIDE_DISTANCE),
-  slideTopRight: slide(SLIDE_DISTANCE, -SLIDE_DISTANCE),
+  slideTopRight: slide(SLIDE_DISTANCE, 0),
   slideLeft: slide(-SLIDE_DISTANCE, 0),
   popCenter: {
-    initial: { opacity: 0, scale: 0.95 },
+    initial: { opacity: 0, scale: 0.9 },
     animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.95, transition: EXIT },
+    exit: { opacity: 0, scale: 0.9, transition: EXIT },
     transition: ENTER,
   },
   slideRight: slide(SLIDE_DISTANCE, 0),
-  slideBottomLeft: slide(-SLIDE_DISTANCE, SLIDE_DISTANCE),
+  slideBottomLeft: slide(-SLIDE_DISTANCE, 0),
   slideBottom: slide(0, SLIDE_DISTANCE),
-  slideBottomRight: slide(SLIDE_DISTANCE, SLIDE_DISTANCE),
+  slideBottomRight: slide(SLIDE_DISTANCE, 0),
 } as const satisfies Record<string, ToastMotionPreset>;
 
 export type ToastVariantName = keyof typeof TOAST_VARIANTS;

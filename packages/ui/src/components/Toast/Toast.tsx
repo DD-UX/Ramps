@@ -51,8 +51,10 @@ export interface ToastProps {
    * <Toast transition={TOAST_VARIANTS.slideBottomRight} title="…" />
    * ```
    *
-   * Omit it for a static toast. Wrap in `<AnimatePresence>` if you want the
-   * exit phase to play on unmount.
+   * Omit it for a static toast. Wrap in `<AnimatePresence mode="wait">` if
+   * you want the exit phase to play on unmount — `mode="wait"` is the kit's
+   * house rule, so a replacement toast enters only after the old one has
+   * fully left (never two animating over each other).
    */
   transition?: ToastMotionPreset;
   className?: string;

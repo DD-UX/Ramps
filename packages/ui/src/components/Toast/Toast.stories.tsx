@@ -98,7 +98,10 @@ const PLACEMENT: Record<ToastVariantName, string> = {
  * The toast plays on an app-sized limestone STAGE and mounts in the preset's
  * home corner/edge — a bottom-right slide actually enters at the bottom right,
  * instead of replaying every preset in a toast-sized box. `key={preset + seq}`
- * remounts so the enter phase replays; `AnimatePresence` plays the exit.
+ * remounts so the enter phase replays; `AnimatePresence mode="wait"` makes the
+ * swap SEQUENTIAL — the outgoing toast fully plays its exit, a beat of empty
+ * stage, then the next one enters (instead of both animating on top of each
+ * other).
  */
 function AnimatedDemo() {
   const [preset, setPreset] = useState<ToastVariantName>('slideBottomRight');
@@ -124,15 +127,22 @@ function AnimatedDemo() {
         ))}
       </div>
       {/* The stage — a stand-in app viewport. overflow-hidden clips the
-          off-stage start of each slide so entries read as arrivals. */}
+          off-stage start of each slide so entries read as arrivals. The
+          KEYED element is the placement layer (not the toast), so an
+          exiting toast keeps ITS corner while the next preset's layer
+          mounts elsewhere — motion's presence context still reaches the
+          nested Toast to play its exit. */}
       <div className="relative h-96 w-[720px] overflow-hidden border border-bone bg-limestone">
-        <div
-          className={clsx('pointer-events-none absolute inset-0 flex p-rui-4', PLACEMENT[preset])}
-        >
-          <AnimatePresence>
-            {shown && (
+        <AnimatePresence mode="wait">
+          {shown && (
+            <div
+              key={`${preset}-${seq}`}
+              className={clsx(
+                'pointer-events-none absolute inset-0 flex p-rui-4',
+                PLACEMENT[preset],
+              )}
+            >
               <Toast
-                key={`${preset}-${seq}`}
                 title="Payment scheduled"
                 description="Arrives in 2 business days"
                 tone="positive"
@@ -140,9 +150,9 @@ function AnimatedDemo() {
                 onDismiss={() => setShown(false)}
                 className="pointer-events-auto w-80"
               />
-            )}
-          </AnimatePresence>
-        </div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

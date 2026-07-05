@@ -196,8 +196,10 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
   // default `align="center"` (it used to hang off the trigger's left edge).
   // The -50% centering rides in the motion values because motion owns
   // `transform` — a Tailwind -translate-x-1/2 would be overwritten.
+  // mode="wait" is the kit's house rule: a rapid close→reopen queues the
+  // re-enter behind the exit instead of overlapping the two cards.
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {open && (
         <motion.div
           data-testid="popover"

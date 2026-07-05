@@ -426,7 +426,9 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
    * The Toast motion contract: 9 spreadable presets — one per screen
    * position — each a classic three-phase variant object (initial/animate/
    * exit) plus a transition, so `<Toast transition={TOAST_VARIANTS.x}>` is
-   * all a developer needs.
+   * all a developer needs. Motion is SINGLE-AXIS by rule: left/right
+   * presets (sides and corners) slide on X only, top/bottom-centre on Y
+   * only — never diagonal — and popCenter grows in place (scale, no x/y).
    */
   test('TOAST_VARIANTS ships 9 positional presets with initial/animate/exit', () => {
     const names = Object.keys(TOAST_VARIANTS);
@@ -449,6 +451,20 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
       expect(preset.animate, `${name}.animate`).toBeDefined();
       expect(preset.exit, `${name}.exit`).toBeDefined();
       expect(preset.transition, `${name}.transition`).toBeDefined();
+
+      // Single-axis rule: never diagonal.
+      const initial = preset.initial as Record<string, number>;
+      if (name === 'popCenter') {
+        expect(initial.x ?? 0, 'popCenter never translates').toBe(0);
+        expect(initial.y ?? 0, 'popCenter never translates').toBe(0);
+        expect(initial.scale, 'popCenter grows from the centre').toBeLessThan(1);
+      } else if (/Left|Right/.test(name)) {
+        expect(initial.x, `${name} slides on X`).not.toBe(0);
+        expect(initial.y ?? 0, `${name} must not move on Y`).toBe(0);
+      } else {
+        expect(initial.y, `${name} slides on Y`).not.toBe(0);
+        expect(initial.x ?? 0, `${name} must not move on X`).toBe(0);
+      }
     }
   });
 
