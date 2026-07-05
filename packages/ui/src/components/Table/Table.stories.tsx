@@ -45,8 +45,10 @@ interface Bill {
  *  - Rows: white bg, limestone dividers, limestone hover, ~56px tall.
  *  - No outer border — the table sits directly on the page canvas.
  *  - Money column: right-aligned, tabular-nums.
- *  - No footer (the real frame shows "1–7 of 7 bills" below the table, which
- *    would be a pagination component outside the Table in a real app).
+ *  - Footer: the REAL pagination band ("Select ⌄" left, "1–7 of 7 bills ·
+ *    $634,235.35 total" right, on canvas) — `footer={{ type: 'pagination' }}`.
+ *    Both controls are clickable: Select opens the selection-scope menu, the
+ *    underlined range opens the page picker (both open upward).
  */
 export const Frame6Replica: StoryObj = {
   render: () => {
@@ -129,7 +131,24 @@ export const Frame6Replica: StoryObj = {
         paymentMethod: 'ACH',
         paymentAccount: 'Thread Bank (...40)',
       },
+      {
+        // 7th bill (the frame shows "1–7 of 7 bills") — amount chosen so the
+        // page total lands EXACTLY on the frame's "$634,235.35 total".
+        id: 'b7',
+        vendor: 'Ramp Cleaning Co.',
+        submitter: 'Elizabeth Smith',
+        submittedDate: 'Nov 26, 2025',
+        suggestedAction: 'ready_to_approve',
+        status: 'awaiting_approval',
+        approvalProgress: '0 of 1 approval',
+        nextApprover: 'Needs your approval',
+        amountCents: 12_250_00,
+        paymentMethod: 'ACH',
+        paymentAccount: 'Thread Bank (...40)',
+      },
     ];
+
+    const totalCents = bills.reduce((sum, bill) => sum + bill.amountCents, 0);
 
     const columns: TableColumn<Bill, string>[] = [
       {
@@ -230,20 +249,21 @@ export const Frame6Replica: StoryObj = {
     ];
 
     return (
-      <div className="space-y-rui-4">
-        <Table
-          data={bills}
-          columns={columns}
-          getRowId={(row) => row.id}
-          onRowClick={(row) => console.log('Clicked:', row.vendor)}
-        />
-        <div className="flex items-center justify-between text-sm text-hushed">
-          <button type="button" className="text-ink underline">
-            Select
-          </button>
-          <span>1–7 of 7 bills</span>
-        </div>
-      </div>
+      <Table
+        data={bills}
+        columns={columns}
+        getRowId={(row) => row.id}
+        selectable
+        onRowClick={(row) => console.log('Clicked:', row.vendor)}
+        footer={{
+          type: 'pagination',
+          page: 1,
+          pageSize: 7,
+          totalCount: 7,
+          noun: 'bills',
+          totalCents,
+        }}
+      />
     );
   },
 };
@@ -326,10 +346,11 @@ export const LargeDataset: StoryObj = {
 };
 
 /**
- * **Cross-page selection** — selection Map survives pagination. This story
- * simulates pagination (page 1 vs page 2) and proves the selection state
- * persists when you flip pages: select rows on page 1, go to page 2, come back
- * to page 1 → your selections are still there.
+ * **Cross-page selection** — selection Map survives pagination. Flip pages via
+ * the table's OWN pagination footer (the underlined range opens the page
+ * picker — the product has no Previous/Next buttons anywhere in the frames):
+ * select rows on page 1, jump to page 2 from the range menu, come back → your
+ * selections are still there.
  *
  * Per the video research (frame 11 "0 of 2 approvals", frame 15 multi-select
  * checkboxes): selection is PER-PAGE (select-all checks only the current page),
@@ -356,7 +377,90 @@ export const CrossPageSelection: StoryObj = {
     const [selection, setSelection] = useState<Map<string, Bill>>(new Map());
     const pageSize = 5;
     const pageData = allBills.slice((page - 1) * pageSize, page * pageSize);
-    const totalPages = Math.ceil(allBills.length / pageSize);
+    const totalCents = allBills.reduce((sum, bill) => sum + bill.amountCents, 0);
+
+    const columns: TableColumn<Bill, string>[] = [
+      {
+        id: 'vendor',
+        header: 'Vendor',
+        cell: (row) => <span className="font-heading text-ink">{row.vendor}</span>,
+        width: '200px',
+      },
+      {
+        id: 'amount',
+        header: 'Amount',
+        cell: (row) => <Money cents={row.amountCents} />,
+        align: 'right',
+        width: '140px',
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: () => (
+          <Button variant="secondary" size="sm">
+            Approve
+          </Button>
+        ),
+        align: 'right',
+        width: '100px',
+      },
+    ];
+
+    return (
+      <div className="space-y-rui-4">
+        <div className="text-sm text-hushed">
+          <strong>Instructions:</strong> Select rows on page 1, jump to another
+          page from the underlined range in the footer, come back → your
+          selections persist.
+        </div>
+        <Table
+          data={pageData}
+          columns={columns}
+          getRowId={(row) => row.id}
+          selectable
+          selectedRows={selection}
+          onSelectionChange={setSelection}
+          footer={{
+            type: 'pagination',
+            page,
+            pageSize,
+            totalCount: allBills.length,
+            noun: 'bills',
+            totalCents,
+            onPageChange: setPage,
+          }}
+        />
+        <div className="text-sm text-ink">
+          <strong>{selection.size}</strong> selected across all pages
+        </div>
+      </div>
+    );
+  },
+};
+
+/**
+ * **Summary footer (per-column totals)** — `footer={{ type: 'summary' }}` with
+ * a money total on the Amount column that tracks the SELECTED rows: $0.00
+ * with nothing selected, live sum as rows are checked. This is the per-column
+ * tfoot kind (the pagination band above is the product's list-screen footer).
+ */
+export const SummaryFooter: StoryObj = {
+  render: () => {
+    const bills: Bill[] = Array.from({ length: 4 }, (_, i) => ({
+      id: `bill-${i}`,
+      vendor: `Vendor ${i + 1}`,
+      submitter: 'User',
+      submittedDate: 'Nov 26, 2025',
+      suggestedAction: 'ready_to_approve',
+      status: 'awaiting_approval',
+      approvalProgress: '0 of 1 approval',
+      nextApprover: 'You',
+      amountCents: (i + 1) * 1000,
+      paymentMethod: 'ACH',
+      paymentAccount: 'Bank (...40)',
+    }));
+
+    const [selection, setSelection] = useState<Map<string, Bill>>(new Map());
 
     const columns: TableColumn<Bill, string>[] = [
       {
@@ -393,48 +497,15 @@ export const CrossPageSelection: StoryObj = {
     ];
 
     return (
-      <div className="space-y-rui-4">
-        <div className="text-sm text-hushed">
-          <strong>Instructions:</strong> Select rows on page 1, flip to page 2, come
-          back → your selections persist. The footer total updates with the selected
-          amount sum.
-        </div>
-        <Table
-          data={pageData}
-          columns={columns}
-          getRowId={(row) => row.id}
-          selectable
-          selectedRows={selection}
-          onSelectionChange={setSelection}
-          footer={{ type: 'summary' }}
-        />
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-ink">
-            <strong>{selection.size}</strong> selected across all pages
-          </div>
-          <div className="flex items-center gap-rui-2">
-            <Button
-              variant="subtle"
-              size="sm"
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-hushed">
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              variant="subtle"
-              size="sm"
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Table
+        data={bills}
+        columns={columns}
+        getRowId={(row) => row.id}
+        selectable
+        selectedRows={selection}
+        onSelectionChange={setSelection}
+        footer={{ type: 'summary' }}
+      />
     );
   },
 };
@@ -572,11 +643,13 @@ export const StickyColumns: StoryObj = {
 };
 
 /**
- * **Custom footer slot** — single-cell custom content spanning all columns.
- * This story shows the "1–3 of 3 bills • $1,194.08 total" pagination/summary
- * footer from frame 17.
+ * **Pagination footer** — the "1–3 of 3 bills · $1,194.08 total" band from
+ * does-ramp/17, now the real `footer={{ type: 'pagination' }}`: "Select ⌄"
+ * on the left, the clickable underlined range + hushed meta on the right,
+ * all on the canvas band. (The free-form `custom` footer kind is exercised
+ * by the LargeDataset story.)
  */
-export const CustomFooter: StoryObj = {
+export const PaginationFooter: StoryObj = {
   render: () => {
     const bills: Bill[] = [
       {
@@ -621,10 +694,6 @@ export const CustomFooter: StoryObj = {
     ];
 
     const totalCents = bills.reduce((sum, bill) => sum + bill.amountCents, 0);
-    const totalFormatted = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(totalCents / 100);
 
     const columns: TableColumn<Bill, string>[] = [
       {
@@ -675,14 +744,12 @@ export const CustomFooter: StoryObj = {
         columns={columns}
         getRowId={(row) => row.id}
         footer={{
-          type: 'custom',
-          content: (
-            <div className="flex items-center justify-end gap-rui-2 text-sm">
-              <span className="text-hushed">1–3 of 3 bills</span>
-              <span className="text-hushed">•</span>
-              <span className="font-heading text-ink">{totalFormatted} total</span>
-            </div>
-          ),
+          type: 'pagination',
+          page: 1,
+          pageSize: 3,
+          totalCount: 3,
+          noun: 'bills',
+          totalCents,
         }}
       />
     );
@@ -696,8 +763,11 @@ export const CustomFooter: StoryObj = {
  * - "This draft may be a duplicate of INV# 8960. Make sure you're not paying twice."
  *   (only "INV# 8960" linked)
  *
- * Treatment: ↳ hook glyph (CornerDownRight icon) + alert red text, indented to
- * start under the first data column, white background, no hover wash.
+ * Treatment (re-vetted on product-overview 01/02): ↳ hook glyph
+ * (CornerDownRight icon) + alert CRIMSON text (#8f1f1f — max-red-saturation
+ * scan of the glyph junctions) on the full-width rose wash band
+ * (--rui-alert-surface #fcf8f4), indented to start under the first data
+ * column, no hover wash.
  */
 export const FlaggedBills: StoryObj = {
   render: () => {

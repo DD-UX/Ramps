@@ -25,6 +25,7 @@ const DotsIcon = (
 
 export type MenuItemTone = 'default' | 'destructive';
 export type MenuAlign = 'start' | 'end';
+export type MenuSide = 'top' | 'bottom';
 
 export interface MenuItem {
   label: ReactNode;
@@ -47,6 +48,13 @@ export interface MenuProps {
    */
   rounded?: boolean;
   align?: MenuAlign;
+  /**
+   * Which side of the trigger the panel opens on. `bottom` (default) hangs the
+   * panel below; `top` raises it above — used by the Table's pagination footer,
+   * whose triggers live in a sticky BOTTOM band where a downward panel would be
+   * clipped by the scroll container.
+   */
+  side?: MenuSide;
   className?: string;
 }
 
@@ -61,6 +69,7 @@ export function Menu({
   trigger,
   rounded = false,
   align = 'end',
+  side = 'bottom',
   className,
 }: MenuProps) {
   const [open, setOpen] = useState(false);
@@ -120,7 +129,8 @@ export function Menu({
           id={menuId}
           role="menu"
           className={clsx(
-            'absolute top-full z-20 mt-rui-1 min-w-44 overflow-hidden rounded-square border border-bone bg-white py-rui-1 shadow-lg',
+            'absolute z-20 min-w-44 overflow-hidden rounded-square border border-bone bg-white py-rui-1 shadow-lg',
+            side === 'bottom' ? 'top-full mt-rui-1' : 'bottom-full mb-rui-1',
             align === 'end' ? 'right-0' : 'left-0',
           )}
         >

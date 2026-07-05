@@ -51,6 +51,9 @@ export function AccordionItem({
 }: AccordionItemProps) {
   const [open, setOpen] = useState(defaultOpen);
   const regionId = useId();
+  const buttonClassName = clsx(
+    'flex w-full cursor-pointer items-center justify-between gap-rui-4 border border-stone px-rui-4 py-rui-3 text-left [&+&]:border-t-0]'
+  );
 
   return (
     <div className={className}>
@@ -62,7 +65,7 @@ export function AccordionItem({
         aria-expanded={open}
         aria-controls={regionId}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full cursor-pointer items-center justify-between gap-rui-4 border-b border-stone px-rui-4 py-rui-3 text-left"
+        className={buttonClassName}
       >
         <span className="flex min-w-0 flex-col">
           <span className="font-heading text-sm text-ink">{title}</span>
@@ -91,9 +94,9 @@ export function AccordionItem({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0, transition: { duration: 0.15, ease: 'easeIn' } }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="overflow-hidden"
+            className="overflow-hidden bg-canvas p-rui-3 border border-stone border-t-0"
           >
-            <div className="px-rui-4 pb-rui-4">{children}</div>
+            {children}
           </motion.div>
         )}
       </AnimatePresence>

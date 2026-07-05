@@ -1,11 +1,12 @@
 'use client';
 
 import { clsx } from 'clsx';
-import { CornerDownRight } from 'lucide-react';
+import { ChevronDown, CornerDownRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Checkbox } from '../Checkbox/Checkbox';
+import { Menu } from '../Menu/Menu';
 
 /**
  * Table — the production-grade data table for Bill Pay lists: "For approval",
@@ -23,16 +24,43 @@ import { Checkbox } from '../Checkbox/Checkbox';
  *    (#f6f5f1 sampled), ~56px tall (294→349, 295→351 measured), tabular-nums
  *    on money columns. Selected rows wash in the pale green
  *    --rui-tone-selected-surface (#f4fff7 sampled), never the accent lime.
+ *  - VERTICAL column dividers: the product separates every column with a
+ *    limestone hairline. Vetted on product-overview/02 with a persistence
+ *    scan (a vertical line is a pixel column that stays off-white through
+ *    ALL 280 scanned rows): hits at x=463, 655, 799, 1073 — every one
+ *    sampling #efefee–#f1f1f1, the limestone family. They run through the
+ *    thead and the body alike.
  *  - Chrome: NO outer border — the table sits directly on the page; the frame
  *    edge people read as a border is just the page canvas (#f9f8f4) meeting
- *    the white table surface.
+ *    the white table surface. `border-separate` + per-CELL borders (never
+ *    tr/thead borders): with `border-collapse`, borders don't travel with
+ *    position:sticky cells, which painted phantom seams over the pinned
+ *    columns and opened a hairline gap next to the checkbox column.
  *  - Selection: positive-green checkbox fill (#01a741), row selection survives
  *    pagination — returns a `Map<K, T>` that persists the chosen records ACROSS pages.
  *  - Sticky: thead + tfoot both sticky, PLUS the first data column (after checkbox)
  *    + last column can be sticky for horizontal scroll.
  *  - Virtualization: hand-rolled windowing (fixed row height, render only visible
  *    rows + overscan, spacer rows top/bottom); coexists with sticky elements.
- *  - Footer: per-column summary (totals, counts) OR custom slot content.
+ *  - Footer: per-column summary (totals, counts), custom slot content, OR the
+ *    vetted PAGINATION band — the product's real table footer (see below).
+ *
+ * **The pagination footer** (every list screen: ap-agent/6 "1–7 of 7 bills ·
+ * $634,235.35 total", product-overview/01 "1–21 of 21 drafts · $494,520.80
+ * total + 5 more currencies", does-ramp/17 "1–3 of 3 bills · $1,194.08 total"):
+ *  - The band sits on --rui-canvas (#fbfaf6 sampled at 1px on frame 6 y634/640)
+ *    under a limestone hairline — NOT on the white table surface.
+ *  - Left: "Select ⌄" — hushed text with a hushed underline (darkest strokes
+ *    #7e7d79 through JPEG blur = --rui-hushed) and a small chevron-down that
+ *    is NOT underlined (confirmed at 8x zoom).
+ *  - Right: the range numbers ("1–7") underlined — the underline spans ONLY
+ *    the numbers — then " of N bills · $TOTAL total" in the same plain hushed.
+ *  - Both are clickable in the product; NO frame shows either menu open, so
+ *    the click behavior here is INFERRED and documented as such: "Select ⌄"
+ *    opens a selection-scope menu (select page / clear) wired to the
+ *    selection Map, and the range opens a page picker that drives
+ *    `onPageChange`. The menus open UPWARD (side="top") because the band is
+ *    sticky-bottom.
  *
  * **Video research findings** (docs/watch-youtube/README.md §1, §5, §6):
  *  - Selection UX: frame 11 shows "0 of 2 approvals", frame 15 shows multi-select
@@ -170,13 +198,35 @@ export interface TableProps<T, K extends string | number = string> {
    */
   overscan?: number;
   /**
-   * Footer definition: 'none' (no footer), 'summary' (per-column summaries defined
-   * in column.footer), or 'custom' (single-cell custom slot spanning all columns).
+   * Footer definition:
+   *  - 'none': no footer.
+   *  - 'summary': per-column summaries defined in column.footer.
+   *  - 'custom': single-cell custom slot spanning all columns.
+   *  - 'pagination': the VETTED product footer band — "Select ⌄" on the left,
+   *    the clickable range + "of N {noun} · $TOTAL total" on the right, on a
+   *    canvas band. See the pagination section of the component doc.
    */
   footer?:
     | { type: 'none' }
     | { type: 'summary' }
-    | { type: 'custom'; content: ReactNode };
+    | { type: 'custom'; content: ReactNode }
+    | {
+        type: 'pagination';
+        /** Current page, 1-based. */
+        page: number;
+        pageSize: number;
+        /** Total records across ALL pages (the "of N" number). */
+        totalCount: number;
+        /** Record noun — the frames show both "bills" and "drafts". */
+        noun?: string;
+        /** Aggregate total in cents for the "· $X total" meta. Omit to hide. */
+        totalCents?: number;
+        currency?: string;
+        /** Trailing meta, e.g. " + 5 more currencies" (product-overview/01). */
+        extra?: string;
+        /** Fired when a page is picked from the (inferred) range menu. */
+        onPageChange?: (page: number) => void;
+      };
   /**
    * Called when a row is clicked (for interactive tables that open a drawer).
    * Receives the full row record.
@@ -330,6 +380,19 @@ export function Table<T, K extends string | number = string>({
     setSelection(newSelection);
   }, [isAllSelected, allPageIds, data, getRowId, selection, setSelection]);
 
+  // Selection scopes for the pagination footer's "Select ⌄" menu. The frames
+  // never show this menu OPEN, so the item set is INFERRED: scope actions on
+  // the existing selection Map (select the visible page / clear everything).
+  const selectPage = useCallback(() => {
+    const newSelection = new Map(selection);
+    data.forEach((row) => newSelection.set(getRowId(row), row));
+    setSelection(newSelection);
+  }, [data, getRowId, selection, setSelection]);
+
+  const clearSelection = useCallback(() => {
+    setSelection(new Map());
+  }, [setSelection]);
+
   const toggleRow = useCallback(
     (row: T) => {
       const id = getRowId(row);
@@ -363,21 +426,27 @@ export function Table<T, K extends string | number = string>({
         className="relative overflow-auto"
         style={{ maxHeight: isVirtualized ? '600px' : undefined }}
       >
-        <table className="w-full border-collapse text-sm">
-          <thead className="sticky top-0 z-20 border-b border-limestone bg-white">
+        {/* border-separate + per-cell borders: sticky cells carry their own
+            hairlines (border-collapse borders stay behind and paint seams). */}
+        <table className="w-full border-separate border-spacing-0 text-sm">
+          <thead className="sticky top-0 z-20 bg-white">
             <tr>
               {selectable && (
                 <th
-                  className="sticky left-0 z-10 bg-white px-rui-3 py-rui-2"
-                  style={{ width: checkboxWidth }}
+                  className="sticky left-0 z-10 border-b border-limestone bg-white px-rui-3 py-rui-2 align-middle"
+                  style={{ width: checkboxWidth, minWidth: checkboxWidth }}
                 >
-                  <Checkbox
-                    checked={isAllSelected}
-                    // React doesn't support indeterminate as a prop; set via ref in a real build
-                    // For now we show checked state when indeterminate for simplicity
-                    onChange={toggleSelectAll}
-                    aria-label="Select all rows on this page"
-                  />
+                  {/* th centers inline content by default — the flex wrapper
+                      pins the box left so it lines up with the row checkboxes. */}
+                  <div className="flex items-center">
+                    <Checkbox
+                      checked={isAllSelected}
+                      // React doesn't support indeterminate as a prop; set via ref in a real build
+                      // For now we show checked state when indeterminate for simplicity
+                      onChange={toggleSelectAll}
+                      aria-label="Select all rows on this page"
+                    />
+                  </div>
                 </th>
               )}
               {columns.map((col) => {
@@ -392,7 +461,10 @@ export function Table<T, K extends string | number = string>({
                     scope="col"
                     className={clsx(
                       // Sentence case — the product never uppercases labels.
-                      'px-rui-3 py-rui-2 text-xs font-heading text-hushed whitespace-nowrap',
+                      // Vertical limestone dividers between every column
+                      // (persistence-scanned on product-overview/02).
+                      'border-b border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed whitespace-nowrap',
+                      'border-l first:border-l-0',
                       ALIGN_CLASS[col.align ?? 'left'],
                       isSticky && 'sticky z-10 bg-white',
                     )}
@@ -409,7 +481,6 @@ export function Table<T, K extends string | number = string>({
             </tr>
           </thead>
           <tbody
-            className="divide-y divide-limestone"
             style={
               isVirtualized
                 ? { transform: `translateY(${offsetY}px)` }
@@ -429,7 +500,11 @@ export function Table<T, K extends string | number = string>({
                     aria-selected={isSelected || undefined}
                     onClick={isClickable ? () => onRowClick(row) : undefined}
                     className={clsx(
-                      'transition-colors',
+                      // group/row lets STICKY cells (which need their own
+                      // opaque bg) follow the row's hover/selected state —
+                      // without it they stayed white and read as vertical
+                      // bands over hovered/selected rows.
+                      'group/row transition-colors',
                       isClickable && 'cursor-pointer hover:bg-limestone',
                       isSelected && 'bg-tone-selected-surface',
                     )}
@@ -437,15 +512,21 @@ export function Table<T, K extends string | number = string>({
                   >
                     {selectable && (
                       <td
-                        className="sticky left-0 z-10 bg-white px-rui-3 py-rui-3 align-middle"
-                        style={{ width: checkboxWidth }}
+                        className={clsx(
+                          'sticky left-0 z-10 border-b border-limestone px-rui-3 py-rui-3 align-middle',
+                          isSelected ? 'bg-tone-selected-surface' : 'bg-white',
+                          isClickable && !isSelected && 'group-hover/row:bg-limestone',
+                        )}
+                        style={{ width: checkboxWidth, minWidth: checkboxWidth }}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Checkbox
-                          checked={isSelected}
-                          onChange={() => toggleRow(row)}
-                          aria-label={`Select row ${id}`}
-                        />
+                        <div className="flex items-center">
+                          <Checkbox
+                            checked={isSelected}
+                            onChange={() => toggleRow(row)}
+                            aria-label={`Select row ${id}`}
+                          />
+                        </div>
                       </td>
                     )}
                     {columns.map((col) => {
@@ -458,9 +539,12 @@ export function Table<T, K extends string | number = string>({
                         <td
                           key={col.id}
                           className={clsx(
-                            'px-rui-3 py-rui-3 text-ink align-middle',
+                            'border-b border-limestone px-rui-3 py-rui-3 text-ink align-middle',
+                            'border-l first:border-l-0',
                             ALIGN_CLASS[col.align ?? 'left'],
-                            isSticky && 'sticky z-10 bg-white',
+                            isSticky && 'sticky z-10',
+                            isSticky && (isSelected ? 'bg-tone-selected-surface' : 'bg-white'),
+                            isSticky && isClickable && !isSelected && 'group-hover/row:bg-limestone',
                           )}
                           style={{
                             width: col.width,
@@ -476,12 +560,19 @@ export function Table<T, K extends string | number = string>({
                   {annotation && (
                     <tr
                       data-testid="table-annotation-row"
-                      className="bg-white"
+                      // Full-width rose wash — vetted #fbf5f3–#fdf8f4 on both
+                      // annotation frames (product-overview 01/02); the band
+                      // has NO vertical dividers crossing it.
+                      className="bg-alert-surface"
                       style={isVirtualized ? { height: annotationHeight } : undefined}
                     >
                       <td
                         colSpan={columns.length + (selectable ? 1 : 0)}
-                        className="px-rui-3 py-rui-2"
+                        className="border-b border-limestone px-rui-3 py-rui-2"
+                        // The ↳ hook starts under the FIRST DATA column, past
+                        // the checkbox gutter (frame 01: hook at x≈265 with
+                        // the table edge at ~210).
+                        style={selectable ? { paddingLeft: checkboxWidth } : undefined}
                       >
                         <div className="sticky left-0 inline-flex items-start gap-rui-2 text-sm text-alert">
                           <CornerDownRight size={14} className="mt-0.5 shrink-0" />
@@ -495,11 +586,121 @@ export function Table<T, K extends string | number = string>({
             })}
           </tbody>
           {footer.type !== 'none' && (
-            <tfoot className="sticky bottom-0 z-20 border-t border-limestone bg-white">
-              {footer.type === 'summary' ? (
+            <tfoot
+              className={clsx(
+                'sticky bottom-0 z-20',
+                // The pagination band sits on CANVAS (#fbfaf6 sampled at 1px
+                // on frame 6 y634/640) — the other footer kinds stay on the
+                // white table surface.
+                footer.type === 'pagination' ? 'bg-canvas' : 'bg-white',
+              )}
+            >
+              {footer.type === 'pagination' ? (
+                <tr>
+                  <td
+                    colSpan={columns.length + (selectable ? 1 : 0)}
+                    className="border-t border-limestone px-rui-3 py-rui-2"
+                  >
+                    <div className="flex items-center justify-between gap-rui-4 text-sm text-hushed">
+                      {/* Left — "Select ⌄": hushed underlined text + a chevron
+                          that is NOT underlined (8x zoom, frame 6). The menu
+                          contents are INFERRED (never shown open in a frame):
+                          selection scopes on the Map. */}
+                      <Menu
+                        side="top"
+                        align="start"
+                        label="Selection options"
+                        trigger={
+                          <span className="inline-flex items-center gap-rui-1 text-sm text-hushed">
+                            <span className="underline decoration-hushed underline-offset-2">
+                              Select
+                            </span>
+                            <ChevronDown size={14} strokeWidth={1.5} aria-hidden />
+                          </span>
+                        }
+                        items={[
+                          {
+                            label: 'Select all on this page',
+                            onSelect: selectPage,
+                          },
+                          {
+                            label: 'Clear selection',
+                            onSelect: clearSelection,
+                            disabled: selection.size === 0,
+                          },
+                        ]}
+                      />
+                      {/* Right — the range numbers are the ONLY underlined
+                          part ("1–7" underlined, " of 7 bills · $… total"
+                          plain, all one hushed gray — 8x zoom, frame 6).
+                          Clicking opens the (inferred) page picker. */}
+                      {(() => {
+                        const {
+                          page,
+                          pageSize,
+                          totalCount,
+                          noun = 'bills',
+                          totalCents,
+                          currency = 'USD',
+                          extra,
+                          onPageChange,
+                        } = footer;
+                        const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+                        const rangeStart = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+                        const rangeEnd = Math.min(page * pageSize, totalCount);
+                        const formattedTotal =
+                          totalCents !== undefined
+                            ? new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency,
+                              }).format(totalCents / 100)
+                            : undefined;
+                        return (
+                          <div className="flex items-center gap-rui-1 whitespace-nowrap">
+                            <Menu
+                              side="top"
+                              align="end"
+                              label="Go to page"
+                              trigger={
+                                <span className="text-sm tabular-nums text-hushed underline decoration-hushed underline-offset-2">
+                                  {rangeStart}–{rangeEnd}
+                                </span>
+                              }
+                              items={Array.from({ length: totalPages }, (_, i) => {
+                                const p = i + 1;
+                                const s = totalCount === 0 ? 0 : i * pageSize + 1;
+                                const e = Math.min(p * pageSize, totalCount);
+                                return {
+                                  label: `${s}–${e}`,
+                                  disabled: p === page,
+                                  onSelect: () => onPageChange?.(p),
+                                };
+                              })}
+                            />
+                            <span>
+                              {' '}
+                              of {totalCount} {noun}
+                              {formattedTotal !== undefined && (
+                                <>
+                                  {' '}
+                                  · <span className="tabular-nums">{formattedTotal}</span> total
+                                </>
+                              )}
+                              {extra}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </td>
+                </tr>
+              ) : footer.type === 'summary' ? (
                 <tr>
                   {selectable && (
-                    <td className="sticky left-0 z-10 bg-white px-rui-3 py-rui-2" style={{ width: checkboxWidth }} />
+                    <td
+                      className="sticky left-0 z-10 border-t border-limestone bg-white px-rui-3 py-rui-2"
+                      style={{ width: checkboxWidth, minWidth: checkboxWidth }}
+                    />
                   )}
                   {columns.map((col) => {
                     const isSticky = col === stickyLeft || col === stickyRight;
@@ -534,7 +735,8 @@ export function Table<T, K extends string | number = string>({
                       <td
                         key={col.id}
                         className={clsx(
-                          'px-rui-3 py-rui-2 text-xs font-heading text-hushed',
+                          'border-t border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed',
+                          'border-l first:border-l-0',
                           ALIGN_CLASS[col.align ?? 'left'],
                           isSticky && 'sticky z-10 bg-white',
                         )}
@@ -553,7 +755,7 @@ export function Table<T, K extends string | number = string>({
                 <tr>
                   <td
                     colSpan={columns.length + (selectable ? 1 : 0)}
-                    className="px-rui-3 py-rui-2 text-sm text-ink"
+                    className="border-t border-limestone px-rui-3 py-rui-2 text-sm text-ink"
                   >
                     {footer.content}
                   </td>

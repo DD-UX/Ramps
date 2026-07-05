@@ -59,13 +59,13 @@ export function SegmentedArea({
   };
 
   return (
-    <div className={clsx('flex flex-col rounded-square bg-canvas p-rui-3', className)}>
+    <div className={clsx('flex flex-col rounded-square', className)}>
       <SegmentedControl
         options={tabs.map(({ value: tabValue, label }) => ({ value: tabValue, label }))}
         value={active}
         onValueChange={select}
       />
-      <div id={panelId} role="tabpanel" data-testid="segmented-area-panel">
+      <div id={panelId} role="tabpanel" className="bg-canvas p-rui-3" data-testid="segmented-area-panel">
         {/* mode="wait": the leaving panel fades out fully before the next fades in. */}
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -74,7 +74,6 @@ export function SegmentedArea({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.15, ease: 'easeIn' } }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="pt-rui-4"
           >
             {activeTab?.content}
           </motion.div>

@@ -105,11 +105,19 @@
   --rui-tone-critical-on: #b23f12;
 
   /* Alert — the ONE place the product really uses red: the ↳ annotation rows
-     under flagged bills (product-overview §02 "Ramp identified $5,660.00 of
-     overbilling for this invoice", §03 fraud/duplicate lines). Vetted at 1px:
-     the darkest full-stroke pixels read #6d2f24–#7d1f1f through JPEG blur, a
-     deep brick red nowhere near the destructive orange. Median full-stroke
-     sample = #713632. Used for annotation text AND its underlined link — the
-     "never red" doctrine above still holds for status pills/buttons. */
-  --rui-alert: #713632;
+     under flagged bills (product-overview §01 "This draft may be a duplicate
+     of INV# 8960", §02 "Ramp identified $5,660.00 of overbilling") and the
+     red "Overdue" under due dates. RE-VETTED with a max-red-saturation scan
+     over the whole text strip (single-pixel probes kept landing between the
+     thin strokes): the densest glyph junctions read #8f171e (frame 01) and
+     #90252b / #7d1f1f (frame 02) — a true crimson, NOT the brown-maroon
+     #713632 the old edge-biased sampling produced (anti-aliased outlines
+     drag red toward brown). Per-channel median of the three junctions:
+     #8f1f1f. The "never red" doctrine still holds for pills/buttons. */
+  --rui-alert: #8f1f1f;
+  /* Alert surface — the full-width rose wash BEHIND a flagged bill's ↳
+     annotation band. Vetted at 1px on both frames: the band field samples
+     #fbf5f3–#fdf8f4 (frame 01 y528–533, frame 02 y392–396) against pure
+     white rows above. Median #fcf8f4 — a whisper of the alert crimson. */
+  --rui-alert-surface: #fcf8f4;
 }

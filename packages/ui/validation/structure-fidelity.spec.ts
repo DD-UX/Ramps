@@ -636,12 +636,13 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   /**
    * Product-overview snapshot 13 — the "Pay with Ramp Card" accordion row:
    * white surface, ink heading + hushed subtitle, thin caret on the right;
-   * the row toggles an aria-wired region. Re-vetted at 1px: the hairline
-   * sits BETWEEN the header and its content (y≈106–107 samples
-   * #e3e2de/#e4e4e4 → stone), so it lives on the header button — not the
-   * item wrapper, and never after the content.
+   * the row toggles an aria-wired region. Design iteration: the item is a
+   * BOXED row — the header button carries a full stone border; while open
+   * its bottom edge drops (border-b-0) so the canvas content region (its own
+   * stone border, sans top) completes the box. Closed again, the header's
+   * bottom hairline returns.
    */
-  test('Accordion matches snapshot 13 (hushed subtitle, stone hairline under the header, toggling region)', async ({
+  test('Accordion matches snapshot 13 (hushed subtitle, boxed stone border, toggling region)', async ({
     page,
   }) => {
     await page.goto(storyUrl('primitives-accordion--pay-with-ramp-card'));
@@ -658,26 +659,50 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
       hexToRgb(RUI['--rui-hushed']),
     );
 
-    // The hairline lives on the header button itself (stone), so it always
-    // separates the header from what follows; the wrapper draws nothing.
-    const hairline = await row.evaluate((el) => {
+    // The header button owns the box: 1px stone on top/left/right, and while
+    // OPEN its bottom edge is dropped so the content region completes the
+    // frame with its own stone border (sans top). The wrapper draws nothing.
+    const openBorders = await row.evaluate((el) => {
       const s = getComputedStyle(el);
       const parent = getComputedStyle(el.parentElement as Element);
       return {
-        color: s.borderBottomColor,
-        width: Number.parseFloat(s.borderBottomWidth),
+        topColor: s.borderTopColor,
+        topWidth: Number.parseFloat(s.borderTopWidth),
+        leftWidth: Number.parseFloat(s.borderLeftWidth),
+        bottomWidth: Number.parseFloat(s.borderBottomWidth),
         parentWidth: Number.parseFloat(parent.borderBottomWidth),
       };
     });
-    expect(hairline.color, 'stone hairline under the header row').toBe(
+    expect(openBorders.topColor, 'stone border frames the header row').toBe(
       hexToRgb(RUI['--rui-stone']),
     );
-    expect(hairline.width, 'hairline is 1px').toBe(1);
-    expect(hairline.parentWidth, 'item wrapper draws no border of its own').toBe(0);
+    expect(openBorders.topWidth, 'top border is 1px').toBe(1);
+    expect(openBorders.leftWidth, 'side border is 1px').toBe(1);
+    expect(openBorders.bottomWidth, 'open header hands its bottom edge to the content').toBe(0);
+    expect(openBorders.parentWidth, 'item wrapper draws no border of its own').toBe(0);
+
+    // The open content region sits on the canvas tint and closes the box
+    // with its own stone border, minus the top edge (the header abuts it).
+    const region = page.getByRole('region');
+    await expect(region, 'content region sits on the canvas tint').toHaveCSS(
+      'background-color',
+      hexToRgb(RUI['--rui-canvas']),
+    );
+    await expect(region).toHaveCSS('border-bottom-color', hexToRgb(RUI['--rui-stone']));
+    await expect(region, 'no top border — the header abuts the content').toHaveCSS(
+      'border-top-width',
+      '0px',
+    );
 
     await row.click();
     await expect(row).toHaveAttribute('aria-expanded', 'false');
     await expect(page.getByRole('region'), 'content unmounts after the exit').toBeHidden();
+
+    // Closed again, the header's bottom hairline returns to complete the box.
+    const closedBottom = await row.evaluate((el) =>
+      Number.parseFloat(getComputedStyle(el).borderBottomWidth),
+    );
+    expect(closedBottom, 'closed header restores its bottom hairline').toBe(1);
   });
 
   /**
@@ -715,26 +740,26 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
 
   /**
    * SegmentedArea = the control fronting a tabpanel (snapshot 12's panel):
-   * selecting a segment swaps the content under it. Re-vetted at 1px: the
-   * whole area (strip + content) sits on the warm canvas tint (#fbfaf6)
-   * against the pure-white panel, with the strip inset ~10px from the tinted
-   * edges — asserted as the --rui-canvas background + rui-3 padding.
+   * selecting a segment swaps the content under it. Design iteration: the
+   * canvas tint (#fbfaf6, --rui-canvas) + rui-3 insets now live on the
+   * TABPANEL itself — the strip sits flush on top and the wrapper stays
+   * transparent, so only the content band reads tinted against the white
+   * panel around it.
    */
   test('SegmentedArea swaps the panel under the control', async ({ page }) => {
     await page.goto(storyUrl('primitives-segmentedarea--pay-by-card'));
 
-    // The area wrapper carries the vetted canvas tint + insets.
-    const area = page.getByRole('tablist').locator('..');
-    await expect(area, 'area sits on the canvas tint').toHaveCSS(
+    // The tabpanel carries the vetted canvas tint + insets; the wrapper
+    // around the strip draws nothing of its own.
+    const panel = page.getByTestId('segmented-area-panel');
+    await expect(panel, 'panel sits on the canvas tint').toHaveCSS(
       'background-color',
       hexToRgb(RUI['--rui-canvas']),
     );
-    await expect(area, 'strip and content inset from the tinted edges').toHaveCSS(
+    await expect(panel, 'content insets from the tinted edges').toHaveCSS(
       'padding-top',
       RUI['--rui-space-3'],
     );
-
-    const panel = page.getByTestId('segmented-area-panel');
     await expect(panel).toContainText('Pay automatically');
     await page.getByRole('tab', { name: 'Existing card' }).click();
     await expect(panel).toContainText('Choose one of your issued Ramp cards');

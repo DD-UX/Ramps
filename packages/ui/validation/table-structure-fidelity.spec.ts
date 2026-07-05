@@ -22,8 +22,14 @@ import { hexToRgb, RUI } from './tokens.fixture';
  *
  * Frame references (cited in each block):
  *  - snapshot 6 — "For approval" table: white header, limestone hairlines,
- *    sticky Actions column, right-aligned money, Approve button per row.
+ *    sticky Actions column, right-aligned money, Approve button per row, and
+ *    the pagination band ("Select ⌄" left, "1–7 of 7 bills · $634,235.35
+ *    total" right, on canvas).
  *  - snapshot 17 — "For payment" footer: "1–3 of 3 bills • $1,194.08 total".
+ *  - product-overview/02 — vertical limestone column dividers (persistence
+ *    scan: x=463/655/799/1073 stay #efefee–#f1f1f1 through 280 rows) and the
+ *    annotation rows: crimson --rui-alert text on the --rui-alert-surface
+ *    rose band.
  */
 
 /** Storybook static: render a single story chrome-free. */
@@ -59,7 +65,7 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
    * container. Assert: position sticky + bottom: 0.
    */
   test('Table footer is sticky (position: sticky, bottom: 0)', async ({ page }) => {
-    await page.goto(storyUrl('primitives-table--custom-footer'));
+    await page.goto(storyUrl('primitives-table--pagination-footer'));
     const footer = page.locator('#storybook-root tfoot').first();
     await expect(footer).toBeVisible();
     const styles = await footer.evaluate((el) => {
@@ -137,17 +143,19 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     await checkboxes.nth(1).check();
     await expect(selectionCount).toContainText('2 selected');
 
-    // Flip to page 2
-    const nextButton = page.getByRole('button', { name: 'Next' });
-    await nextButton.click();
+    // Flip to page 2 via the pagination footer's range menu — the product
+    // has NO Previous/Next buttons anywhere in the frames; the underlined
+    // range IS the page control.
+    await page.getByRole('button', { name: '1–5' }).click();
+    await page.getByRole('menuitem', { name: '6–10' }).click();
     await page.waitForTimeout(100); // Let React re-render
 
     // Still 2 selected (the count persists)
     await expect(selectionCount).toContainText('2 selected');
 
     // Go back to page 1
-    const prevButton = page.getByRole('button', { name: 'Previous' });
-    await prevButton.click();
+    await page.getByRole('button', { name: '6–10' }).click();
+    await page.getByRole('menuitem', { name: '1–5' }).click();
     await page.waitForTimeout(100);
 
     // Still 2 selected, and the checkboxes are still checked
@@ -173,14 +181,43 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
   /**
    * The hairlines (header bottom, row dividers) are LIMESTONE — the frame
    * dividers sample #f4f4f4 at 1px, the limestone family, visibly lighter
-   * than the bone this test used to assert.
+   * than the bone this test used to assert. The border now lives on the TH
+   * (border-separate: sticky cells must carry their own hairlines), not on
+   * the thead element.
    */
   test('Table borders are limestone hairlines (frame 6)', async ({ page }) => {
     await page.goto(storyUrl('primitives-table--frame-6-replica'));
-    const header = page.locator('#storybook-root thead').first();
-    await expect(header).toBeVisible();
-    const borderColor = await header.evaluate((el) => getComputedStyle(el).borderBottomColor);
-    expect(borderColor, 'thead border-bottom is limestone').toBe(hexToRgb(RUI['--rui-limestone']));
+    const headerCell = page.locator('#storybook-root thead th').first();
+    await expect(headerCell).toBeVisible();
+    const borderColor = await headerCell.evaluate((el) => getComputedStyle(el).borderBottomColor);
+    expect(borderColor, 'th border-bottom is limestone').toBe(hexToRgb(RUI['--rui-limestone']));
+  });
+
+  /**
+   * VERTICAL column dividers — the product separates every column with a
+   * limestone hairline (persistence scan on product-overview/02: x=463/655/
+   * 799/1073 stay #efefee–#f1f1f1 through all 280 scanned rows). Assert:
+   * a middle data cell carries a 1px limestone border-left; the row's FIRST
+   * cell does not (no divider on the table's outer edge).
+   */
+  test('Vertical column dividers are limestone hairlines (product-overview 02)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-table--frame-6-replica'));
+    const firstRow = page.locator('#storybook-root tbody tr').first();
+    await expect(firstRow).toBeVisible();
+
+    const middleCell = firstRow.locator('td').nth(2);
+    const middleStyles = await middleCell.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { width: Number.parseFloat(s.borderLeftWidth), color: s.borderLeftColor };
+    });
+    expect(middleStyles.width, 'data cell has a 1px left divider').toBe(1);
+    expect(middleStyles.color, 'divider is limestone').toBe(hexToRgb(RUI['--rui-limestone']));
+
+    const firstCell = firstRow.locator('td').first();
+    const firstWidth = await firstCell.evaluate(
+      (el) => Number.parseFloat(getComputedStyle(el).borderLeftWidth),
+    );
+    expect(firstWidth, 'no divider on the table outer edge').toBe(0);
   });
 
   /**
@@ -211,14 +248,14 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     await page.goto(storyUrl('primitives-table--frame-6-replica'));
     const table = page.locator('#storybook-root table').first();
     await expect(table).toBeVisible();
-    // The Amount column is the 5th column (0-indexed: checkbox, vendor, action, status, approver, amount)
-    const amountHeader = table.locator('thead th').nth(4);
+    // Amount is the 6th column (0-indexed: checkbox, vendor, action, status, approver, amount)
+    const amountHeader = table.locator('thead th').nth(5);
     await expect(amountHeader).toBeVisible();
     const headerAlign = await amountHeader.evaluate((el) => getComputedStyle(el).textAlign);
     expect(headerAlign, 'Amount header is right-aligned').toBe('right');
 
     // Check a data cell in the Amount column (first row, same index)
-    const amountCell = table.locator('tbody tr').first().locator('td').nth(4);
+    const amountCell = table.locator('tbody tr').first().locator('td').nth(5);
     await expect(amountCell).toBeVisible();
     const cellStyles = await amountCell.evaluate((el) => {
       const s = getComputedStyle(el);
@@ -269,11 +306,11 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
 
   /**
    * The per-column footer summary (money total) renders correctly in the
-   * CrossPageSelection story. Assert: the footer cell shows a formatted
-   * currency value.
+   * SummaryFooter story. Assert: the footer cell shows a formatted
+   * currency value that tracks the selected rows.
    */
   test('Footer summary (money total) renders correctly', async ({ page }) => {
-    await page.goto(storyUrl('primitives-table--cross-page-selection'));
+    await page.goto(storyUrl('primitives-table--summary-footer'));
     const tfoot = page.locator('#storybook-root tfoot').first();
     await expect(tfoot).toBeVisible();
 
@@ -291,20 +328,116 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
   });
 
   /**
-   * The custom footer content (frame 17: "1–3 of 3 bills • $1,194.08 total")
-   * spans all columns in a single cell. Assert: the tfoot tr has ONE td with
-   * a colSpan matching the column count.
+   * The pagination footer (frame 17: "1–3 of 3 bills · $1,194.08 total")
+   * spans all columns in a single cell. Assert: the tfoot tr has ONE td
+   * containing the range, the noun and the money total.
    */
-  test('Custom footer spans all columns (frame 17)', async ({ page }) => {
-    await page.goto(storyUrl('primitives-table--custom-footer'));
+  test('Pagination footer spans all columns (frame 17)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-table--pagination-footer'));
     const tfoot = page.locator('#storybook-root tfoot').first();
     await expect(tfoot).toBeVisible();
     const footerRow = tfoot.locator('tr').first();
     const cells = footerRow.locator('td');
     const cellCount = await cells.count();
-    expect(cellCount, 'custom footer is a single spanning cell').toBe(1);
-    await expect(cells.first()).toContainText('1–3 of 3 bills');
+    expect(cellCount, 'pagination footer is a single spanning cell').toBe(1);
+    await expect(cells.first()).toContainText('1–3');
+    await expect(cells.first()).toContainText('of 3 bills');
+    await expect(cells.first()).toContainText('$1,194.08');
     await expect(cells.first()).toContainText('total');
+  });
+
+  /**
+   * The pagination band sits on CANVAS under a limestone hairline — vetted
+   * at 1px on ap-agent/6 (y634/640 sample #fbfaf6, the canvas token; the
+   * table surface above is pure white).
+   */
+  test('Pagination band sits on canvas with a limestone top hairline (frame 6)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-table--pagination-footer'));
+    const tfoot = page.locator('#storybook-root tfoot').first();
+    await expect(tfoot).toBeVisible();
+    const bg = await tfoot.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(bg, 'pagination band bg is canvas').toBe(hexToRgb(RUI['--rui-canvas']));
+
+    const td = tfoot.locator('td').first();
+    const border = await td.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { width: Number.parseFloat(s.borderTopWidth), color: s.borderTopColor };
+    });
+    expect(border.width, 'band has a 1px top hairline').toBe(1);
+    expect(border.color, 'top hairline is limestone').toBe(hexToRgb(RUI['--rui-limestone']));
+  });
+
+  /**
+   * "Select ⌄" — hushed UNDERLINED text plus a chevron that is NOT part of
+   * the underline (8x zoom on frame 6: the underline stops at the "t"; the
+   * chevron sits outside it). Assert: the underlined span is hushed and
+   * does NOT contain the svg; the svg lives beside it in the trigger.
+   */
+  test('Pagination "Select" is hushed + underlined with a non-underlined chevron (frame 6)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-table--pagination-footer'));
+    const trigger = page.locator('#storybook-root tfoot [role="button"]').first();
+    await expect(trigger).toBeVisible();
+    await expect(trigger).toContainText('Select');
+
+    const underlined = trigger.locator('span.underline').first();
+    await expect(underlined).toHaveText('Select');
+    const styles = await underlined.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { decoration: s.textDecorationLine, color: s.color };
+    });
+    expect(styles.decoration, '"Select" text is underlined').toBe('underline');
+    expect(styles.color, '"Select" text is hushed').toBe(hexToRgb(RUI['--rui-hushed']));
+
+    // The chevron exists in the trigger but OUTSIDE the underlined span.
+    expect(await trigger.locator('svg').count(), 'trigger has the chevron').toBe(1);
+    expect(await underlined.locator('svg').count(), 'chevron is not underlined').toBe(0);
+  });
+
+  /**
+   * The range numbers are the ONLY underlined part of the right-hand meta
+   * ("1–3" underlined; " of 3 bills · $1,194.08 total" plain hushed).
+   * Clicking behavior (page picker) is INFERRED — asserted in the
+   * cross-page test via real page flips.
+   */
+  test('Pagination range numbers are underlined hushed (frame 6)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-table--pagination-footer'));
+    const range = page.getByRole('button', { name: '1–3' });
+    await expect(range).toBeVisible();
+    const inner = range.locator('span.underline').first();
+    const styles = await inner.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { decoration: s.textDecorationLine, color: s.color };
+    });
+    expect(styles.decoration, 'range numbers are underlined').toBe('underline');
+    expect(styles.color, 'range numbers are hushed').toBe(hexToRgb(RUI['--rui-hushed']));
+  });
+
+  /**
+   * "Select ⌄" opens the (inferred) selection-scope menu: "Select all on
+   * this page" fills the page into the selection Map; "Clear selection"
+   * empties it. Wired to the same Map the checkboxes use.
+   */
+  test('Select menu selects the whole page and clears it (inferred behavior)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-table--frame-6-replica'));
+    const checkboxes = page.locator('#storybook-root tbody input[type="checkbox"]');
+    // toHaveCount waits for the story to hydrate — a bare .count() races it.
+    await expect(checkboxes, 'frame 6 replica shows 7 bills').toHaveCount(7);
+    const count = 7;
+
+    const selectTrigger = page.locator('#storybook-root tfoot [role="button"]').first();
+    await selectTrigger.click();
+    await page.getByRole('menuitem', { name: 'Select all on this page' }).click();
+    await page.waitForTimeout(100);
+    for (let i = 0; i < count; i++) {
+      await expect(checkboxes.nth(i)).toBeChecked();
+    }
+
+    await selectTrigger.click();
+    await page.getByRole('menuitem', { name: 'Clear selection' }).click();
+    await page.waitForTimeout(100);
+    for (let i = 0; i < count; i++) {
+      await expect(checkboxes.nth(i)).not.toBeChecked();
+    }
   });
 
   /**
@@ -448,25 +581,29 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
   });
 
   /**
-   * Annotation rows have no hover wash (background stays white when hovered).
-   * The parent data row gets limestone hover, but the annotation row does not.
+   * Annotation rows sit on the full-width ROSE band (--rui-alert-surface,
+   * vetted #fbf5f3–#fdf8f4 at 1px on product-overview 01 y528–533 and
+   * 02 y392–396) and have no hover wash — the parent data row gets
+   * limestone hover, the annotation band does not change.
    */
-  test('Annotation row has no hover wash (background stays white)', async ({ page }) => {
+  test('Annotation row sits on the alert-surface band, no hover wash', async ({ page }) => {
     await page.goto(storyUrl('primitives-table--flagged-bills'));
     const annotationRow = page.locator('[data-testid="table-annotation-row"]').first();
     await expect(annotationRow).toBeVisible();
 
-    // Initial background is white
+    const expected = hexToRgb(RUI['--rui-alert-surface']);
+
+    // Initial background is the rose band
     const bgInitial = await annotationRow.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bgInitial, 'annotation row initial bg is white').toBe('rgb(255, 255, 255)');
+    expect(bgInitial, 'annotation row bg is the alert-surface rose').toBe(expected);
 
     // Hover over the annotation row
     await annotationRow.hover();
     await page.waitForTimeout(100); // Let any hover transition finish
 
-    // Background should still be white (no limestone hover)
+    // Background is unchanged (no limestone hover on the band)
     const bgHover = await annotationRow.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bgHover, 'annotation row bg stays white on hover').toBe('rgb(255, 255, 255)');
+    expect(bgHover, 'annotation row bg stays on the band on hover').toBe(expected);
   });
 
   /**
