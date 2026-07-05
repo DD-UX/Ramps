@@ -7,6 +7,10 @@
   "exports": {
     "./tokens.css": "./src/tokens/tokens.css",
     "./theme.css": "./src/tokens/theme.css",
+    "./icons": {
+      "types": "./dist/icons/index.d.ts",
+      "import": "./dist/icons/index.js"
+    },
     "./Button": {
       "types": "./dist/components/Button/Button.d.ts",
       "import": "./dist/components/Button/Button.js"
