@@ -1,0 +1,27 @@
+{
+  // The Playwright validation harness (validation/**/*.spec.ts, rui.fixture.ts,
+  // playwright.config.ts) runs in Node, not the browser bundle — it reads
+  // tokens.css off disk (`node:fs`/`node:url`) and reads `process.env`. The kit
+  // build (tsconfig.json) is deliberately DOM-only with `types: []`, so it does
+  // NOT cover these files; without a config that pulls in @types/node the editor
+  // and a bare tsc flag `node:url` as TS2591. This is that config: node + DOM
+  // libs for the harness, kept out of the shipped `dist` build.
+  "extends": "@ramps/config/tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    // Playwright specs, not shipped code. They index regex captures and query
+    // results freely (`m[1]`, `boxes[i]`) and locally alias helpers they don't
+    // always use — the product-strictness flags from the base config only add
+    // noise here without protecting anything that ships. Keep type resolution
+    // (the point of this config) and drop the index/unused ceremony for tests.
+    "noUncheckedIndexedAccess": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["validation", "playwright.config.ts"]
+}
