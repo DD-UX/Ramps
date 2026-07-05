@@ -14,10 +14,18 @@ import { Checkbox } from '../Checkbox/Checkbox';
  * a COMPLETE rewrite: virtualized scrolling, sticky header/footer/columns,
  * cross-page selection via Map, dependency-free.
  *
- * **Vetted against frame 6** (see research below):
- *  - Header: limestone (#f4f2f0) background, hushed uppercase column labels,
- *    bone hairline bottom border (frame samples #faf9f5 footer → limestone family).
- *  - Rows: white bg, bone dividers, limestone hover, tabular-nums on money columns.
+ * **Vetted against the frames at 1px sampling** (ap-agent/6, product-overview
+ * 01/02/16, does-ramp/11 — every table screen in the corpus):
+ *  - Header: WHITE background (#ffffff–#fcfcfc on all five screens — the old
+ *    limestone thead was an invention), hushed sentence-case labels (no
+ *    uppercase in the product), limestone hairline under the header row.
+ *  - Rows: white bg, limestone dividers (#f4f4f4 sampled), limestone hover
+ *    (#f6f5f1 sampled), ~56px tall (294→349, 295→351 measured), tabular-nums
+ *    on money columns. Selected rows wash in the pale green
+ *    --rui-tone-selected-surface (#f4fff7 sampled), never the accent lime.
+ *  - Chrome: NO outer border — the table sits directly on the page; the frame
+ *    edge people read as a border is just the page canvas (#f9f8f4) meeting
+ *    the white table surface.
  *  - Selection: positive-green checkbox fill (#01a741), row selection survives
  *    pagination — returns a `Map<K, T>` that persists the chosen records ACROSS pages.
  *  - Sticky: thead + tfoot both sticky, PLUS the first data column (after checkbox)
@@ -39,8 +47,9 @@ import { Checkbox } from '../Checkbox/Checkbox';
  *    happen in modals triggered by selecting rows, not a persistent bottom bar.
  *
  * **Design tokens** (docs/design-system.md §2, tokens.css):
- *  - All colors via semantic Tailwind utilities: bg-limestone (header/hover),
- *    border-bone (hairlines), text-hushed (header labels), text-ink (body),
+ *  - All colors via semantic Tailwind utilities: bg-white (header/footer),
+ *    hover:bg-limestone + border-limestone (hairlines), text-hushed (header
+ *    labels), text-ink (body), bg-tone-selected-surface (selected rows),
  *    bg-positive + border-positive (checkbox checked).
  *  - Spacing: p-rui-3 (cells), py-rui-2 (header), gap-rui-2 (internal).
  *  - Corner: rounded-square (0px, per frame measurements — every rectangle is sharp).
@@ -95,7 +104,7 @@ export type CellAlign = 'left' | 'right' | 'center';
 export interface TableColumn<T, K extends string | number = string> {
   /** Unique column ID (must match the TS keys for type safety). */
   id: K;
-  /** Header label (rendered as hushed uppercase in thead). */
+  /** Header label (rendered as hushed sentence-case text in thead). */
   header: ReactNode;
   /** Cell renderer: receives the full row record. */
   cell: (row: T) => ReactNode;
@@ -151,8 +160,8 @@ export interface TableProps<T, K extends string | number = string> {
    */
   virtualizeAfter?: number;
   /**
-   * Fixed row height in pixels (required for virtualization). Measure a typical
-   * row in the browser; a Bills table row is ~64px per Ramp's token sheet.
+   * Fixed row height in pixels (required for virtualization). A Bills table
+   * row is ~56px — measured on the frames (row baselines 294→349, 295→351).
    */
   rowHeight?: number;
   /**
@@ -228,7 +237,7 @@ export function Table<T, K extends string | number = string>({
   onSelectionChange,
   selectedRows: controlledSelection,
   virtualizeAfter = Infinity,
-  rowHeight = 64,
+  rowHeight = 56,
   overscan = 5,
   footer = { type: 'none' },
   onRowClick,
@@ -343,7 +352,9 @@ export function Table<T, K extends string | number = string>({
   return (
     <div
       className={clsx(
-        'overflow-hidden rounded-square border border-bone bg-white',
+        // No outer border — the frames show the table sitting borderless on
+        // the page canvas; every hairline lives INSIDE (header/dividers).
+        'overflow-hidden rounded-square bg-white',
         className,
       )}
     >
@@ -353,11 +364,11 @@ export function Table<T, K extends string | number = string>({
         style={{ maxHeight: isVirtualized ? '600px' : undefined }}
       >
         <table className="w-full border-collapse text-sm">
-          <thead className="sticky top-0 z-20 border-b border-bone bg-limestone">
+          <thead className="sticky top-0 z-20 border-b border-limestone bg-white">
             <tr>
               {selectable && (
                 <th
-                  className="sticky left-0 z-10 bg-limestone px-rui-3 py-rui-2"
+                  className="sticky left-0 z-10 bg-white px-rui-3 py-rui-2"
                   style={{ width: checkboxWidth }}
                 >
                   <Checkbox
@@ -380,9 +391,10 @@ export function Table<T, K extends string | number = string>({
                     key={col.id}
                     scope="col"
                     className={clsx(
-                      'px-rui-3 py-rui-2 text-xs font-heading uppercase tracking-wide text-hushed whitespace-nowrap',
+                      // Sentence case — the product never uppercases labels.
+                      'px-rui-3 py-rui-2 text-xs font-heading text-hushed whitespace-nowrap',
                       ALIGN_CLASS[col.align ?? 'left'],
-                      isSticky && 'sticky z-10 bg-limestone',
+                      isSticky && 'sticky z-10 bg-white',
                     )}
                     style={{
                       width: col.width,
@@ -397,7 +409,7 @@ export function Table<T, K extends string | number = string>({
             </tr>
           </thead>
           <tbody
-            className="divide-y divide-bone"
+            className="divide-y divide-limestone"
             style={
               isVirtualized
                 ? { transform: `translateY(${offsetY}px)` }
@@ -419,7 +431,7 @@ export function Table<T, K extends string | number = string>({
                     className={clsx(
                       'transition-colors',
                       isClickable && 'cursor-pointer hover:bg-limestone',
-                      isSelected && 'bg-tone-accent-surface',
+                      isSelected && 'bg-tone-selected-surface',
                     )}
                     style={isVirtualized ? { height: rowHeight } : undefined}
                   >
@@ -483,11 +495,11 @@ export function Table<T, K extends string | number = string>({
             })}
           </tbody>
           {footer.type !== 'none' && (
-            <tfoot className="sticky bottom-0 z-20 border-t border-bone bg-limestone">
+            <tfoot className="sticky bottom-0 z-20 border-t border-limestone bg-white">
               {footer.type === 'summary' ? (
                 <tr>
                   {selectable && (
-                    <td className="sticky left-0 z-10 bg-limestone px-rui-3 py-rui-2" style={{ width: checkboxWidth }} />
+                    <td className="sticky left-0 z-10 bg-white px-rui-3 py-rui-2" style={{ width: checkboxWidth }} />
                   )}
                   {columns.map((col) => {
                     const isSticky = col === stickyLeft || col === stickyRight;
@@ -524,7 +536,7 @@ export function Table<T, K extends string | number = string>({
                         className={clsx(
                           'px-rui-3 py-rui-2 text-xs font-heading text-hushed',
                           ALIGN_CLASS[col.align ?? 'left'],
-                          isSticky && 'sticky z-10 bg-limestone',
+                          isSticky && 'sticky z-10 bg-white',
                         )}
                         style={{
                           width: col.width,

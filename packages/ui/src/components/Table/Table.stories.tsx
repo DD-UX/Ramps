@@ -40,9 +40,10 @@ interface Bill {
  * Status (approval progress "0 of 2") · Next approver · Amount (right-aligned
  * Money) · Payment method · Payment account · Actions (Approve button).
  *
- * Vetted visual details:
- *  - Header: limestone bg, hushed uppercase labels, bone bottom border.
- *  - Rows: white bg, bone dividers, limestone hover.
+ * Vetted visual details (1px sampling across all table screens):
+ *  - Header: WHITE bg, hushed sentence-case labels, limestone bottom hairline.
+ *  - Rows: white bg, limestone dividers, limestone hover, ~56px tall.
+ *  - No outer border — the table sits directly on the page canvas.
  *  - Money column: right-aligned, tabular-nums.
  *  - No footer (the real frame shows "1–7 of 7 bills" below the table, which
  *    would be a pagination component outside the Table in a real app).
@@ -312,7 +313,7 @@ export const LargeDataset: StoryObj = {
           columns={columns}
           getRowId={(row) => row.id}
           virtualizeAfter={100}
-          rowHeight={64}
+          rowHeight={56}
           overscan={5}
           footer={{
             type: 'custom',

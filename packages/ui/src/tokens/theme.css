@@ -18,6 +18,7 @@
   --color-ink: var(--rui-ink);
   --color-ink-strong: var(--rui-ink-strong);
   --color-limestone: var(--rui-limestone);
+  --color-canvas: var(--rui-canvas);
   --color-stone: var(--rui-stone);
   --color-bone: var(--rui-bone);
   --color-hushed: var(--rui-hushed);
@@ -38,6 +39,7 @@
   --color-tone-info-on: var(--rui-tone-info-on);
   --color-tone-accent-surface: var(--rui-tone-accent-surface);
   --color-tone-accent-on: var(--rui-tone-accent-on);
+  --color-tone-selected-surface: var(--rui-tone-selected-surface);
   --color-tone-positive-surface: var(--rui-tone-positive-surface);
   --color-tone-positive-on: var(--rui-tone-positive-on);
   --color-tone-warning-surface: var(--rui-tone-warning-surface);

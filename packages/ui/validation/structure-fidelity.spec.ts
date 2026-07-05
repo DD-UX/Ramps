@@ -635,10 +635,13 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
 
   /**
    * Product-overview snapshot 13 — the "Pay with Ramp Card" accordion row:
-   * white surface, ink heading + hushed subtitle, bone hairline under the
-   * row, thin caret on the right; the row toggles an aria-wired region.
+   * white surface, ink heading + hushed subtitle, thin caret on the right;
+   * the row toggles an aria-wired region. Re-vetted at 1px: the hairline
+   * sits BETWEEN the header and its content (y≈106–107 samples
+   * #e3e2de/#e4e4e4 → stone), so it lives on the header button — not the
+   * item wrapper, and never after the content.
    */
-  test('Accordion matches snapshot 13 (hushed subtitle, bone hairline, toggling region)', async ({
+  test('Accordion matches snapshot 13 (hushed subtitle, stone hairline under the header, toggling region)', async ({
     page,
   }) => {
     await page.goto(storyUrl('primitives-accordion--pay-with-ramp-card'));
@@ -655,11 +658,22 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
       hexToRgb(RUI['--rui-hushed']),
     );
 
-    // The hairline lives on the item wrapper (button's parent), in bone.
-    const hairline = await row.evaluate(
-      (el) => getComputedStyle(el.parentElement as Element).borderBottomColor,
+    // The hairline lives on the header button itself (stone), so it always
+    // separates the header from what follows; the wrapper draws nothing.
+    const hairline = await row.evaluate((el) => {
+      const s = getComputedStyle(el);
+      const parent = getComputedStyle(el.parentElement as Element);
+      return {
+        color: s.borderBottomColor,
+        width: Number.parseFloat(s.borderBottomWidth),
+        parentWidth: Number.parseFloat(parent.borderBottomWidth),
+      };
+    });
+    expect(hairline.color, 'stone hairline under the header row').toBe(
+      hexToRgb(RUI['--rui-stone']),
     );
-    expect(hairline, 'bone hairline under the row').toBe(hexToRgb(RUI['--rui-bone']));
+    expect(hairline.width, 'hairline is 1px').toBe(1);
+    expect(hairline.parentWidth, 'item wrapper draws no border of its own').toBe(0);
 
     await row.click();
     await expect(row).toHaveAttribute('aria-expanded', 'false');
@@ -701,10 +715,25 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
 
   /**
    * SegmentedArea = the control fronting a tabpanel (snapshot 12's panel):
-   * selecting a segment swaps the content under it.
+   * selecting a segment swaps the content under it. Re-vetted at 1px: the
+   * whole area (strip + content) sits on the warm canvas tint (#fbfaf6)
+   * against the pure-white panel, with the strip inset ~10px from the tinted
+   * edges — asserted as the --rui-canvas background + rui-3 padding.
    */
   test('SegmentedArea swaps the panel under the control', async ({ page }) => {
     await page.goto(storyUrl('primitives-segmentedarea--pay-by-card'));
+
+    // The area wrapper carries the vetted canvas tint + insets.
+    const area = page.getByRole('tablist').locator('..');
+    await expect(area, 'area sits on the canvas tint').toHaveCSS(
+      'background-color',
+      hexToRgb(RUI['--rui-canvas']),
+    );
+    await expect(area, 'strip and content inset from the tinted edges').toHaveCSS(
+      'padding-top',
+      RUI['--rui-space-3'],
+    );
+
     const panel = page.getByTestId('segmented-area-panel');
     await expect(panel).toContainText('Pay automatically');
     await page.getByRole('tab', { name: 'Existing card' }).click();

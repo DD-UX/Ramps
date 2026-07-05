@@ -15,12 +15,14 @@ import { hexToRgb, RUI } from './tokens.fixture';
  *  - Virtualization: DOM row count << dataset size for the 5,000-row story.
  *  - Selection Map across pages: select rows on page 1, flip to page 2, come back
  *    → selection count preserved.
- *  - Frame fidelity: limestone header, bone hairlines, 0px corners, tabular-nums
- *    on money columns, positive-green checkbox fill.
+ *  - Frame fidelity: WHITE header (re-vetted at 1px across five screens — the
+ *    old limestone thead was an invention), sentence-case hushed labels,
+ *    limestone hairlines, 0px corners, tabular-nums on money columns,
+ *    positive-green checkbox fill.
  *
  * Frame references (cited in each block):
- *  - snapshot 6 — "For approval" table: limestone header, bone hairlines, sticky
- *    Actions column, right-aligned money, Approve button per row.
+ *  - snapshot 6 — "For approval" table: white header, limestone hairlines,
+ *    sticky Actions column, right-aligned money, Approve button per row.
  *  - snapshot 17 — "For payment" footer: "1–3 of 3 bills • $1,194.08 total".
  */
 
@@ -155,41 +157,50 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
   });
 
   /**
-   * Snapshot 6 — the header background is limestone (#f4f2f0), confirming the
-   * frame's footer sample #faf9f5 is the same limestone family.
+   * The header background is WHITE — re-vetted at 1px sampling on EVERY table
+   * screen in the corpus (ap-agent/6 y262–270, product-overview 01/02/16,
+   * does-ramp/11): all thead bands read #ffffff–#fcfcfc. The limestone thead
+   * this test used to assert was an invention.
    */
-  test('Table header background is limestone (frame 6)', async ({ page }) => {
+  test('Table header background is white (re-vetted across all frames)', async ({ page }) => {
     await page.goto(storyUrl('primitives-table--frame-6-replica'));
     const header = page.locator('#storybook-root thead').first();
     await expect(header).toBeVisible();
     const bg = await header.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg, 'thead bg is limestone').toBe(hexToRgb(RUI['--rui-limestone']));
+    expect(bg, 'thead bg is white').toBe('rgb(255, 255, 255)');
   });
 
   /**
-   * Snapshot 6 — the hairline borders (header bottom, row dividers) are bone
-   * (#d2cecb), not a darker gray.
+   * The hairlines (header bottom, row dividers) are LIMESTONE — the frame
+   * dividers sample #f4f4f4 at 1px, the limestone family, visibly lighter
+   * than the bone this test used to assert.
    */
-  test('Table borders are bone hairlines (frame 6)', async ({ page }) => {
+  test('Table borders are limestone hairlines (frame 6)', async ({ page }) => {
     await page.goto(storyUrl('primitives-table--frame-6-replica'));
     const header = page.locator('#storybook-root thead').first();
     await expect(header).toBeVisible();
     const borderColor = await header.evaluate((el) => getComputedStyle(el).borderBottomColor);
-    expect(borderColor, 'thead border-bottom is bone').toBe(hexToRgb(RUI['--rui-bone']));
+    expect(borderColor, 'thead border-bottom is limestone').toBe(hexToRgb(RUI['--rui-limestone']));
   });
 
   /**
-   * The table container has rounded-square corners (0px). Per the design-system
-   * doc: EVERY rectangle in the frames is sharp 0px — no soft radii.
+   * The table container has rounded-square corners (0px) and NO outer border —
+   * the frames show the table sitting borderless on the page canvas; every
+   * hairline lives inside (header bottom, row dividers).
    */
-  test('Table container has 0px corners (rounded-square)', async ({ page }) => {
+  test('Table container has 0px corners and no outer border', async ({ page }) => {
     await page.goto(storyUrl('primitives-table--frame-6-replica'));
     const container = page.locator('#storybook-root div.overflow-hidden').first();
     await expect(container).toBeVisible();
-    const radius = await container.evaluate((el) =>
-      Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
-    );
-    expect(radius, 'table container corner is 0px (rounded-square)').toBeLessThanOrEqual(1);
+    const styles = await container.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return {
+        radius: Number.parseFloat(s.borderTopLeftRadius),
+        borderWidth: Number.parseFloat(s.borderTopWidth),
+      };
+    });
+    expect(styles.radius, 'table container corner is 0px (rounded-square)').toBeLessThanOrEqual(1);
+    expect(styles.borderWidth, 'no outer border around the table').toBe(0);
   });
 
   /**
@@ -297,10 +308,10 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
   });
 
   /**
-   * Header labels (thead th) are hushed uppercase text (text-hushed,
-   * uppercase, font-heading).
+   * Header labels (thead th) are hushed SENTENCE-CASE text — the frames show
+   * "Vendor", "Amount", "Due date", never "VENDOR". No uppercase transform.
    */
-  test('Header labels are hushed uppercase (frame 6)', async ({ page }) => {
+  test('Header labels are hushed sentence case (frame 6)', async ({ page }) => {
     await page.goto(storyUrl('primitives-table--frame-6-replica'));
     const vendorHeader = page.locator('#storybook-root thead th').nth(1); // First data column (Vendor)
     await expect(vendorHeader).toBeVisible();
@@ -312,7 +323,7 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
       };
     });
     expect(styles.color, 'header text is hushed').toBe(hexToRgb(RUI['--rui-hushed']));
-    expect(styles.textTransform, 'header text is uppercase').toBe('uppercase');
+    expect(styles.textTransform, 'header text keeps its written case').toBe('none');
   });
 
   /**

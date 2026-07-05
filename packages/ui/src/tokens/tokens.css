@@ -9,6 +9,13 @@
   --rui-ink: #1a1919;
   --rui-ink-strong: #0c0a08;
   --rui-limestone: #f4f2f0;
+  /* Canvas — the warm near-white the product paints BEHIND surfaces: the page
+     behind tables and the tinted pay-by-card area (product-overview §12).
+     Vetted at 1px: the area around the [ New card | Existing card ] strip and
+     its option cards samples #fbfaf6 on an otherwise pure-#ffffff panel, and
+     the page behind the Bill Pay tables reads #f9f8f4–#fbfaf6. A full step
+     LIGHTER than limestone — limestone was visibly too gray here. */
+  --rui-canvas: #fbfaf6;
   /* Stone — the mid gray between limestone and bone. Vetted on the frame-7
      split grip at 1px sampling: the handle's face reads #dcdbd6–#e6e2df,
      a full step darker than limestone (which vanished against the panes). */
@@ -80,6 +87,11 @@
   --rui-tone-info-on: #4b3fb0;
   --rui-tone-accent-surface: var(--rui-accent);
   --rui-tone-accent-on: var(--rui-ink);
+  /* Selected-row wash — the barely-there green tint under checked table rows.
+     Vetted at 1px on the multi-select frames: the row field samples #f4fff7,
+     far paler than the paid/approved pill surface (#e6f4ea) and nothing like
+     the raw accent lime. Selection reads as a whisper, not a highlight. */
+  --rui-tone-selected-surface: #f4fff7;
   --rui-tone-positive-surface: #e6f4ea; /* muted green — paid/approved */
   /* Green TEXT on tinted surfaces — Ryu's verified deep constructive #26763B
      (docs/design-system.md §2.3). Re-vetted against ap-agent snapshot 8: the

@@ -12,10 +12,13 @@ import { SegmentedControl } from '../SegmentedControl/SegmentedControl';
  * (product-overview snapshot 12: `[ New card | Existing card ]` with the
  * three payout option cards living below the selected segment).
  *
- * Vetted from the frame: the area itself is a PLAIN white region — no extra
- * border box under the control (samples right below the strip read the page
- * white, ~#fbfaf6); the content brings its own surfaces (the option cards).
- * So the area here is just a padded region separated by a `pt` gap.
+ * Re-vetted from the frame at 1px sampling: the whole area — strip, option
+ * cards AND explainer — sits on a single warm canvas tint (#fbfaf6, the
+ * --rui-canvas token) that reads against the pure-white panel around it
+ * (samples outside the area: #ffffff at 700:112, 900:95, 660:300, 900:470).
+ * The strip and cards inset ~10px from the tinted region's edges, so the
+ * area is a `bg-canvas` box with `p-rui-3` padding; the content brings its
+ * own surfaces (the option cards) on top of the tint.
  *
  * Panels swap with a quiet fade via AnimatePresence — `mode="wait"` per the
  * house rule, so the outgoing panel finishes before the next one enters.
@@ -56,7 +59,7 @@ export function SegmentedArea({
   };
 
   return (
-    <div className={clsx('flex flex-col', className)}>
+    <div className={clsx('flex flex-col rounded-square bg-canvas p-rui-3', className)}>
       <SegmentedControl
         options={tabs.map(({ value: tabValue, label }) => ({ value: tabValue, label }))}
         value={active}
