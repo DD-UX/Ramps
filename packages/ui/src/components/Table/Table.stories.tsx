@@ -32,6 +32,172 @@ interface Bill {
   paymentAccount: string;
 }
 
+/* ------------------------------------------------------------------------ *
+ * Shared fixtures & column builders — extracted per `fallow dupes`
+ * (6 clone groups / 396 duplicated lines, all in this file). The rendered
+ * story output is IDENTICAL to the pre-extraction copies; the table gate
+ * (table-structure-fidelity.spec.ts) depends on that.
+ * ------------------------------------------------------------------------ */
+
+/** Bill factory with the Frame-6 defaults; override only what a story needs. */
+const makeBill = (overrides: Partial<Bill> & Pick<Bill, 'id'>): Bill => ({
+  vendor: 'Vendor',
+  submitter: 'Elizabeth Smith',
+  submittedDate: 'Nov 26, 2025',
+  suggestedAction: 'ready_to_approve',
+  status: 'awaiting_approval',
+  approvalProgress: '0 of 1 approval',
+  nextApprover: 'Needs your approval',
+  amountCents: 0,
+  paymentMethod: 'ACH',
+  paymentAccount: 'Thread Bank (...40)',
+  ...overrides,
+});
+
+/** `Vendor 1..n` bills used by the selection/summary stories. */
+const makeSimpleBills = (count: number): Bill[] =>
+  Array.from({ length: count }, (_, i) =>
+    makeBill({
+      id: `bill-${i}`,
+      vendor: `Vendor ${i + 1}`,
+      submitter: 'User',
+      nextApprover: 'You',
+      amountCents: (i + 1) * 1000,
+      paymentAccount: 'Bank (...40)',
+    }),
+  );
+
+const sumCents = (bills: Bill[]): number =>
+  bills.reduce((sum, bill) => sum + bill.amountCents, 0);
+
+/** Vendor + "submitter · date" subline with avatar — the product's lead column. */
+const vendorSubmitterColumn = (
+  options: { width?: string; sticky?: 'left' } = {},
+): TableColumn<Bill, string> => ({
+  id: 'vendor',
+  header: 'Vendor / submitter',
+  cell: (row) => (
+    <div className="flex items-center gap-rui-2">
+      <Avatar name={row.vendor} size="sm" />
+      <div className="flex flex-col gap-rui-1">
+        <span className="font-heading text-ink">{row.vendor}</span>
+        <span className="text-xs text-hushed">
+          {row.submitter} · {row.submittedDate}
+        </span>
+      </div>
+    </div>
+  ),
+  width: options.width ?? '280px',
+  ...(options.sticky ? { sticky: options.sticky } : {}),
+});
+
+/** Bare vendor name — the compact lead column for the demo stories. */
+const vendorNameColumn: TableColumn<Bill, string> = {
+  id: 'vendor',
+  header: 'Vendor',
+  cell: (row) => <span className="font-heading text-ink">{row.vendor}</span>,
+  width: '200px',
+};
+
+/** Green/amber suggested-action pill (Frame 6 / flagged-bills screens). */
+const suggestedActionColumn: TableColumn<Bill, string> = {
+  id: 'suggestedAction',
+  header: 'Suggested action',
+  cell: (row) => (
+    <StatusPill
+      status={
+        row.suggestedAction === 'ready_to_approve' ? 'approved' : 'missing_info'
+      }
+    />
+  ),
+  width: '180px',
+};
+
+/** Approval progress with the concentric-circles glyph ("0 of 2 approvals"). */
+const statusProgressColumn: TableColumn<Bill, string> = {
+  id: 'status',
+  header: 'Status',
+  cell: (row) => (
+    <div className="flex items-center gap-rui-1 text-sm text-ink">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        className="text-hushed"
+      >
+        <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="8" cy="8" r="2" fill="currentColor" />
+      </svg>
+      {row.approvalProgress}
+    </div>
+  ),
+  width: '150px',
+};
+
+/** Status rendered as the StatusPill primitive (scheduled/approved screens). */
+const statusPillColumn: TableColumn<Bill, string> = {
+  id: 'status',
+  header: 'Status',
+  cell: (row) => <StatusPill status={row.status} />,
+  width: '150px',
+};
+
+const nextApproverColumn: TableColumn<Bill, string> = {
+  id: 'nextApprover',
+  header: 'Next approver',
+  cell: (row) => <span className="text-sm text-ink">{row.nextApprover}</span>,
+  width: '180px',
+};
+
+/** Right-aligned tabular-nums Money column (every table screen has one). */
+const amountColumn: TableColumn<Bill, string> = {
+  id: 'amount',
+  header: 'Amount',
+  cell: (row) => <Money cents={row.amountCents} />,
+  align: 'right',
+  width: '140px',
+};
+
+/** Payment method with the card glyph. */
+const paymentMethodColumn: TableColumn<Bill, string> = {
+  id: 'paymentMethod',
+  header: 'Payment method',
+  cell: (row) => (
+    <div className="flex items-center gap-rui-1 text-sm text-ink">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <rect x="2" y="4" width="12" height="8" rx="1" />
+      </svg>
+      {row.paymentMethod}
+    </div>
+  ),
+  width: '160px',
+};
+
+const paymentAccountColumn: TableColumn<Bill, string> = {
+  id: 'paymentAccount',
+  header: 'Payment account',
+  cell: (row) => <span className="text-sm text-ink">{row.paymentAccount}</span>,
+  width: '180px',
+};
+
+/** Right-aligned secondary-button Actions column (label varies per screen). */
+const actionsColumn = (
+  label: string,
+  options: { width?: string; sticky?: 'right' } = {},
+): TableColumn<Bill, string> => ({
+  id: 'actions',
+  header: 'Actions',
+  cell: () => (
+    <Button variant="secondary" size="sm">
+      {label}
+    </Button>
+  ),
+  align: 'right',
+  width: options.width ?? '100px',
+  ...(options.sticky ? { sticky: options.sticky } : {}),
+});
+
 /**
  * **Frame 6 replica** — the "For approval" table from
  * docs/watch-youtube/ramp-bill-pay-series-ap-agent/snapshots/6.jpeg.
@@ -53,199 +219,50 @@ interface Bill {
 export const Frame6Replica: StoryObj = {
   render: () => {
     const bills: Bill[] = [
-      {
+      makeBill({
         id: 'b1',
         vendor: 'Figma',
-        submitter: 'Elizabeth Smith',
-        submittedDate: 'Nov 26, 2025',
         suggestedAction: 'review_recommended',
-        status: 'awaiting_approval',
         approvalProgress: '0 of 2 approvals',
-        nextApprover: 'Needs your approval',
         amountCents: 150_042_75,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
+      }),
+      makeBill({
         id: 'b2',
         vendor: 'Salesforce',
-        submitter: 'Elizabeth Smith',
-        submittedDate: 'Nov 26, 2025',
-        suggestedAction: 'ready_to_approve',
-        status: 'awaiting_approval',
         approvalProgress: '0 of 2 approvals',
-        nextApprover: 'Needs your approval',
         amountCents: 441_726_00,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
-        id: 'b3',
-        vendor: 'Slack',
-        submitter: 'Elizabeth Smith',
-        submittedDate: 'Nov 26, 2025',
-        suggestedAction: 'ready_to_approve',
-        status: 'awaiting_approval',
-        approvalProgress: '0 of 1 approval',
-        nextApprover: 'Needs your approval',
-        amountCents: 1_725_00,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
-        id: 'b4',
-        vendor: 'UPS',
-        submitter: 'Elizabeth Smith',
-        submittedDate: 'Nov 26, 2025',
-        suggestedAction: 'ready_to_approve',
-        status: 'awaiting_approval',
-        approvalProgress: '0 of 1 approval',
-        nextApprover: 'Needs your approval',
-        amountCents: 49_14,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
+      }),
+      makeBill({ id: 'b3', vendor: 'Slack', amountCents: 1_725_00 }),
+      makeBill({ id: 'b4', vendor: 'UPS', amountCents: 49_14 }),
+      makeBill({
         id: 'b5',
         vendor: 'W.B. Mason',
-        submitter: 'Elizabeth Smith',
-        submittedDate: 'Nov 26, 2025',
-        suggestedAction: 'ready_to_approve',
-        status: 'awaiting_approval',
         approvalProgress: '0 of 2 approvals',
-        nextApprover: 'Needs your approval',
         amountCents: 6_442_46,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
+      }),
+      makeBill({
         id: 'b6',
         vendor: 'GTI Properties',
-        submitter: 'Elizabeth Smith',
-        submittedDate: 'Nov 26, 2025',
         suggestedAction: 'review_recommended',
-        status: 'awaiting_approval',
         approvalProgress: '0 of 3 approvals',
-        nextApprover: 'Needs your approval',
         amountCents: 22_000_00,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
-        // 7th bill (the frame shows "1–7 of 7 bills") — amount chosen so the
-        // page total lands EXACTLY on the frame's "$634,235.35 total".
-        id: 'b7',
-        vendor: 'Ramp Cleaning Co.',
-        submitter: 'Elizabeth Smith',
-        submittedDate: 'Nov 26, 2025',
-        suggestedAction: 'ready_to_approve',
-        status: 'awaiting_approval',
-        approvalProgress: '0 of 1 approval',
-        nextApprover: 'Needs your approval',
-        amountCents: 12_250_00,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
+      }),
+      // 7th bill (the frame shows "1–7 of 7 bills") — amount chosen so the
+      // page total lands EXACTLY on the frame's "$634,235.35 total".
+      makeBill({ id: 'b7', vendor: 'Ramp Cleaning Co.', amountCents: 12_250_00 }),
     ];
 
-    const totalCents = bills.reduce((sum, bill) => sum + bill.amountCents, 0);
+    const totalCents = sumCents(bills);
 
     const columns: TableColumn<Bill, string>[] = [
-      {
-        id: 'vendor',
-        header: 'Vendor / submitter',
-        cell: (row) => (
-          <div className="flex items-center gap-rui-2">
-            <Avatar name={row.vendor} size="sm" />
-            <div className="flex flex-col gap-rui-1">
-              <span className="font-heading text-ink">{row.vendor}</span>
-              <span className="text-xs text-hushed">
-                {row.submitter} · {row.submittedDate}
-              </span>
-            </div>
-          </div>
-        ),
-        width: '280px',
-        sticky: 'left',
-      },
-      {
-        id: 'suggestedAction',
-        header: 'Suggested action',
-        cell: (row) => (
-          <StatusPill
-            status={
-              row.suggestedAction === 'ready_to_approve'
-                ? 'approved'
-                : 'missing_info'
-            }
-          />
-        ),
-        width: '180px',
-      },
-      {
-        id: 'status',
-        header: 'Status',
-        cell: (row) => (
-          <div className="flex items-center gap-rui-1 text-sm text-ink">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              className="text-hushed"
-            >
-              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-              <circle cx="8" cy="8" r="2" fill="currentColor" />
-            </svg>
-            {row.approvalProgress}
-          </div>
-        ),
-        width: '150px',
-      },
-      {
-        id: 'nextApprover',
-        header: 'Next approver',
-        cell: (row) => <span className="text-sm text-ink">{row.nextApprover}</span>,
-        width: '180px',
-      },
-      {
-        id: 'amount',
-        header: 'Amount',
-        cell: (row) => <Money cents={row.amountCents} />,
-        align: 'right',
-        width: '140px',
-      },
-      {
-        id: 'paymentMethod',
-        header: 'Payment method',
-        cell: (row) => (
-          <div className="flex items-center gap-rui-1 text-sm text-ink">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <rect x="2" y="4" width="12" height="8" rx="1" />
-            </svg>
-            {row.paymentMethod}
-          </div>
-        ),
-        width: '160px',
-      },
-      {
-        id: 'paymentAccount',
-        header: 'Payment account',
-        cell: (row) => <span className="text-sm text-ink">{row.paymentAccount}</span>,
-        width: '180px',
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
-        cell: () => (
-          <Button variant="secondary" size="sm">
-            Approve
-          </Button>
-        ),
-        align: 'right',
-        width: '120px',
-        sticky: 'right',
-      },
+      vendorSubmitterColumn({ sticky: 'left' }),
+      suggestedActionColumn,
+      statusProgressColumn,
+      nextApproverColumn,
+      amountColumn,
+      paymentMethodColumn,
+      paymentAccountColumn,
+      actionsColumn('Approve', { width: '120px', sticky: 'right' }),
     ];
 
     return (
@@ -276,51 +293,29 @@ export const Frame6Replica: StoryObj = {
  */
 export const LargeDataset: StoryObj = {
   render: () => {
-    const bills: Bill[] = Array.from({ length: 5000 }, (_, i) => ({
-      id: `bill-${i}`,
-      vendor: `Vendor ${i + 1}`,
-      submitter: 'System',
-      submittedDate: 'Nov 26, 2025',
-      suggestedAction: i % 3 === 0 ? 'review_recommended' : 'ready_to_approve',
-      status: 'awaiting_approval',
-      approvalProgress: `0 of ${(i % 3) + 1} approvals`,
-      nextApprover: 'Needs review',
-      amountCents: Math.floor(Math.random() * 100_000),
-      paymentMethod: 'ACH',
-      paymentAccount: 'Bank (...99)',
-    }));
+    const bills: Bill[] = Array.from({ length: 5000 }, (_, i) =>
+      makeBill({
+        id: `bill-${i}`,
+        vendor: `Vendor ${i + 1}`,
+        submitter: 'System',
+        suggestedAction: i % 3 === 0 ? 'review_recommended' : 'ready_to_approve',
+        approvalProgress: `0 of ${(i % 3) + 1} approvals`,
+        nextApprover: 'Needs review',
+        amountCents: Math.floor(Math.random() * 100_000),
+        paymentAccount: 'Bank (...99)',
+      }),
+    );
 
     const columns: TableColumn<Bill, string>[] = [
-      {
-        id: 'vendor',
-        header: 'Vendor',
-        cell: (row) => <span className="font-heading text-ink">{row.vendor}</span>,
-        width: '200px',
-      },
+      vendorNameColumn,
       {
         id: 'status',
         header: 'Status',
         cell: (row) => <span className="text-sm text-ink">{row.approvalProgress}</span>,
         width: '150px',
       },
-      {
-        id: 'amount',
-        header: 'Amount',
-        cell: (row) => <Money cents={row.amountCents} />,
-        align: 'right',
-        width: '140px',
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
-        cell: () => (
-          <Button variant="secondary" size="sm">
-            View
-          </Button>
-        ),
-        align: 'right',
-        width: '100px',
-      },
+      amountColumn,
+      actionsColumn('View'),
     ];
 
     return (
@@ -359,51 +354,18 @@ export const LargeDataset: StoryObj = {
  */
 export const CrossPageSelection: StoryObj = {
   render: () => {
-    const allBills: Bill[] = Array.from({ length: 20 }, (_, i) => ({
-      id: `bill-${i}`,
-      vendor: `Vendor ${i + 1}`,
-      submitter: 'User',
-      submittedDate: 'Nov 26, 2025',
-      suggestedAction: 'ready_to_approve',
-      status: 'awaiting_approval',
-      approvalProgress: '0 of 1 approval',
-      nextApprover: 'You',
-      amountCents: (i + 1) * 1000,
-      paymentMethod: 'ACH',
-      paymentAccount: 'Bank (...40)',
-    }));
+    const allBills: Bill[] = makeSimpleBills(20);
 
     const [page, setPage] = useState(1);
     const [selection, setSelection] = useState<Map<string, Bill>>(new Map());
     const pageSize = 5;
     const pageData = allBills.slice((page - 1) * pageSize, page * pageSize);
-    const totalCents = allBills.reduce((sum, bill) => sum + bill.amountCents, 0);
+    const totalCents = sumCents(allBills);
 
     const columns: TableColumn<Bill, string>[] = [
-      {
-        id: 'vendor',
-        header: 'Vendor',
-        cell: (row) => <span className="font-heading text-ink">{row.vendor}</span>,
-        width: '200px',
-      },
-      {
-        id: 'amount',
-        header: 'Amount',
-        cell: (row) => <Money cents={row.amountCents} />,
-        align: 'right',
-        width: '140px',
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
-        cell: () => (
-          <Button variant="secondary" size="sm">
-            Approve
-          </Button>
-        ),
-        align: 'right',
-        width: '100px',
-      },
+      vendorNameColumn,
+      amountColumn,
+      actionsColumn('Approve'),
     ];
 
     return (
@@ -446,54 +408,20 @@ export const CrossPageSelection: StoryObj = {
  */
 export const SummaryFooter: StoryObj = {
   render: () => {
-    const bills: Bill[] = Array.from({ length: 4 }, (_, i) => ({
-      id: `bill-${i}`,
-      vendor: `Vendor ${i + 1}`,
-      submitter: 'User',
-      submittedDate: 'Nov 26, 2025',
-      suggestedAction: 'ready_to_approve',
-      status: 'awaiting_approval',
-      approvalProgress: '0 of 1 approval',
-      nextApprover: 'You',
-      amountCents: (i + 1) * 1000,
-      paymentMethod: 'ACH',
-      paymentAccount: 'Bank (...40)',
-    }));
+    const bills: Bill[] = makeSimpleBills(4);
 
     const [selection, setSelection] = useState<Map<string, Bill>>(new Map());
 
     const columns: TableColumn<Bill, string>[] = [
+      vendorNameColumn,
       {
-        id: 'vendor',
-        header: 'Vendor',
-        cell: (row) => <span className="font-heading text-ink">{row.vendor}</span>,
-        width: '200px',
-      },
-      {
-        id: 'amount',
-        header: 'Amount',
-        cell: (row) => <Money cents={row.amountCents} />,
-        align: 'right',
-        width: '140px',
+        ...amountColumn,
         footer: {
           type: 'money',
-          cents: Array.from(selection.values()).reduce(
-            (sum, bill) => sum + bill.amountCents,
-            0,
-          ),
+          cents: sumCents(Array.from(selection.values())),
         },
       },
-      {
-        id: 'actions',
-        header: 'Actions',
-        cell: () => (
-          <Button variant="secondary" size="sm">
-            Approve
-          </Button>
-        ),
-        align: 'right',
-        width: '100px',
-      },
+      actionsColumn('Approve'),
     ];
 
     return (
@@ -522,32 +450,27 @@ export const SummaryFooter: StoryObj = {
 export const StickyColumns: StoryObj = {
   render: () => {
     const bills: Bill[] = [
-      {
+      makeBill({
         id: 'b1',
         vendor: 'Figma',
-        submitter: 'Elizabeth Smith',
-        submittedDate: 'Nov 26, 2025',
-        suggestedAction: 'ready_to_approve',
         status: 'approved',
         approvalProgress: '2 of 2 approvals',
         nextApprover: 'Complete',
         amountCents: 4500,
-        paymentMethod: 'ACH',
         paymentAccount: 'Thread Bank',
-      },
-      {
+      }),
+      makeBill({
         id: 'b2',
         vendor: 'Salesforce',
         submitter: 'John Doe',
         submittedDate: 'Nov 25, 2025',
-        suggestedAction: 'ready_to_approve',
         status: 'scheduled',
         approvalProgress: '1 of 1 approval',
         nextApprover: 'Complete',
         amountCents: 131_845,
         paymentMethod: 'Wire',
         paymentAccount: 'Thread Bank',
-      },
+      }),
     ];
 
     const columns: TableColumn<Bill, string>[] = [
@@ -575,12 +498,7 @@ export const StickyColumns: StoryObj = {
         cell: (row) => <span className="text-sm text-hushed">{row.submittedDate}</span>,
         width: '150px',
       },
-      {
-        id: 'status',
-        header: 'Status',
-        cell: (row) => <StatusPill status={row.status} />,
-        width: '150px',
-      },
+      statusPillColumn,
       {
         id: 'approvalProgress',
         header: 'Approvals',
@@ -593,13 +511,7 @@ export const StickyColumns: StoryObj = {
         cell: (row) => <span className="text-sm text-hushed">{row.nextApprover}</span>,
         width: '150px',
       },
-      {
-        id: 'amount',
-        header: 'Amount',
-        cell: (row) => <Money cents={row.amountCents} />,
-        align: 'right',
-        width: '140px',
-      },
+      amountColumn,
       {
         id: 'paymentMethod',
         header: 'Method',
@@ -612,18 +524,7 @@ export const StickyColumns: StoryObj = {
         cell: (row) => <span className="text-sm text-ink">{row.paymentAccount}</span>,
         width: '150px',
       },
-      {
-        id: 'actions',
-        header: 'Actions',
-        cell: () => (
-          <Button variant="secondary" size="sm">
-            Pay
-          </Button>
-        ),
-        align: 'right',
-        width: '100px',
-        sticky: 'right',
-      },
+      actionsColumn('Pay', { sticky: 'right' }),
     ];
 
     return (
@@ -651,91 +552,32 @@ export const StickyColumns: StoryObj = {
  */
 export const PaginationFooter: StoryObj = {
   render: () => {
-    const bills: Bill[] = [
-      {
-        id: 'b1',
-        vendor: 'Berroco, Inc.',
+    const bills: Bill[] = (
+      [
+        ['b1', 'Berroco, Inc.', 825_00],
+        ['b2', 'Ziply Fiber', 106_58],
+        ['b3', 'Clarity Online', 262_50],
+      ] as const
+    ).map(([id, vendor, amountCents]) =>
+      makeBill({
+        id,
+        vendor,
+        amountCents,
         submitter: 'Hannah Smolinski',
         submittedDate: 'Feb 22, 2026',
-        suggestedAction: 'ready_to_approve',
         status: 'scheduled',
         approvalProgress: 'Payment details needed',
         nextApprover: 'N/A',
-        amountCents: 825_00,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
-        id: 'b2',
-        vendor: 'Ziply Fiber',
-        submitter: 'Hannah Smolinski',
-        submittedDate: 'Feb 22, 2026',
-        suggestedAction: 'ready_to_approve',
-        status: 'scheduled',
-        approvalProgress: 'Payment details needed',
-        nextApprover: 'N/A',
-        amountCents: 106_58,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
-        id: 'b3',
-        vendor: 'Clarity Online',
-        submitter: 'Hannah Smolinski',
-        submittedDate: 'Feb 22, 2026',
-        suggestedAction: 'ready_to_approve',
-        status: 'scheduled',
-        approvalProgress: 'Payment details needed',
-        nextApprover: 'N/A',
-        amountCents: 262_50,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-    ];
+      }),
+    );
 
-    const totalCents = bills.reduce((sum, bill) => sum + bill.amountCents, 0);
+    const totalCents = sumCents(bills);
 
     const columns: TableColumn<Bill, string>[] = [
-      {
-        id: 'vendor',
-        header: 'Vendor / submitter',
-        cell: (row) => (
-          <div className="flex items-center gap-rui-2">
-            <Avatar name={row.vendor} size="sm" />
-            <div className="flex flex-col gap-rui-1">
-              <span className="font-heading text-ink">{row.vendor}</span>
-              <span className="text-xs text-hushed">
-                {row.submitter} · {row.submittedDate}
-              </span>
-            </div>
-          </div>
-        ),
-        width: '300px',
-      },
-      {
-        id: 'status',
-        header: 'Status',
-        cell: (row) => <StatusPill status={row.status} />,
-        width: '150px',
-      },
-      {
-        id: 'amount',
-        header: 'Amount',
-        cell: (row) => <Money cents={row.amountCents} />,
-        align: 'right',
-        width: '140px',
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
-        cell: () => (
-          <Button variant="secondary" size="sm">
-            Review
-          </Button>
-        ),
-        align: 'right',
-        width: '100px',
-      },
+      vendorSubmitterColumn({ width: '300px' }),
+      statusPillColumn,
+      amountColumn,
+      actionsColumn('Review'),
     ];
 
     return (
@@ -772,137 +614,40 @@ export const PaginationFooter: StoryObj = {
 export const FlaggedBills: StoryObj = {
   render: () => {
     const bills: Bill[] = [
-      {
+      makeBill({
         id: 'b1',
         vendor: 'Amazon',
         submitter: 'David Wallace',
         submittedDate: 'Sep 12, 2025',
-        suggestedAction: 'ready_to_approve',
-        status: 'awaiting_approval',
         approvalProgress: '0 of 2 approvals',
-        nextApprover: 'Needs your approval',
         amountCents: 3_514_92,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
+      }),
+      makeBill({
         id: 'b2',
         vendor: 'Cisco Systems',
         submitter: 'David Wallace',
         submittedDate: 'Sep 12, 2025',
         suggestedAction: 'review_recommended',
-        status: 'awaiting_approval',
         approvalProgress: '0 of 2 approvals',
-        nextApprover: 'Needs your approval',
         amountCents: 198_380_00,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
-      {
+      }),
+      makeBill({
         id: 'b3',
         vendor: 'Staples',
         submitter: 'David Wallace',
         submittedDate: 'Sep 12, 2025',
-        suggestedAction: 'ready_to_approve',
-        status: 'awaiting_approval',
-        approvalProgress: '0 of 1 approval',
-        nextApprover: 'Needs your approval',
         amountCents: 3_010_48,
-        paymentMethod: 'ACH',
-        paymentAccount: 'Thread Bank (...40)',
-      },
+      }),
     ];
 
     const columns: TableColumn<Bill, string>[] = [
-      {
-        id: 'vendor',
-        header: 'Vendor / submitter',
-        cell: (row) => (
-          <div className="flex items-center gap-rui-2">
-            <Avatar name={row.vendor} size="sm" />
-            <div className="flex flex-col gap-rui-1">
-              <span className="font-heading text-ink">{row.vendor}</span>
-              <span className="text-xs text-hushed">
-                {row.submitter} · {row.submittedDate}
-              </span>
-            </div>
-          </div>
-        ),
-        width: '280px',
-        sticky: 'left',
-      },
-      {
-        id: 'suggestedAction',
-        header: 'Suggested action',
-        cell: (row) => (
-          <StatusPill
-            status={
-              row.suggestedAction === 'ready_to_approve'
-                ? 'approved'
-                : 'missing_info'
-            }
-          />
-        ),
-        width: '180px',
-      },
-      {
-        id: 'status',
-        header: 'Status',
-        cell: (row) => (
-          <div className="flex items-center gap-rui-1 text-sm text-ink">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              className="text-hushed"
-            >
-              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-              <circle cx="8" cy="8" r="2" fill="currentColor" />
-            </svg>
-            {row.approvalProgress}
-          </div>
-        ),
-        width: '150px',
-      },
-      {
-        id: 'nextApprover',
-        header: 'Next approver',
-        cell: (row) => <span className="text-sm text-ink">{row.nextApprover}</span>,
-        width: '180px',
-      },
-      {
-        id: 'amount',
-        header: 'Amount',
-        cell: (row) => <Money cents={row.amountCents} />,
-        align: 'right',
-        width: '140px',
-      },
-      {
-        id: 'paymentMethod',
-        header: 'Payment method',
-        cell: (row) => (
-          <div className="flex items-center gap-rui-1 text-sm text-ink">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <rect x="2" y="4" width="12" height="8" rx="1" />
-            </svg>
-            {row.paymentMethod}
-          </div>
-        ),
-        width: '160px',
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
-        cell: () => (
-          <Button variant="secondary" size="sm">
-            Review
-          </Button>
-        ),
-        align: 'right',
-        width: '100px',
-        sticky: 'right',
-      },
+      vendorSubmitterColumn({ sticky: 'left' }),
+      suggestedActionColumn,
+      statusProgressColumn,
+      nextApproverColumn,
+      amountColumn,
+      paymentMethodColumn,
+      actionsColumn('Review', { sticky: 'right' }),
     ];
 
     return (

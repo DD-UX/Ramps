@@ -1,6 +1,8 @@
 import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 
+import { Badge } from '../Badge/Badge';
+
 /**
  * SideMenu — the product's left navigation (the persistent vertical sidebar).
  *
@@ -89,11 +91,11 @@ export function SideMenu({ children, className, 'aria-label': ariaLabel }: SideM
     <nav
       aria-label={ariaLabel ?? 'Main navigation'}
       className={clsx(
-        // min-h-full (not h-full): the limestone must stretch to the parent
-        // on short pages AND keep growing with the item list — h-full pins
-        // the background to the parent's height, so overflowing items would
-        // scroll onto the white page background.
-        'flex min-h-full w-48 flex-col bg-limestone',
+        // overflow-auto: the nav is its own scroll container — when the item
+        // list outgrows the parent, the items scroll WITHIN the limestone
+        // background instead of spilling onto the white page canvas (which is
+        // what a plain h-full/min-h-full background pin allowed).
+        'flex w-48 overflow-auto flex-col bg-limestone',
         // Sharp 0px corners (vetted across all frames).
         'rounded-square',
         className,
@@ -130,12 +132,17 @@ export function SideMenuItem({
       )}
       <span className="flex-1 truncate text-left text-sm font-body">{children}</span>
       {badge !== undefined && badge > 0 && (
-        <span
-          className="flex-shrink-0 rounded-square bg-accent px-1.5 py-0.5 text-xs font-body text-ink"
+        // The Badge primitive in its accent/solid tone (bg-accent + text-ink,
+        // rounded-square) — the same vetted lime pill the frames show, without
+        // a hand-rolled copy of its styles.
+        <Badge
+          tone="accent"
+          variant="solid"
+          className="flex-shrink-0"
           aria-label={`${badge} items`}
         >
           {badge}
-        </span>
+        </Badge>
       )}
     </>
   );

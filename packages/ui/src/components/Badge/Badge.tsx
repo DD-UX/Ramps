@@ -45,12 +45,22 @@ export type BadgeProps = PropsWithChildren<{
   /** Optional leading glyph (icon/dot). */
   icon?: ReactNode;
   className?: string;
+  /** Accessible label for count badges (e.g. the SideMenu's "90 items"). */
+  'aria-label'?: string;
 }>;
 
-export function Badge({ children, tone = 'neutral', variant = 'subtle', icon, className }: BadgeProps) {
+export function Badge({
+  children,
+  tone = 'neutral',
+  variant = 'subtle',
+  icon,
+  className,
+  'aria-label': ariaLabel,
+}: BadgeProps) {
   const style = variant === 'solid' ? SOLID_STYLE[tone] : SUBTLE_STYLE[tone];
   return (
     <span
+      aria-label={ariaLabel}
       className={clsx(
         'inline-flex items-center gap-rui-1 rounded-square px-rui-2 py-0.5 text-xs font-heading whitespace-nowrap',
         style,
