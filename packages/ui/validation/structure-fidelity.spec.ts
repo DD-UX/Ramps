@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 // Runtime-safe: toastVariants.ts only type-imports from motion/react.
 import { TOAST_VARIANTS } from '../src/components/Toast/toastVariants';
-import { hexToRgb, RUI } from './tokens.fixture';
+import { hexToRgb, RUI } from './rui.fixture';
 
 /**
  * STRUCTURE-FIDELITY — the second half of the hard gate ("mocks", not just

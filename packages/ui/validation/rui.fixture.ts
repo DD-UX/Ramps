@@ -6,6 +6,10 @@ import { fileURLToPath } from 'node:url';
  * validation suite has ZERO hardcoded colours — tokens.css stays the single
  * source of truth. If a token value drifts, both the CSS and this parse move
  * together, and the assertions re-anchor automatically.
+ *
+ * FILENAME NOTE: this is `rui.fixture.ts` (not `tokens.fixture.ts`) on purpose —
+ * graphify's secret-hygiene heuristic silently drops any file whose name reads
+ * as a bare "token(s)" word from the knowledge graph. Do not rename it back.
  */
 const TOKENS_CSS = fileURLToPath(new URL('../src/tokens/tokens.css', import.meta.url));
 

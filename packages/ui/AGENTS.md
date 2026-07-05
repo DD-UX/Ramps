@@ -67,6 +67,17 @@ the gate validates the kit, but the *app* serves the stale copy.
 2. `src/components/<Name>/<Name>.stories.tsx` — `title: 'Primitives/<Name>'`,
    default/hover/focus/disabled/loading where relevant. No stories → not done.
 3. Add the subpath export to `package.json` (`"./<Name>": { types, import }`).
-4. Extend `validation/token-fidelity.spec.ts` if the component asserts an identity
-   invariant (e.g. destructive/critical must be the **orange** token, never red).
+4. Extend `validation/design-token-fidelity.spec.ts` if the component asserts an
+   identity invariant (e.g. destructive/critical must be the **orange** token,
+   never red).
 5. Run the **definition of done** block above (including `sync:web`).
+
+## File naming: never name a file a bare "token(s)"
+
+graphify's secret-hygiene heuristic **silently skips** any file whose name reads
+as a bare `token`/`tokens` word (e.g. `Tokens.stories.tsx`, `tokens.fixture.ts`,
+`token-fidelity.spec.ts`) — it never enters the knowledge graph, with no warning.
+That's why this package has `DesignTokens.stories.tsx`, `rui.fixture.ts`, and
+`design-token-fidelity.spec.ts`. Prefix or fuse the word (`design-token-…`,
+`tokensheet`) so new files stay graph-visible. (`src/tokens/tokens.css` is exempt:
+graphify never extracts CSS, so its name doesn't matter.)

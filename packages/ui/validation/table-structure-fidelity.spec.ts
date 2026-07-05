@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { hexToRgb, RUI } from './tokens.fixture';
+import { hexToRgb, RUI } from './rui.fixture';
 
 /**
  * TABLE STRUCTURE-FIDELITY — the Table primitive validation spec.

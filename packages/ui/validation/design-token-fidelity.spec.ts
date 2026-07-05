@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { hexToRgb, RUI } from './tokens.fixture';
+import { hexToRgb, RUI } from './rui.fixture';
 
 /**
  * TOKEN-FIDELITY — the hard gate.

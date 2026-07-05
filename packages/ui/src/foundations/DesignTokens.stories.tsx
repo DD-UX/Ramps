@@ -9,6 +9,11 @@ import { useState } from 'react';
  * src/tokens/tokens.css — it IS tokens.css, painted. The notes carry the
  * vetting provenance from the token sheet so a reviewer can trace each value
  * back to the product frame it was sampled from.
+ *
+ * FILENAME NOTE: this file is `DesignTokens.stories.tsx` (not `Tokens.…`) on
+ * purpose — graphify's secret-hygiene heuristic silently skips any file whose
+ * name ends in a bare "token(s)" word, dropping it from the knowledge graph.
+ * The Storybook title stays 'Foundations/Tokens'. Do not rename it back.
  */
 const meta = {
   title: 'Foundations/Tokens',
