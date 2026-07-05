@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf .next .turbo public/storybook *.tsbuildinfo"
   },
   "dependencies": {
