@@ -47,7 +47,8 @@ import { Badge } from '../Badge/Badge';
  *    Policy, Company) — some with trailing badges (Home: 90, Accounting: 383, Vendors: 3).
  *  - One divider visible between sections (Treasury ↔ Accounting in most frames).
  *  - Ask Ramp pinned at the very bottom (product-overview/01 x14-80 y604-614: a spark
- *    glyph + "Ask Ramp") — the `footer` slot, composed with SideMenuAction.
+ *    glyph + "Ask Ramp") — the `footer` slot, composed with SideMenuAction. This
+ *    system reshapes the band as "About DD" linking to https://www.diegodiaz.dev/.
  *
  * FOOTER COLOR VETTING (product-overview/01, 1px sampling):
  *  - "Ask Ramp" text: densest glyph junctions #4f4e4a–#575652 — DARKER than hushed
@@ -73,8 +74,9 @@ export interface SideMenuProps {
    */
   header?: ReactNode;
   /**
-   * Bottom slot — pinned to the nav's bottom edge (the product's "Ask Ramp");
-   * compose with SideMenuAction. Renders outside the <ul>.
+   * Bottom slot — pinned to the nav's bottom edge (the band the product fills
+   * with "Ask Ramp"; ours is "About DD" → diegodiaz.dev); compose with
+   * SideMenuAction. Renders outside the <ul>.
    */
   footer?: ReactNode;
   className?: string;
@@ -222,27 +224,38 @@ export function SideMenuDivider({ className }: SideMenuDividerProps) {
 }
 
 export interface SideMenuActionProps {
-  /** The action label (the product's is "Ask Ramp"). */
+  /** The action label (the product's is "Ask Ramp"; ours is "About DD"). */
   children: ReactNode;
   /** Leading glyph — the product shows a spark; rendered in hushed (vetted). */
   icon?: ReactNode;
   onClick?: () => void;
+  /**
+   * External destination — renders an <a> (new tab, rel noreferrer) instead
+   * of a <button>. Ours points at https://www.diegodiaz.dev/.
+   */
+  href?: string;
   className?: string;
 }
 
 /**
- * SideMenuAction — the footer-slot button (the product's "Ask Ramp").
+ * SideMenuAction — the footer-slot action (the slot the product fills with
+ * "Ask Ramp"; this system fills it with "About DD" → diegodiaz.dev).
  *
- * NOT a nav item: it lives outside the <ul> (no li), triggers an action rather
- * than navigating, and its colors differ from items — VETTED on
- * product-overview/01 (1px): label junctions #4f4e4a (INK, darker than the
+ * NOT a nav item: it lives outside the <ul> (no li), acts (or links out)
+ * rather than navigating the app, and its colors differ from items — VETTED
+ * on product-overview/01 (1px): label junctions #4f4e4a (INK, darker than the
  * hushed items), spark glyph #7a7975 (HUSHED). Hover/focus reuse the item
  * conventions (limestone hover, control-ring focus) — INFERRED, no hover frame.
  */
-export function SideMenuAction({ children, icon, onClick, className }: SideMenuActionProps) {
+export function SideMenuAction({ children, icon, onClick, href, className }: SideMenuActionProps) {
+  const Component = href ? 'a' : 'button';
   return (
-    <button
-      type="button"
+    <Component
+      type={href ? undefined : 'button'}
+      href={href}
+      // External by nature (the footer links out of the app): new tab, no referrer.
+      target={href ? '_blank' : undefined}
+      rel={href ? 'noreferrer' : undefined}
       onClick={onClick}
       className={clsx(
         'flex w-full items-center gap-rui-2 rounded-square px-rui-3 py-rui-2',
@@ -259,6 +272,6 @@ export function SideMenuAction({ children, icon, onClick, className }: SideMenuA
         </span>
       )}
       <span className="flex-1 truncate text-left">{children}</span>
-    </button>
+    </Component>
   );
 }

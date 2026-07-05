@@ -26,8 +26,9 @@ import { hexToRgb, RUI } from './tokens.fixture';
  *  - Divider: bone hairline (INFERRED, standard neutral divider token).
  *  - Header slot: the two-ramp Logo above the item list, ink fill (vetted
  *    product-overview/01 x14-28 y12-26: stroke junctions #4e4d49–#565551).
- *  - Footer slot: "Ask Ramp" pinned at the nav bottom — label INK (vetted
- *    #4f4e4a junctions, darker than hushed), spark glyph HUSHED (#7a7975).
+ *  - Footer slot: the pinned bottom band (the product's "Ask Ramp"; ours is
+ *    "About DD" → https://www.diegodiaz.dev/) — label INK (vetted #4f4e4a
+ *    junctions, darker than hushed), spark glyph HUSHED (#7a7975).
  */
 
 /** Storybook static: render a single story chrome-free. */
@@ -299,22 +300,30 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
   });
 
   /**
-   * Footer slot — "Ask Ramp" pinned at the very bottom of the nav
-   * (product-overview/01 x14-80 y604-614). Label is INK (vetted #4f4e4a
-   * junctions — darker than the hushed items), the spark glyph is HUSHED
-   * (#7a7975–#8b8784), and the whole band renders below the item list,
-   * flush with the nav's bottom edge (within the p-rui-2 band padding).
+   * Footer slot — the band the product pins at the very bottom as "Ask Ramp"
+   * (product-overview/01 x14-80 y604-614); this system reshapes it as
+   * "About DD", an external LINK to https://www.diegodiaz.dev/ (new tab,
+   * noreferrer). Label is INK (vetted #4f4e4a junctions — darker than the
+   * hushed items), the spark glyph is HUSHED (#7a7975–#8b8784), and the whole
+   * band renders below the item list, flush with the nav's bottom edge
+   * (within the p-rui-2 band padding).
    */
-  test('Footer "Ask Ramp" is pinned at the nav bottom (ink label, hushed spark)', async ({
+  test('Footer "About DD" links to diegodiaz.dev, pinned at the nav bottom (ink label, hushed spark)', async ({
     page,
   }) => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
     const nav = page.locator('nav[aria-label*="navigation"]').first();
-    const action = nav.getByRole('button', { name: 'Ask Ramp' });
+    const action = nav.getByRole('link', { name: 'About DD' });
     await expect(action).toBeVisible();
+    await expect(action, 'links to the About site').toHaveAttribute(
+      'href',
+      'https://www.diegodiaz.dev/',
+    );
+    await expect(action, 'opens in a new tab').toHaveAttribute('target', '_blank');
+    await expect(action, 'leaks no referrer').toHaveAttribute('rel', 'noreferrer');
 
     const color = await action.evaluate((el) => getComputedStyle(el).color);
-    expect(color, 'Ask Ramp label is ink').toBe(hexToRgb(RUI['--rui-ink']));
+    expect(color, 'About DD label is ink').toBe(hexToRgb(RUI['--rui-ink']));
 
     const icon = action.locator('span[aria-hidden]').first();
     const iconColor = await icon.evaluate((el) => getComputedStyle(el).color);

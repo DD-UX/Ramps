@@ -54,15 +54,20 @@ type Story = StoryObj<typeof meta>;
  *
  * Top and bottom bands from product-overview/01-dashboard-drafts-tab.jpeg:
  * the brand mark at the nav's top-left (`header` slot, our two-ramp Logo) and
- * "Ask Ramp" pinned at the very bottom (`footer` slot, SideMenuAction with the
- * spark glyph — text vetted ink, glyph vetted hushed).
+ * the pinned bottom band the product fills with "Ask Ramp" (`footer` slot,
+ * SideMenuAction with the spark glyph — text vetted ink, glyph vetted hushed).
+ * Ours says "About DD" and links out to https://www.diegodiaz.dev/.
  */
 export const RampBillPayReplica: Story = {
   render: () => (
     <SideMenu
       aria-label="Bill Pay navigation"
       header={<Logo />}
-      footer={<SideMenuAction icon={<Sparkles size={16} />}>Ask Ramp</SideMenuAction>}
+      footer={
+        <SideMenuAction icon={<Sparkles size={16} />} href="https://www.diegodiaz.dev/">
+          About DD
+        </SideMenuAction>
+      }
     >
       <SideMenuItem icon={<Home size={16} />} badge={90}>
         Home
