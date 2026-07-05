@@ -5,8 +5,8 @@ import './globals.css';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
-import { AppSideMenu } from '@/features/common/components/AppSideMenu';
-import { AppTopBar } from '@/features/common/components/AppTopBar';
+import { CommonSideMenu } from '@/features/common/components/CommonSideMenu';
+import { CommonTopBar } from '@/features/common/components/CommonTopBar';
 
 export const metadata: Metadata = {
   title: 'ramps — payables',
@@ -18,11 +18,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body className="flex h-dvh min-h-dvh flex-row overflow-hidden">
         {/* Left: SideMenu (full viewport height) */}
-        <AppSideMenu />
+        <CommonSideMenu />
 
         {/* Right: Top bar + main content column */}
         <div className="flex flex-1 flex-col overflow-auto">
-          <AppTopBar />
+          <CommonTopBar />
           <main className="flex flex-1 flex-col">{children}</main>
         </div>
       </body>

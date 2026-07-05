@@ -2,14 +2,14 @@ import { Avatar } from '@ramps/ui/Avatar';
 import type { ReactNode } from 'react';
 
 /**
- * AppTopBar — the app's persistent horizontal top bar, spanning the content area
+ * CommonTopBar — the app's persistent horizontal top bar, spanning the content area
  * to the right of the sidebar.
  *
  * Layout: limestone/white surface with a bone bottom border, fixed padding,
  * flexible title slot on the left and user affordance (avatar) on the right.
  * Token-only styling.
  */
-export interface AppTopBarProps {
+export interface CommonTopBarProps {
   /** Optional page title (left slot). */
   title?: ReactNode;
   /** Optional right-side actions/content. */
@@ -17,7 +17,7 @@ export interface AppTopBarProps {
   className?: string;
 }
 
-export function AppTopBar({ title, children, className }: AppTopBarProps) {
+export function CommonTopBar({ title, children, className }: CommonTopBarProps) {
   const baseClasses =
     'flex items-center justify-between border-b border-bone bg-white px-rui-6 py-rui-3';
   const finalClasses = className ? `${baseClasses} ${className}` : baseClasses;

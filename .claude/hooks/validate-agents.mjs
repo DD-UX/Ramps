@@ -79,6 +79,9 @@ const NEXT_RESERVED = new Set([
   'instrumentation',
 ]);
 
+// The one sanctioned barrel: the icon door (see the barrel check below).
+const ALLOWED_BARRELS = new Set(['packages/ui/src/icons/index.ts']);
+
 // Files/folders exempt from convention checks.
 const EXEMPT_STEMS = new Set(['index']); // barrel files
 const EXEMPT_DIRS = new Set([
@@ -200,7 +203,14 @@ for (const file of files) {
   // Barrels are banned (AGENTS.md "Imports & module graph"): an `index` file
   // whose entire body is re-exports adds an aggregation layer that breaks
   // tree-shaking and invites cycles. Import concrete modules instead.
-  if (base === 'index') {
+  //
+  // One deliberate exception: the icon door. `packages/ui/src/icons/index.ts`
+  // is `export * from 'lucide-react'` on purpose — a single provider seam so
+  // the whole app imports icons from `@ramps/ui/icons` and the kit owns which
+  // library backs them (swap the re-export once, not at every call site). The
+  // repo-level ESLint `no-restricted-imports` rule enforces that seam. It is
+  // the only sanctioned barrel; everything else stays banned.
+  if (base === 'index' && !ALLOWED_BARRELS.has(rel)) {
     let body = '';
     try {
       body = stripBlockAndLineComments(readFileSync(file, 'utf8')).trim();

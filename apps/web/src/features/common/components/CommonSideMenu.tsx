@@ -22,7 +22,7 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 /**
- * AppSideMenu — the app's persistent left navigation.
+ * CommonSideMenu — the app's persistent left navigation.
  *
  * This reproduces Ramp's full left nav from the reference frame
  * (docs/watch-youtube/does-ramp-live-up-to-the-hype…/01-home-dashboard-left-nav.jpeg):
@@ -66,7 +66,7 @@ export const NAV: Array<NavItem | null> = [
   { label: 'Company', href: '/company', icon: <Building width={16} height={16} /> },
 ];
 
-export function AppSideMenu() {
+export function CommonSideMenu() {
   const pathname = usePathname();
 
   return (

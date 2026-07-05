@@ -5,12 +5,12 @@ import { ArrowRight, ReceiptText } from '@ramps/ui/icons';
 import { useRouter } from 'next/navigation';
 
 /**
- * BillPayJokePageContent — the centered placeholder shown on every route EXCEPT /bills.
+ * CommonBillPayJokePageContent — the centered placeholder shown on every route EXCEPT /bills.
  *
  * A full-height centered stack with a large icon, heading "Are you looking for Bill Pay?",
  * sub-heading "Sure you are 😉", and a button navigating to /bills.
  */
-export function BillPayJokePageContent() {
+export function CommonBillPayJokePageContent() {
   const router = useRouter();
 
   return (

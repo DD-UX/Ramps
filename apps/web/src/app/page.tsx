@@ -1,5 +1,5 @@
-import { BillPayJokePageContent } from '@/features/common/components/BillPayJokePageContent';
+import { CommonBillPayJokePageContent } from '@/features/common/components/CommonBillPayJokePageContent';
 
 export default function HomePage() {
-  return <BillPayJokePageContent />;
+  return <CommonBillPayJokePageContent />;
 }
