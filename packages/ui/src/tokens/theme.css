@@ -44,6 +44,7 @@
   --color-tone-warning-on: var(--rui-tone-warning-on);
   --color-tone-critical-surface: var(--rui-tone-critical-surface);
   --color-tone-critical-on: var(--rui-tone-critical-on);
+  --color-alert: var(--rui-alert);
 
   /* Typography */
   --font-sans: var(--rui-font-sans);

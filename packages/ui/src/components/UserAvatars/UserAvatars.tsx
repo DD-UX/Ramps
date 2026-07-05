@@ -10,8 +10,11 @@ import { Avatar, type AvatarSize } from '../Avatar/Avatar';
  *
  * Avatars overlap left-to-right with a white ring separating each from the one
  * behind, so a chain of approvers reads as a single compact unit. When there are
- * more people than `max`, the overflow collapses into a "+N" chip. Earlier
- * avatars sit on top (higher z-index) so the leading identity stays legible.
+ * more people than `max`, the overflow collapses into a "+N" chip. Stacking runs
+ * **deepest → closest**: each avatar tucks UNDER the one after it, so the last
+ * item (and the "+N" chip) sits on top. Vetted on product-overview snapshot 13
+ * ("Any Admin" approver chip) at 8x zoom: the orange "J" bites into the green
+ * "M", and "+3" bites into "J" — later is always closer.
  *
  * Tokens only; sizes come from Avatar. Presentational — hover/click behaviour
  * (e.g. opening a Popover per person) lives in the app.
@@ -50,9 +53,10 @@ export function UserAvatars({ people, max = 4, size = 'md', className }: UserAva
         <span
           key={`${person.name}-${i}`}
           data-testid="stacked-avatar"
-          // Earlier avatars overlap on top; the ring carves them apart.
+          // Later avatars overlap on top (deepest → closest, per snapshot 13) —
+          // that's the natural flex paint order, so NO z-index: forcing an
+          // inverted stack here is exactly the bug this replaced.
           className={clsx('rounded-pill ring-2 ring-white', i > 0 && OVERLAP[size])}
-          style={{ zIndex: shown.length - i }}
         >
           <Avatar name={person.name} src={person.src} size={size} />
         </span>

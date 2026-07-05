@@ -75,12 +75,18 @@ gitignored). Currently pinned:
 | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`supabase/server`](https://skills.sh/supabase/server) | Guardrails for server-side Supabase (`@supabase/server`): auth modes and the **new** API keys (`sb_publishable_…` / `sb_secret_…`), not the legacy `anon` / `service_role`. |
 
-Our own hand-authored skills (e.g. `create-feature`) live in-tree under
-`.claude/skills/` and are committed normally.
+### Hand-authored skills (built for this project)
 
-**`watch-youtube`** was written specifically to **research Ramp's functionalities
-and UX**. It downloads a Ramp walkthrough video, extracts frames, and lets the
-agent *watch* them (not just read a transcript) — then commits the frames as
-documentation next to our design-system research. It ships a URL-timestamp mode
-to grab a single frame at a precise moment. See the first artifact it produced:
-[`docs/watch-youtube/ramp-bill-pay-series-ap-agent/findings.md`](docs/watch-youtube/ramp-bill-pay-series-ap-agent/findings.md).
+The rest of the skills live in-tree under `.claude/skills/` and are committed
+normally — each one was written **for this project specifically**, mostly to
+fight *context rot*: long agent sessions degrade as their context fills with
+stale tool output, so the workflow is factored into skills that either persist
+knowledge outside the session or gate the work mechanically.
+
+| Skill                                                                  | What it does                                                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`watch-youtube`](.claude/skills/watch-youtube/SKILL.md)               | The research workhorse: downloads a Ramp walkthrough video, extracts frames, and lets the agent *watch* them (not just read a transcript) — then commits the frames as documentation next to the design-system research. Ships a URL-timestamp mode to grab a single frame at a precise moment. First artifact: [`docs/watch-youtube/ramp-bill-pay-series-ap-agent/findings.md`](docs/watch-youtube/ramp-bill-pay-series-ap-agent/findings.md). Every component in `packages/ui` is vetted against these frames at pixel zoom before it ships. |
+| [`handoff-set`](.claude/skills/handoff-set/SKILL.md)                   | The context-rot antidote, half one: distills a long session into a gitignored `handoff.md` (Goal / Current State / Active Files / Changes Made / Failed Attempts / Next Steps) so the *work* survives even when the session's context doesn't.                                                                                                |
+| [`handoff-take`](.claude/skills/handoff-take/SKILL.md)                 | Half two: a fresh session reads `handoff.md`, **verifies it against the actual repo state** (never trusts the note blindly), asks clarifying questions *before* touching anything, then rebuilds the todo list and resumes. Together the pair replaces one rotting mega-session with a chain of sharp ones.                                    |
+| [`design-system-validate`](.claude/skills/design-system-validate/SKILL.md) | The pre-push gate for `packages/ui`: builds the static Storybook, runs the **token-fidelity hard gate** (computed styles must resolve to the verified `--rui-*` tokens — a failure blocks the push) plus a visual-advisory pass that captures the component gallery side-by-side with the curated Ramp video frames.                        |
+| [`create-feature`](.claude/skills/create-feature/SKILL.md)             | Scaffolds a new feature folder under `apps/web/src/features/` with the house category layout (components, hooks, context, constants, helpers, types) so every domain starts consistent.                                                                                                                                                     |

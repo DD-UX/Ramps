@@ -91,4 +91,13 @@
   --rui-tone-warning-on: #9a5b12;
   --rui-tone-critical-surface: #ffe9df; /* destructive family tint — never red */
   --rui-tone-critical-on: #b23f12;
+
+  /* Alert — the ONE place the product really uses red: the ↳ annotation rows
+     under flagged bills (product-overview §02 "Ramp identified $5,660.00 of
+     overbilling for this invoice", §03 fraud/duplicate lines). Vetted at 1px:
+     the darkest full-stroke pixels read #6d2f24–#7d1f1f through JPEG blur, a
+     deep brick red nowhere near the destructive orange. Median full-stroke
+     sample = #713632. Used for annotation text AND its underlined link — the
+     "never red" doctrine above still holds for status pills/buttons. */
+  --rui-alert: #713632;
 }

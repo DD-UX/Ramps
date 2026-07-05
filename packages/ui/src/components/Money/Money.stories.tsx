@@ -18,6 +18,21 @@ export const Large: Story = { args: { cents: 1429312454 } };
 export const Muted: Story = { args: { cents: -8250, muted: true } };
 export const Euro: Story = { args: { cents: 26250, currency: 'EUR', locale: 'de-DE' } };
 
+/**
+ * The `locale` prop drives the `,`/`.` ORDER, not just the symbol: the same
+ * 1,234,567 cents renders "$12,345.67" (en-US), "12.345,67 €" (de-DE) and
+ * "$ 12.345,67" (es-AR) — group/decimal separators flip per locale.
+ */
+export const LocaleSeparators: StoryObj = {
+  render: () => (
+    <div style={{ display: 'grid', gap: 4 }}>
+      <Money cents={1234567} currency="USD" locale="en-US" className="block" />
+      <Money cents={1234567} currency="EUR" locale="de-DE" className="block" />
+      <Money cents={1234567} currency="ARS" locale="es-AR" className="block" />
+    </div>
+  ),
+};
+
 /** Tabular numerals keep a real column aligned regardless of magnitude. */
 export const Column: StoryObj = {
   render: () => (

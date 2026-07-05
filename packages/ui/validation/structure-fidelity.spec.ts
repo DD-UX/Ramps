@@ -595,4 +595,121 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
       expect(second.x, 'avatars overlap').toBeLessThan(first.x + first.width);
     }
   });
+
+  /**
+   * Product-overview snapshot 13 ("Any Admin" chip) at 8x zoom — the stack
+   * runs deepest → closest: each LATER avatar bites into the one before it
+   * (orange "J" over green "M", "+3" over "J"). Hit-test the overlap seam:
+   * the topmost element there must belong to the SECOND avatar. This is the
+   * inverse of the old (invented) z-index order.
+   */
+  test('UserAvatars stacks deepest → closest (later avatar paints on top)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-useravatars--approval-chain'));
+    const avatars = page.getByTestId('stacked-avatar');
+    await expect(avatars.first()).toBeVisible();
+    const second = await avatars.nth(1).boundingBox();
+    expect(second).not.toBeNull();
+    if (!second) return;
+    // Left edge of the second circle at mid-height — inside the seam where
+    // both circles overlap, so whoever wins the hit-test is on top.
+    const seam: [number, number] = [second.x + 2, second.y + second.height / 2];
+    const laterWins = await page.evaluate(([x, y]) => {
+      const hit = document.elementFromPoint(x, y);
+      const stack = document.querySelectorAll('[data-testid="stacked-avatar"]');
+      return stack[1]?.contains(hit) ?? false;
+    }, seam);
+    expect(laterWins, 'the later avatar covers the earlier one at the seam').toBe(true);
+  });
+
+  /**
+   * Money's `locale` prop drives the group/decimal separator ORDER, not just
+   * the symbol: the same cents render "12,345.67" (en-US) and "12.345,67"
+   * (de-DE / es-AR) side by side in the LocaleSeparators story.
+   */
+  test('Money locale flips the , / . separator order', async ({ page }) => {
+    await page.goto(storyUrl('primitives-money--locale-separators'));
+    const root = page.locator('#storybook-root');
+    await expect(root, 'en-US: comma groups, dot decimals').toContainText('12,345.67');
+    await expect(root, 'de-DE: dot groups, comma decimals').toContainText('12.345,67');
+  });
+
+  /**
+   * Product-overview snapshot 13 — the "Pay with Ramp Card" accordion row:
+   * white surface, ink heading + hushed subtitle, bone hairline under the
+   * row, thin caret on the right; the row toggles an aria-wired region.
+   */
+  test('Accordion matches snapshot 13 (hushed subtitle, bone hairline, toggling region)', async ({
+    page,
+  }) => {
+    await page.goto(storyUrl('primitives-accordion--pay-with-ramp-card'));
+    const row = page.getByRole('button', { name: /Pay with Ramp Card/ });
+    await expect(row).toBeVisible();
+    await expect(row, 'open by default like the frame').toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByRole('region')).toBeVisible();
+
+    const subtitle = page.getByText(
+      'Create a single-use virtual card number you can use for this bill',
+    );
+    await expect(subtitle, 'subtitle is the hushed gray').toHaveCSS(
+      'color',
+      hexToRgb(RUI['--rui-hushed']),
+    );
+
+    // The hairline lives on the item wrapper (button's parent), in bone.
+    const hairline = await row.evaluate(
+      (el) => getComputedStyle(el.parentElement as Element).borderBottomColor,
+    );
+    expect(hairline, 'bone hairline under the row').toBe(hexToRgb(RUI['--rui-bone']));
+
+    await row.click();
+    await expect(row).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('region'), 'content unmounts after the exit').toBeHidden();
+  });
+
+  /**
+   * Product-overview snapshot 12 — `[ New card | Existing card ]`: stone
+   * strip with a bone hairline, sharp corners, and ONE white plate (hushed
+   * hairline) that glides to whichever segment is selected via shared layout.
+   */
+  test('SegmentedControl: stone strip, single gliding white plate', async ({ page }) => {
+    await page.goto(storyUrl('primitives-segmentedcontrol--pay-by-card'));
+    const strip = page.getByRole('tablist');
+    await expect(strip).toHaveCSS('background-color', hexToRgb(RUI['--rui-stone']));
+    await expect(strip, 'sharp corners').toHaveCSS('border-top-left-radius', '0px');
+    await expect(strip).toHaveCSS('border-top-color', hexToRgb(RUI['--rui-bone']));
+
+    const plate = page.getByTestId('segment-plate');
+    await expect(plate, 'exactly one shared plate').toHaveCount(1);
+    await expect(plate).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect(plate, 'selected hairline is the darker hushed').toHaveCSS(
+      'border-top-color',
+      hexToRgb(RUI['--rui-hushed']),
+    );
+
+    // Click the other segment: still ONE plate, and it settles under it.
+    const target = page.getByRole('tab', { name: 'Existing card' });
+    await target.click();
+    await expect(plate).toHaveCount(1);
+    await expect
+      .poll(async () => {
+        const plateBox = await plate.boundingBox();
+        const tabBox = await target.boundingBox();
+        return plateBox && tabBox ? Math.abs(plateBox.x - tabBox.x) : Number.POSITIVE_INFINITY;
+      }, 'plate glides to the selected segment')
+      .toBeLessThan(2);
+  });
+
+  /**
+   * SegmentedArea = the control fronting a tabpanel (snapshot 12's panel):
+   * selecting a segment swaps the content under it.
+   */
+  test('SegmentedArea swaps the panel under the control', async ({ page }) => {
+    await page.goto(storyUrl('primitives-segmentedarea--pay-by-card'));
+    const panel = page.getByTestId('segmented-area-panel');
+    await expect(panel).toContainText('Pay automatically');
+    await page.getByRole('tab', { name: 'Existing card' }).click();
+    await expect(panel).toContainText('Choose one of your issued Ramp cards');
+    await page.getByRole('tab', { name: 'New card' }).click();
+    await expect(panel).toContainText('Send card to vendor');
+  });
 });
