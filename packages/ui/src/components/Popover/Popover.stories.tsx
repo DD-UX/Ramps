@@ -57,11 +57,14 @@ export const VendorHovercard: Story = {
 
 /**
  * The DEFAULT trigger — click the vendor name to pin the card open; it stays
- * until you click away or press Esc (`useClickAway`).
+ * until you click away or press Esc (`useClickAway`). The trigger sits
+ * mid-canvas so the card has room to center under it (the gate asserts the
+ * unconstrained placement here; NearViewportEdges owns the clipped cases,
+ * where the card shifts off-center on purpose).
  */
 export const OnClick: Story = {
   render: () => (
-    <div className="p-8 pb-56">
+    <div className="flex justify-center p-8 pb-56">
       <Popover>
         <Popover.Trigger>
           <span className="text-sm font-heading text-ink underline decoration-dotted">Staples</span>
@@ -82,6 +85,60 @@ export const OnHover: Story = {
         </Popover.Trigger>
         <VendorCard />
       </Popover>
+    </div>
+  ),
+};
+
+/**
+ * Boundary awareness (Popper-style flip + shift) — triggers pinned to the
+ * viewport edges. The card centered under a corner trigger would clip; instead
+ * it SHIFTS along x to stay inside (8px collision padding), and near the
+ * bottom it FLIPS above the trigger. Click each trigger to see it.
+ */
+export const NearViewportEdges: Story = {
+  parameters: { layout: 'fullscreen' },
+  render: () => (
+    <div className="relative h-screen">
+      <div className="absolute left-2 top-2">
+        <Popover>
+          <Popover.Trigger>
+            <span className="text-sm font-heading text-ink underline decoration-dotted">
+              Top left
+            </span>
+          </Popover.Trigger>
+          <VendorCard />
+        </Popover>
+      </div>
+      <div className="absolute right-2 top-2">
+        <Popover>
+          <Popover.Trigger>
+            <span className="text-sm font-heading text-ink underline decoration-dotted">
+              Top right
+            </span>
+          </Popover.Trigger>
+          <VendorCard />
+        </Popover>
+      </div>
+      <div className="absolute bottom-2 left-2">
+        <Popover>
+          <Popover.Trigger>
+            <span className="text-sm font-heading text-ink underline decoration-dotted">
+              Bottom left
+            </span>
+          </Popover.Trigger>
+          <VendorCard />
+        </Popover>
+      </div>
+      <div className="absolute bottom-2 right-2">
+        <Popover>
+          <Popover.Trigger>
+            <span className="text-sm font-heading text-ink underline decoration-dotted">
+              Bottom right
+            </span>
+          </Popover.Trigger>
+          <VendorCard />
+        </Popover>
+      </div>
     </div>
   ),
 };

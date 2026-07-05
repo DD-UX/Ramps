@@ -17,6 +17,12 @@ import type { PropsWithChildren, ReactNode } from 'react';
  */
 export type BadgeTone = 'neutral' | 'info' | 'accent' | 'positive' | 'warning' | 'critical';
 export type BadgeVariant = 'subtle' | 'solid';
+/**
+ * Shape: `square` (0px, the house default for rectangular chrome) or `pill`
+ * (fully rounded) — the count-badge shape the Tabs bar established, adopted
+ * by the SideMenu nav counts too.
+ */
+export type BadgeShape = 'square' | 'pill';
 
 const SUBTLE_STYLE: Record<BadgeTone, string> = {
   // ap-agent frames 7/8: the neutral chips — the inline vendor tag
@@ -42,6 +48,8 @@ const SOLID_STYLE: Record<BadgeTone, string> = {
 export type BadgeProps = PropsWithChildren<{
   tone?: BadgeTone;
   variant?: BadgeVariant;
+  /** Corner shape — `square` (default) or `pill` for count badges. */
+  shape?: BadgeShape;
   /** Optional leading glyph (icon/dot). */
   icon?: ReactNode;
   className?: string;
@@ -53,6 +61,7 @@ export function Badge({
   children,
   tone = 'neutral',
   variant = 'subtle',
+  shape = 'square',
   icon,
   className,
   'aria-label': ariaLabel,
@@ -62,7 +71,8 @@ export function Badge({
     <span
       aria-label={ariaLabel}
       className={clsx(
-        'inline-flex items-center gap-rui-1 rounded-square px-rui-2 py-0.5 text-xs font-heading whitespace-nowrap',
+        'inline-flex items-center gap-rui-1 px-rui-2 py-0.5 text-xs font-heading whitespace-nowrap',
+        shape === 'pill' ? 'rounded-pill' : 'rounded-square',
         style,
         className,
       )}

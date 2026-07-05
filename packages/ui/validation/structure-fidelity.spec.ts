@@ -370,6 +370,57 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   });
 
   /**
+   * Popover boundary awareness (Popper-style): a card opened from a trigger
+   * pinned to a viewport corner must SHIFT along x to stay inside (8px
+   * collision padding) and FLIP above the trigger when the bottom would clip.
+   * Uses the NearViewportEdges story (four corner triggers).
+   */
+  test('Popover/click shifts and flips to stay inside the viewport', async ({ page }) => {
+    await page.goto(storyUrl('primitives-popover--near-viewport-edges'));
+    const viewport = page.viewportSize();
+    if (!viewport) throw new Error('no viewport');
+
+    const cases: Array<{ name: string; flipsAbove: boolean }> = [
+      { name: 'Top left', flipsAbove: false },
+      { name: 'Top right', flipsAbove: false },
+      { name: 'Bottom left', flipsAbove: true },
+      { name: 'Bottom right', flipsAbove: true },
+    ];
+
+    for (const { name, flipsAbove } of cases) {
+      const trigger = page.getByRole('button', { name });
+      await trigger.click();
+      const popover = page.getByTestId('popover');
+      await expect(popover).toBeVisible();
+
+      // Fully inside the viewport (collision padding honored, ≥8px each side).
+      await expect
+        .poll(async () => {
+          const p = await popover.boundingBox();
+          if (!p) return false;
+          return (
+            p.x >= 7 &&
+            p.y >= 7 &&
+            p.x + p.width <= viewport.width - 7 &&
+            p.y + p.height <= viewport.height - 7
+          );
+        }, { message: `${name}: popover stays inside the viewport` })
+        .toBe(true);
+
+      // Bottom triggers flip: the card sits ABOVE the trigger.
+      if (flipsAbove) {
+        const t = await trigger.boundingBox();
+        const p = await popover.boundingBox();
+        if (!t || !p) throw new Error(`${name}: missing boxes`);
+        expect(p.y + p.height, `${name}: card flips above the trigger`).toBeLessThanOrEqual(t.y);
+      }
+
+      await page.keyboard.press('Escape');
+      await expect(popover).toBeHidden();
+    }
+  });
+
+  /**
    * Frame 13 ("When do you want to pay this bill?") — the Modal is ONE white
    * padded panel over a LIGHT scrim (sampled ~#f8f4f5 — a whitish wash, never
    * a dark dim): near-square corner, real dialog semantics, ✕ in the header.

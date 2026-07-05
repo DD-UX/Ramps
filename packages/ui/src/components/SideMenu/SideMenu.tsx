@@ -26,8 +26,10 @@ import { Badge } from '../Badge/Badge';
  *    (--rui-accent #e4f222, the lime; samples are JPEG-inflated but the yellow-green family
  *    is unmistakable and matches no other token).
  *  - Badge text: ink (same INK as active text, high contrast on lime).
- *  - Corners: VETTED at 5x zoom across all frames — every nav item, badge, and the nav
- *    container itself is sharp 0px (rounded-square). No pill radii anywhere in the nav.
+ *  - Corners: VETTED at 5x zoom across all frames — nav items and the nav container
+ *    are sharp 0px (rounded-square). Badges are the exception BY DESIGN DECISION:
+ *    they render as fully-rounded pills to match the count badges in the Tabs bar
+ *    (user direction supersedes the frame reading here).
  *
  * INFERRED (not directly visible in static frames):
  *  - Hover state: limestone background (consistent with Button/Menu hover treatments and
@@ -132,12 +134,14 @@ export function SideMenuItem({
       )}
       <span className="flex-1 truncate text-left text-sm font-body">{children}</span>
       {badge !== undefined && badge > 0 && (
-        // The Badge primitive in its accent/solid tone (bg-accent + text-ink,
-        // rounded-square) — the same vetted lime pill the frames show, without
-        // a hand-rolled copy of its styles.
+        // The Badge primitive in its accent/solid tone (bg-accent + text-ink).
+        // shape="pill": DESIGN DECISION — nav counts are fully-rounded pills,
+        // matching the count badges the Tabs bar established (overrides the
+        // 0px-corner frame reading; codified in sidemenu-fidelity.spec.ts).
         <Badge
           tone="accent"
           variant="solid"
+          shape="pill"
           className="flex-shrink-0"
           aria-label={`${badge} items`}
         >

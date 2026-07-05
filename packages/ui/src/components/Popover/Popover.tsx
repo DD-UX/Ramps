@@ -8,6 +8,7 @@ import {
   type PropsWithChildren,
   useCallback,
   useContext,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -28,6 +29,11 @@ import { useClickAway } from '../../hooks/useClickAway';
  * - `trigger="hover"` — the frame-7 hovercard: Base UI's headless
  *   `PreviewCard` (hover/focus intent with sensible open/close delays,
  *   portalling, positioning). We own only the skin either way.
+ *
+ * Both modes are BOUNDARY-AWARE (Popper-style): hover mode inherits flip/shift
+ * from Base UI's Positioner; click mode hand-rolls the same two moves in
+ * PopoverContent — shift along x to stay inside the viewport (8px padding),
+ * flip above the trigger when the bottom would clip and the top fits.
  *
  * Compound so callers assemble their own trigger + content.
  * `"use client"` — it holds open state.
@@ -157,9 +163,61 @@ export type PopoverContentProps = PropsWithChildren<{
   className?: string;
 }>;
 
+/** Viewport padding the card never crosses (Popper's `padding` default). */
+const COLLISION_PADDING = 8;
+
 /** The floating card surface — white, near-square, soft popover shadow. */
 function PopoverContent({ children, sideOffset = 8, className }: PopoverContentProps) {
   const { mode, open } = usePopoverContext('Content');
+
+  // Click-mode collision handling (Popper-style, hand-rolled): the card is
+  // CSS-anchored centered under the trigger, then nudged to stay inside the
+  // viewport — `shiftX` slides it along the x-axis (Popper's "shift"),
+  // `flipped` moves it above the trigger when it would fall off the bottom
+  // and there IS room on top (Popper's "flip"). Hover mode needs none of
+  // this: Base UI's Positioner already flips/shifts on its own.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [shiftX, setShiftX] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+
+  useLayoutEffect(() => {
+    if (mode !== 'click' || !open) return;
+
+    const compute = () => {
+      const card = cardRef.current;
+      const anchor = card?.parentElement; // the Popover root (relative)
+      if (!card || !anchor) return;
+
+      const anchorRect = anchor.getBoundingClientRect();
+      // offsetWidth/Height: layout size, immune to the enter animation's
+      // scale transform (a getBoundingClientRect mid-fade under-measures).
+      const cardW = card.offsetWidth;
+      const cardH = card.offsetHeight;
+
+      // Shift: clamp the centered card into the horizontal viewport range.
+      const naturalLeft = anchorRect.left + anchorRect.width / 2 - cardW / 2;
+      const minLeft = COLLISION_PADDING;
+      const maxLeft = window.innerWidth - COLLISION_PADDING - cardW;
+      const clampedLeft = Math.min(Math.max(naturalLeft, minLeft), Math.max(minLeft, maxLeft));
+      setShiftX(clampedLeft - naturalLeft);
+
+      // Flip: only when below overflows AND above actually fits — otherwise
+      // stay below (matching Popper's fallback behavior).
+      const fitsBelow =
+        anchorRect.bottom + sideOffset + cardH <= window.innerHeight - COLLISION_PADDING;
+      const fitsAbove = anchorRect.top - sideOffset - cardH >= COLLISION_PADDING;
+      setFlipped(!fitsBelow && fitsAbove);
+    };
+
+    compute();
+    // Re-anchor while open: viewport resizes and any ancestor scroll.
+    window.addEventListener('resize', compute);
+    window.addEventListener('scroll', compute, true);
+    return () => {
+      window.removeEventListener('resize', compute);
+      window.removeEventListener('scroll', compute, true);
+    };
+  }, [mode, open, sideOffset]);
 
   // The one skin, shared by both modes.
   const surface = clsx(
@@ -193,19 +251,31 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
   // the SAME fade+lift the hover mode gets from Base UI's style hooks
   // (opacity+scale, 150ms) — instead of abruptly appearing. It also lands in
   // the SAME spot: centered under the trigger, matching the hover Positioner's
-  // default `align="center"` (it used to hang off the trigger's left edge).
+  // default `align="center"` — then the useLayoutEffect above shifts/flips it
+  // only when the viewport would clip it (the effect runs pre-paint, so a
+  // constrained card never flashes in the wrong place).
   // The -50% centering rides in the motion values because motion owns
-  // `transform` — a Tailwind -translate-x-1/2 would be overwritten.
+  // `transform` — a Tailwind -translate-x-1/2 would be overwritten. The
+  // collision shift rides in `left` instead, which motion doesn't touch.
   // mode="wait" is the kit's house rule: a rapid close→reopen queues the
   // re-enter behind the exit instead of overlapping the two cards.
   return (
     <AnimatePresence mode="wait">
       {open && (
         <motion.div
+          ref={cardRef}
           data-testid="popover"
           role="dialog"
-          className={clsx('absolute left-1/2 top-full z-50 origin-top', surface)}
-          style={{ marginTop: sideOffset }}
+          className={clsx(
+            'absolute z-50',
+            flipped ? 'bottom-full origin-bottom' : 'top-full origin-top',
+            surface,
+          )}
+          style={{
+            left: `calc(50% + ${shiftX}px)`,
+            marginTop: flipped ? undefined : sideOffset,
+            marginBottom: flipped ? sideOffset : undefined,
+          }}
           initial={{ opacity: 0, scale: 0.95, x: '-50%' }}
           animate={{ opacity: 1, scale: 1, x: '-50%' }}
           exit={{ opacity: 0, scale: 0.95, x: '-50%', transition: { duration: 0.1, ease: 'easeIn' } }}

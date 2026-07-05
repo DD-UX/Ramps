@@ -411,6 +411,16 @@ export function Table<T, K extends string | number = string>({
   const stickyLeft = columns.find((col) => col.sticky === 'left');
   const stickyRight = columns.find((col) => col.sticky === 'right');
   const checkboxWidth = selectable ? 56 : 0; // Ramp's token: selection column is 56px
+  // FIXED-width selection column: with a plain `width: 56` the auto table
+  // layout still hands the column its proportional share of any SPARE width
+  // (w-full tables are usually wider than the columns' sum), so the checkbox
+  // gutter stretched with the viewport. `width: 1%` opts it out of the
+  // spare-space distribution entirely; min/max pin it to exactly 56px.
+  const checkboxCellStyle = {
+    width: '1%',
+    minWidth: checkboxWidth,
+    maxWidth: checkboxWidth,
+  } as const;
 
   return (
     <div
@@ -434,7 +444,7 @@ export function Table<T, K extends string | number = string>({
               {selectable && (
                 <th
                   className="sticky left-0 z-10 border-b border-limestone bg-white px-rui-3 py-rui-2 align-middle"
-                  style={{ width: checkboxWidth, minWidth: checkboxWidth }}
+                  style={checkboxCellStyle}
                 >
                   {/* th centers inline content by default — the flex wrapper
                       pins the box left so it lines up with the row checkboxes. */}
@@ -517,7 +527,7 @@ export function Table<T, K extends string | number = string>({
                           isSelected ? 'bg-tone-selected-surface' : 'bg-white',
                           isClickable && !isSelected && 'group-hover/row:bg-limestone',
                         )}
-                        style={{ width: checkboxWidth, minWidth: checkboxWidth }}
+                        style={checkboxCellStyle}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex items-center">
@@ -699,7 +709,7 @@ export function Table<T, K extends string | number = string>({
                   {selectable && (
                     <td
                       className="sticky left-0 z-10 border-t border-limestone bg-white px-rui-3 py-rui-2"
-                      style={{ width: checkboxWidth, minWidth: checkboxWidth }}
+                      style={checkboxCellStyle}
                     />
                   )}
                   {columns.map((col) => {

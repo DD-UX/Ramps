@@ -21,7 +21,8 @@ import { hexToRgb, RUI } from './tokens.fixture';
  *  - Inactive item text: HUSHED (vetted #6f6e6a at frame-02 x45-50 y169).
  *  - Badge background: ACCENT (vetted #fbff85–#f8ff77 at frame-02 x160-165 y65/302).
  *  - Badge text: INK (high contrast on lime).
- *  - Corners: 0px (rounded-square) on nav container, items, and badges (vetted 5x zoom).
+ *  - Corners: 0px (rounded-square) on nav container and items (vetted 5x zoom);
+ *    badges are PILLS by design decision (matching the Tabs count badges).
  *  - Divider: bone hairline (INFERRED, standard neutral divider token).
  */
 
@@ -128,14 +129,19 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
   });
 
   /**
-   * Badge has 0px corners (rounded-square) — vetted across all frames.
+   * Badge is a fully-rounded PILL — DESIGN DECISION (user direction): the nav
+   * counts share the pill shape of the Tabs bar's count badges, superseding
+   * the earlier 0px frame reading. Pill = radius >= half the rendered height.
    */
-  test('Badge has 0px corners (rounded-square)', async ({ page }) => {
+  test('Badge is a pill (fully rounded, like the Tabs count badges)', async ({ page }) => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
     const badge = page.locator('nav li').filter({ hasText: 'Home' }).locator('span[aria-label]').first();
     await expect(badge).toBeVisible();
-    const radius = await badge.evaluate((el) => Number.parseFloat(getComputedStyle(el).borderTopLeftRadius));
-    expect(radius, 'badge corner is 0px').toBeLessThanOrEqual(1);
+    const { radius, height } = await badge.evaluate((el) => ({
+      radius: Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+      height: el.getBoundingClientRect().height,
+    }));
+    expect(radius, 'badge corner is a pill radius').toBeGreaterThanOrEqual(height / 2 - 1);
   });
 
   /**

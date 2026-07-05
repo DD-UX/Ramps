@@ -305,6 +305,27 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
   });
 
   /**
+   * The selection column is a FIXED 56px gutter. The auto table layout used
+   * to hand it a proportional share of the table's spare width (w-full tables
+   * are wider than the columns' sum), stretching the gutter with the
+   * viewport — the `width: 1%` + min/max pin keeps it at exactly 56px.
+   * CrossPageSelection's columns (200+140+100) leave plenty of spare width,
+   * so any regression re-stretches it well past 56.
+   */
+  test('Selection checkbox column is fixed at 56px', async ({ page }) => {
+    await page.goto(storyUrl('primitives-table--cross-page-selection'));
+    const checkboxHeader = page.locator('#storybook-root thead th').first();
+    await expect(checkboxHeader).toBeVisible();
+    const headerBox = await checkboxHeader.boundingBox();
+    expect(headerBox, 'checkbox header cell exists').not.toBeNull();
+    expect(Math.abs((headerBox?.width ?? 0) - 56), 'checkbox th is 56px wide').toBeLessThanOrEqual(1);
+
+    const checkboxCell = page.locator('#storybook-root tbody td').first();
+    const cellBox = await checkboxCell.boundingBox();
+    expect(Math.abs((cellBox?.width ?? 0) - 56), 'checkbox td is 56px wide').toBeLessThanOrEqual(1);
+  });
+
+  /**
    * The per-column footer summary (money total) renders correctly in the
    * SummaryFooter story. Assert: the footer cell shows a formatted
    * currency value that tracks the selected rows.
