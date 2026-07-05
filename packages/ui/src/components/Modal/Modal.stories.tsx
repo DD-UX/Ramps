@@ -18,8 +18,8 @@ type Story = StoryObj<typeof meta>;
 /** The frame-13 payment-date field: floating label, value, calendar glyph. */
 function PaymentDateField() {
   return (
-    <div className="flex flex-col gap-rui-1">
-      <div className="flex items-center justify-between gap-rui-3 rounded-square border border-bone bg-white px-rui-3 py-rui-2">
+    <div className="gap-rui-1 flex flex-col">
+      <div className="gap-rui-3 rounded-square border-bone bg-white px-rui-3 py-rui-2 flex items-center justify-between border">
         <div className="flex flex-col">
           <span className="text-xs text-hushed">Payment date</span>
           <span className="text-base text-ink">Feb 23, 2026</span>

@@ -6,14 +6,14 @@ Two things live here:
    assignment brief + its "Bill Creation and Management" reference image, cross-checked
    against `support.ramp.com`), mapped to an explicit build decision. This is the
    scope contract.
-2. **Execution sequence** — the ordered plan of *how* we build it, from empty repo to
+2. **Execution sequence** — the ordered plan of _how_ we build it, from empty repo to
    shippable demo. Deliberately more detailed than the work is long: planning is cheap,
    thrash is expensive.
 
 Scope rationale and the week-level view live in [`ANALYSIS.md`](./ANALYSIS.md) (§3 Scope,
 §7 Week plan); this doc is the feature-grained companion.
 
-> **Living doc.** The execution sequence should be *extended* as we go — each phase below
+> **Living doc.** The execution sequence should be _extended_ as we go — each phase below
 > will spawn finer steps (e.g. "kick off models and relationships" → "seed the DB with
 > fake data to establish the relationships" → "expose them through the SDK" → …). Add
 > detail just ahead of doing the work.
@@ -30,34 +30,34 @@ Scope rationale and the week-level view live in [`ANALYSIS.md`](./ANALYSIS.md) (
 These are Ramp's own documented Bill Pay sub-capabilities, verbatim from the reference
 screenshot shipped with the brief.
 
-| # | Ramp capability | What it means | Decision | Rationale |
-|---|---|---|---|---|
-| 1 | **Bill Pay OCR** | Scan/parse invoice → prefill fields | 🟡 Simulated | Fixture-based fake behind an interface; unknown uploads → `missing_info`. Real extractor slots in later. Core to the create-bill "wow." |
-| 2 | **Line-item coding (accounting dimensions)** | Per-line GL account, department, class, location, tax code, billable | 🟢 In | The t=46 frame's coding grid. Seeded dimension tables (`gl_accounts`, `departments`, `classes`, `locations`, `tax_codes`) with `external_id` provenance for a future integration seam. |
-| 2b | **Line-item splits & allocation templates** | Split one line across multiple GL codes | 🔵 Nice-to-have | Ramp models a split as *replace-with-N-lines* (`split_group_id`), not a separate entry table. Model supports it; split UI + saved templates only if ahead. |
-| 3 | **AP email forwarding** (`@ap.ramp.com`) | Dedicated inbox; vendors email invoices in | ⚪ Cut | Real inbound-email infra, no demo value. Roadmap line in README. |
-| 4 | **Spreadsheet (CSV) upload of bills** | Bulk-create bills from a sheet | 🔵 Nice-to-have | Cheap to fake (parse CSV → draft bills); good bulk story if time. |
-| 5 | **Managing bills** (filters, sorts, bulk) | The dense AP table | 🟢 **In — centerpiece** | This *is* the product. DataTable with lifecycle tabs, filters, sort, bulk select. |
-| 6 | **Creating draft bills** | Upload → draft → review/code | 🟢 In | The create-bill flow; pairs with OCR (#1). |
-| 7 | **Uploading invoices/bills** | Multiple upload entry points | 🟢 In (one path) | Single upload path real; email/CSV entry points cut/nice. |
-| 8 | **Invoice line items: expense vs. item** | Match lines to "expenses"/"items", sync to accounting | 🟡 Simplified | Keep Ramp's `kind: expense\|item` discriminator on the line (expense→GL account+dims; item→product+qty); skip the live accounting sync. |
-| 9 | **Recurring bill payments** | Auto-create bills on a schedule | ⚪ Cut | Scheduler infra; roadmap line. One-off bills only. |
-| 10 | **Bill lifecycle** | Status state machine + process controls | 🟢 **In — spine** | The state machine is our core domain flex; server-guarded transitions. |
-| 11 | **AP Aging Report** | Outstanding payables by age bucket | 🔵 Nice-to-have | Highest-value nice-to-have; the finance artifact that signals real AP understanding. |
+| #   | Ramp capability                              | What it means                                                        | Decision                | Rationale                                                                                                                                                                              |
+| --- | -------------------------------------------- | -------------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Bill Pay OCR**                             | Scan/parse invoice → prefill fields                                  | 🟡 Simulated            | Fixture-based fake behind an interface; unknown uploads → `missing_info`. Real extractor slots in later. Core to the create-bill "wow."                                                |
+| 2   | **Line-item coding (accounting dimensions)** | Per-line GL account, department, class, location, tax code, billable | 🟢 In                   | The t=46 frame's coding grid. Seeded dimension tables (`gl_accounts`, `departments`, `classes`, `locations`, `tax_codes`) with `external_id` provenance for a future integration seam. |
+| 2b  | **Line-item splits & allocation templates**  | Split one line across multiple GL codes                              | 🔵 Nice-to-have         | Ramp models a split as _replace-with-N-lines_ (`split_group_id`), not a separate entry table. Model supports it; split UI + saved templates only if ahead.                             |
+| 3   | **AP email forwarding** (`@ap.ramp.com`)     | Dedicated inbox; vendors email invoices in                           | ⚪ Cut                  | Real inbound-email infra, no demo value. Roadmap line in README.                                                                                                                       |
+| 4   | **Spreadsheet (CSV) upload of bills**        | Bulk-create bills from a sheet                                       | 🔵 Nice-to-have         | Cheap to fake (parse CSV → draft bills); good bulk story if time.                                                                                                                      |
+| 5   | **Managing bills** (filters, sorts, bulk)    | The dense AP table                                                   | 🟢 **In — centerpiece** | This _is_ the product. DataTable with lifecycle tabs, filters, sort, bulk select.                                                                                                      |
+| 6   | **Creating draft bills**                     | Upload → draft → review/code                                         | 🟢 In                   | The create-bill flow; pairs with OCR (#1).                                                                                                                                             |
+| 7   | **Uploading invoices/bills**                 | Multiple upload entry points                                         | 🟢 In (one path)        | Single upload path real; email/CSV entry points cut/nice.                                                                                                                              |
+| 8   | **Invoice line items: expense vs. item**     | Match lines to "expenses"/"items", sync to accounting                | 🟡 Simplified           | Keep Ramp's `kind: expense\|item` discriminator on the line (expense→GL account+dims; item→product+qty); skip the live accounting sync.                                                |
+| 9   | **Recurring bill payments**                  | Auto-create bills on a schedule                                      | ⚪ Cut                  | Scheduler infra; roadmap line. One-off bills only.                                                                                                                                     |
+| 10  | **Bill lifecycle**                           | Status state machine + process controls                              | 🟢 **In — spine**       | The state machine is our core domain flex; server-guarded transitions.                                                                                                                 |
+| 11  | **AP Aging Report**                          | Outstanding payables by age bucket                                   | 🔵 Nice-to-have         | Highest-value nice-to-have; the finance artifact that signals real AP understanding.                                                                                                   |
 
 ### B. The rest of the loop (implied by the product, not in the image)
 
-| # | Capability | Decision | Rationale |
-|---|---|---|---|
-| 12 | **Approval routing** (rules → chain, approve/reject w/ comment) | 🟢 **In** | The "grok complex workflow" flex; rule-based + non-retroactive per Ramp. |
-| 13 | **Payments** (ACH/check/wire, schedule, lifecycle sim) | 🟡 Simulated | Real UX + status progression (`scheduled→initiated→paid`, one seeded failure); no real rails. |
-| 14 | **Vendors** (payment details, default coding, owner, bill history) | 🟢 In | First-class per Ramp; bills route off vendor config. |
-| 15 | **Activity / audit log** | 🟢 In | `activity_events` from day one; powers the timeline UI. |
-| 16 | **Roles / permissions / role switcher** | 🟢 In | Unified policy model (§9 open-question 2); demos authorization without authentication. |
-| 17 | **Ramp design system reproduction** | 🟢 **In — baseline** | Design-engineer track; the actual graded deliverable, not styling. |
-| 18 | **Dashboard / insights** (upcoming payments, AP aging) | 🔵 Nice-to-have | Overlaps #11. |
-| 19 | **CSV export · saved views · remind approver** | 🔵 Nice-to-have | Pre-cut unless the golden path + design system are fully done. |
-| 20 | Accounting sync · multi-entity · intl FX · mobile | ⚪ Cut | Roadmap awareness in README only. |
+| #   | Capability                                                         | Decision             | Rationale                                                                                     |
+| --- | ------------------------------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------- |
+| 12  | **Approval routing** (rules → chain, approve/reject w/ comment)    | 🟢 **In**            | The "grok complex workflow" flex; rule-based + non-retroactive per Ramp.                      |
+| 13  | **Payments** (ACH/check/wire, schedule, lifecycle sim)             | 🟡 Simulated         | Real UX + status progression (`scheduled→initiated→paid`, one seeded failure); no real rails. |
+| 14  | **Vendors** (payment details, default coding, owner, bill history) | 🟢 In                | First-class per Ramp; bills route off vendor config.                                          |
+| 15  | **Activity / audit log**                                           | 🟢 In                | `activity_events` from day one; powers the timeline UI.                                       |
+| 16  | **Roles / permissions / role switcher**                            | 🟢 In                | Unified policy model (§9 open-question 2); demos authorization without authentication.        |
+| 17  | **Ramp design system reproduction**                                | 🟢 **In — baseline** | Design-engineer track; the actual graded deliverable, not styling.                            |
+| 18  | **Dashboard / insights** (upcoming payments, AP aging)             | 🔵 Nice-to-have      | Overlaps #11.                                                                                 |
+| 19  | **CSV export · saved views · remind approver**                     | 🔵 Nice-to-have      | Pre-cut unless the golden path + design system are fully done.                                |
+| 20  | Accounting sync · multi-entity · intl FX · mobile                  | ⚪ Cut               | Roadmap awareness in README only.                                                             |
 
 ### The golden path (sacred — everything else is negotiable)
 
@@ -66,7 +66,7 @@ upload invoice ──▶ approve as approver ──▶ schedule payment ──�
    (#1,6,7)            (#12,16)                 (#13)              (#10,13)
 ```
 
-Nothing in the reference image forces a change to this path — it *validates* it.
+Nothing in the reference image forces a change to this path — it _validates_ it.
 
 ---
 
@@ -77,7 +77,7 @@ model come before features (a design-engineer's screens must be on-brand from th
 pixel; features must have a schema + seed to render against). Extend each phase with finer
 steps just before starting it.
 
-### Phase 0 — Foundations ✅ *(done)*
+### Phase 0 — Foundations ✅ _(done)_
 
 - [x] Monorepo scaffold (`apps/web`, `packages/{ui,schemas,sdk,config}`, `supabase/`)
 - [x] Node/pnpm pinned; typecheck/lint/build green across all workspaces
@@ -85,7 +85,7 @@ steps just before starting it.
 - [x] Env samples, Supabase keys wired, MCP + skill tooling local
 - [x] Architecture, scope, permissions model, roadmap documented
 
-### Phase 1 — Data model & seed *(next)*
+### Phase 1 — Data model & seed _(next)_
 
 > "Kick off models and relationships" → "seed the DB to establish the relationships."
 
@@ -96,7 +96,7 @@ steps just before starting it.
 2. **Migrations (`supabase/migrations`)** — tables/enums/constraints mirroring the
    schemas 1:1; Postgres enums + CHECK constraints; RLS authored (defense-in-depth).
    Permissions tables: `policies`, `role_policies`, `user_policy_overrides`.
-3. **Seed (`supabase/seed.sql`)** — realistic demo data that *tells a story*: ~15 vendors,
+3. **Seed (`supabase/seed.sql`)** — realistic demo data that _tells a story_: ~15 vendors,
    ~40 bills across **every** lifecycle state (incl. overdue, one rejected, one failed
    payment), seeded users across roles **plus an off-AP employee placed on an approval
    chain** (to demo the approver = chain-membership path), seeded approval rules.
@@ -104,7 +104,7 @@ steps just before starting it.
 5. **SDK surface (`packages/sdk`)** — typed read/write functions consuming the schemas;
    the app never touches the DB shape directly.
 
-*Exit:* `db reset` + `pnpm typecheck` green; SDK can read a seeded bill with its vendor,
+_Exit:_ `db reset` + `pnpm typecheck` green; SDK can read a seeded bill with its vendor,
 approvals, and payments.
 
 ### Phase 2 — Design system core + app shell
@@ -115,7 +115,7 @@ approvals, and payments.
 3. Structural: Sidebar/AppShell, PageHeader, Drawer, Modal.
 4. **Role-switcher drawer** wired to the acting-role cookie + `router.refresh()`.
 
-*Exit:* an empty but navigable app that already *looks like Ramp*; Storybook deployed.
+_Exit:_ an empty but navigable app that already _looks like Ramp_; Storybook deployed.
 
 ### Phase 3 — Bills workspace + vendors
 
@@ -127,7 +127,7 @@ approvals, and payments.
    activity timeline.
 4. Vendors list + detail.
 
-*Exit:* browse all seeded bills/vendors through the real UI.
+_Exit:_ browse all seeded bills/vendors through the real UI.
 
 ### Phase 4 — Create bill + approvals
 
@@ -138,7 +138,7 @@ approvals, and payments.
 5. Employee (non-AP) dashboard = redirect target.
 6. Activity timeline writes.
 
-*Exit:* the authorization story is demoable end-to-end from every seat.
+_Exit:_ the authorization story is demoable end-to-end from every seat.
 
 ### Phase 5 — Payments + lifecycle
 
@@ -148,7 +148,7 @@ approvals, and payments.
 3. Server-side **transition guards** (`transitionBill()` allowed-transitions map; illegal → 422).
 4. Payments view.
 
-*Exit:* the golden path runs start to finish; illegal transitions rejected.
+_Exit:_ the golden path runs start to finish; illegal transitions rejected.
 
 ### Phase 6 — Polish + realism
 

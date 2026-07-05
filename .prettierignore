@@ -6,3 +6,4 @@ storybook-static
 coverage
 pnpm-lock.yaml
 docs/assets/swatches
+.claude

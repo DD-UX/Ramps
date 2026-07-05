@@ -101,8 +101,8 @@ export const Small: Story = {
 /** The full matrix, side by side, for a reviewer's eyeball. */
 export const Catalogue: Story = {
   render: () => (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
+    <div className="gap-4 flex flex-col">
+      <div className="gap-3 flex items-center">
         <Button variant="primary" trailingIcon={<ChevronDown size={16} />}>
           New bill
         </Button>
@@ -119,7 +119,7 @@ export const Catalogue: Story = {
           Options
         </Button>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="gap-3 flex items-center">
         <Button variant="primary" disabled leadingIcon={<Plus size={16} />}>
           New bill
         </Button>

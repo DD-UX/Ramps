@@ -30,7 +30,7 @@ export function Spinner({ size = 'md', className, label }: SpinnerProps) {
       aria-label={label}
       aria-hidden={label ? undefined : true}
       className={clsx(
-        'inline-block animate-spin rounded-pill border-current/25 border-t-current',
+        'animate-spin rounded-pill inline-block border-current/25 border-t-current',
         SIZE_STYLE[size],
         className,
       )}

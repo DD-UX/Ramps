@@ -25,10 +25,10 @@ export function Tooltip({ label, children, className }: TooltipProps) {
       <span
         role="tooltip"
         className={clsx(
-          'pointer-events-none absolute bottom-full left-1/2 z-10 mb-rui-2 -translate-x-1/2',
-          'w-max max-w-64 whitespace-normal rounded-square bg-ink px-rui-3 py-rui-1 text-center text-xs font-body text-limestone',
+          'mb-rui-2 pointer-events-none absolute bottom-full left-1/2 z-10 -translate-x-1/2',
+          'max-w-64 rounded-square bg-ink px-rui-3 py-rui-1 text-xs font-body text-limestone w-max text-center whitespace-normal',
           'opacity-0 transition-opacity duration-100',
-          'group-hover:opacity-100 group-focus-within:opacity-100',
+          'group-focus-within:opacity-100 group-hover:opacity-100',
         )}
       >
         {label}

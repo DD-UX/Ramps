@@ -122,7 +122,12 @@ export type PopoverTriggerProps = PropsWithChildren<{
  * The trigger. In click mode it's a real `<button>` (toggle, `aria-expanded`);
  * in hover mode it's Base UI's hover/focus target. Wrap the vendor name/logo.
  */
-function PopoverTrigger({ children, delay = 100, closeDelay = 150, className }: PopoverTriggerProps) {
+function PopoverTrigger({
+  children,
+  delay = 100,
+  closeDelay = 150,
+  className,
+}: PopoverTriggerProps) {
   const { mode, open, setOpen } = usePopoverContext('Trigger');
 
   if (mode === 'hover') {
@@ -131,8 +136,8 @@ function PopoverTrigger({ children, delay = 100, closeDelay = 150, className }: 
         delay={delay}
         closeDelay={closeDelay}
         className={clsx(
-          'cursor-default rounded-square underline-offset-2 outline-none',
-          'focus-visible:ring-2 focus-visible:ring-control-ring',
+          'rounded-square cursor-default underline-offset-2 outline-none',
+          'focus-visible:ring-control-ring focus-visible:ring-2',
           className,
         )}
       >
@@ -147,8 +152,8 @@ function PopoverTrigger({ children, delay = 100, closeDelay = 150, className }: 
       aria-expanded={open}
       onClick={() => setOpen(!open)}
       className={clsx(
-        'cursor-pointer rounded-square underline-offset-2 outline-none',
-        'focus-visible:ring-2 focus-visible:ring-control-ring',
+        'rounded-square cursor-pointer underline-offset-2 outline-none',
+        'focus-visible:ring-control-ring focus-visible:ring-2',
         className,
       )}
     >
@@ -278,7 +283,12 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
           }}
           initial={{ opacity: 0, scale: 0.95, x: '-50%' }}
           animate={{ opacity: 1, scale: 1, x: '-50%' }}
-          exit={{ opacity: 0, scale: 0.95, x: '-50%', transition: { duration: 0.1, ease: 'easeIn' } }}
+          exit={{
+            opacity: 0,
+            scale: 0.95,
+            x: '-50%',
+            transition: { duration: 0.1, ease: 'easeIn' },
+          }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
         >
           {children}

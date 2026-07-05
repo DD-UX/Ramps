@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 
 export default function DesignSystemPage() {
   return (
-    <main className="flex h-dvh flex-col bg-limestone">
-      <header className="flex items-center justify-between border-b border-bone px-rui-4 py-rui-3">
+    <main className="bg-limestone flex h-dvh flex-col">
+      <header className="border-bone px-rui-4 py-rui-3 flex items-center justify-between border-b">
         <div>
           <h1 className="text-sm font-heading text-ink">Design system</h1>
           <p className="text-xs font-body text-hushed">
@@ -34,11 +34,7 @@ export default function DesignSystemPage() {
       </header>
       {/* Embed the static Storybook build. If it hasn't been built yet the
           iframe 404s gracefully; the header link is the fallback. */}
-      <iframe
-        title="Storybook"
-        src="/storybook/index.html"
-        className="min-h-0 flex-1 border-0"
-      />
+      <iframe title="Storybook" src="/storybook/index.html" className="min-h-0 flex-1 border-0" />
     </main>
   );
 }

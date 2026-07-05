@@ -63,7 +63,9 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
    * inert: dimmed and not-allowed, NOT pixel-identical to the enabled base.
    * (This was the concrete defect the reviewer flagged.)
    */
-  test('Button/disabled has a real disabled affordance (dimmed + not-allowed)', async ({ page }) => {
+  test('Button/disabled has a real disabled affordance (dimmed + not-allowed)', async ({
+    page,
+  }) => {
     await page.goto(storyUrl('primitives-button--disabled'));
     const btn = page.getByRole('button').first();
     await expect(btn).toBeVisible();
@@ -108,7 +110,9 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
    * Snapshot 9 — the lime "Create bill" primary carries its shortcut as TWO
    * separate raised chips (⌘ then ↵), rendered as real <kbd> elements.
    */
-  test('Button/with-keys renders two separate <kbd> chips and a pointer cursor', async ({ page }) => {
+  test('Button/with-keys renders two separate <kbd> chips and a pointer cursor', async ({
+    page,
+  }) => {
     await page.goto(storyUrl('primitives-button--with-keys'));
     const btn = page.getByRole('button', { name: /Create bill/ });
     await expect(btn).toBeVisible();
@@ -124,8 +128,12 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     await page.goto(storyUrl('primitives-input--default'));
     const input = page.getByRole('textbox').first();
     await expect(input).toBeVisible();
-    const r = await input.evaluate((el) => Number.parseFloat(getComputedStyle(el).borderTopLeftRadius));
-    expect(r, 'input corner is near-square').toBeLessThanOrEqual(px(RUI['--rui-radius-square']) + 1);
+    const r = await input.evaluate((el) =>
+      Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    );
+    expect(r, 'input corner is near-square').toBeLessThanOrEqual(
+      px(RUI['--rui-radius-square']) + 1,
+    );
   });
 
   /**
@@ -290,7 +298,9 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     await expect(card).toBeVisible();
     const shadow = await card.evaluate((el) => getComputedStyle(el).boxShadow);
     expect(shadow, 'card carries a soft-glow shadow').not.toBe('none');
-    const r = await card.evaluate((el) => Number.parseFloat(getComputedStyle(el).borderTopLeftRadius));
+    const r = await card.evaluate((el) =>
+      Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    );
     expect(r, 'card corner is near-square').toBeLessThanOrEqual(px(RUI['--rui-radius-square']) + 1);
   });
 
@@ -395,16 +405,19 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
 
       // Fully inside the viewport (collision padding honored, ≥8px each side).
       await expect
-        .poll(async () => {
-          const p = await popover.boundingBox();
-          if (!p) return false;
-          return (
-            p.x >= 7 &&
-            p.y >= 7 &&
-            p.x + p.width <= viewport.width - 7 &&
-            p.y + p.height <= viewport.height - 7
-          );
-        }, { message: `${name}: popover stays inside the viewport` })
+        .poll(
+          async () => {
+            const p = await popover.boundingBox();
+            if (!p) return false;
+            return (
+              p.x >= 7 &&
+              p.y >= 7 &&
+              p.x + p.width <= viewport.width - 7 &&
+              p.y + p.height <= viewport.height - 7
+            );
+          },
+          { message: `${name}: popover stays inside the viewport` },
+        )
         .toBe(true);
 
       // Bottom triggers flip: the card sits ABOVE the trigger.
@@ -432,8 +445,12 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     await expect(modal).toHaveRole('dialog');
     await expect(modal.getByRole('button', { name: 'Close' })).toBeVisible();
 
-    const r = await modal.evaluate((el) => Number.parseFloat(getComputedStyle(el).borderTopLeftRadius));
-    expect(r, 'panel corner is near-square').toBeLessThanOrEqual(px(RUI['--rui-radius-square']) + 1);
+    const r = await modal.evaluate((el) =>
+      Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    );
+    expect(r, 'panel corner is near-square').toBeLessThanOrEqual(
+      px(RUI['--rui-radius-square']) + 1,
+    );
 
     // Tailwind v4 emits `bg-white/75` via color-mix, so the computed value is
     // an oklab() white in Chromium. Assert the two facts that matter: the veil
@@ -537,7 +554,10 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
           }),
         { message: 'toast settles at opacity 1, identity transform' },
       )
-      .toEqual({ opacity: 1, transform: expect.stringMatching(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/) });
+      .toEqual({
+        opacity: 1,
+        transform: expect.stringMatching(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/),
+      });
   });
 
   /**
@@ -597,7 +617,11 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     await expect(btn).toBeVisible();
     const rest = await btn.evaluate((el) => {
       const s = getComputedStyle(el);
-      return { bg: s.backgroundColor, borderColor: s.borderTopColor, borderW: Number.parseFloat(s.borderTopWidth) };
+      return {
+        bg: s.backgroundColor,
+        borderColor: s.borderTopColor,
+        borderW: Number.parseFloat(s.borderTopWidth),
+      };
     });
     expect(rest.bg, 'outline rest is transparent').toBe('rgba(0, 0, 0, 0)');
     expect(rest.borderColor, 'border carries the variant (accent) colour').toBe(
@@ -832,9 +856,7 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     // Two marks × (bar + swoosh) = four paths, all riding currentColor.
     const paths = logo.locator('path');
     await expect(paths, 'two marks = four paths').toHaveCount(4);
-    for (const fill of await paths.evaluateAll((els) =>
-      els.map((el) => el.getAttribute('fill')),
-    )) {
+    for (const fill of await paths.evaluateAll((els) => els.map((el) => el.getAttribute('fill')))) {
       expect(fill, 'every path fills with currentColor').toBe('currentColor');
     }
 

@@ -22,7 +22,7 @@ export function Skeleton({ className, circle = false }: SkeletonProps) {
     <span
       aria-hidden
       className={clsx(
-        'block animate-pulse bg-bone',
+        'animate-pulse bg-bone block',
         circle ? 'rounded-pill' : 'rounded-square',
         className,
       )}
@@ -36,10 +36,10 @@ export function SkeletonRow({ className }: { className?: string }) {
     <div
       role="status"
       aria-label="Loading"
-      className={clsx('flex items-center gap-rui-3 px-rui-4 py-rui-3', className)}
+      className={clsx('gap-rui-3 px-rui-4 py-rui-3 flex items-center', className)}
     >
       <Skeleton circle className="size-8" />
-      <div className="flex-1 space-y-1.5">
+      <div className="space-y-1.5 flex-1">
         <Skeleton className="h-3 w-40" />
         <Skeleton className="h-2.5 w-24" />
       </div>

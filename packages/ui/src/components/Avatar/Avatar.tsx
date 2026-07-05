@@ -69,7 +69,7 @@ export function Avatar({ name, src, size = 'md', className }: AvatarProps) {
       role="img"
       aria-label={name}
       className={clsx(
-        'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-pill font-heading select-none',
+        'rounded-pill font-heading inline-flex shrink-0 items-center justify-center overflow-hidden select-none',
         SIZE_STYLE[size],
         !src && tone,
         className,

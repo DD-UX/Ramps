@@ -19,18 +19,18 @@ Two sources: the official **Ramp Bill Pay playlist**
 ([PLfEbMx3FLWDa73XnP1bz11_bCTKY6gXKE](https://www.youtube.com/playlist?list=PLfEbMx3FLWDa73XnP1bz11_bCTKY6gXKE))
 and one third-party accountant review. One playlist entry was unavailable.
 
-| # | Video | Lens | Folder |
-|---|-------|------|--------|
-| 1 | Ramp Bill Pay **Product Overview** | Ramp marketing — full lifecycle | [`ramp-bill-pay-product-overview`](./ramp-bill-pay-product-overview/findings.md) |
-| 2 | Bill Pay Series: **AP Agent** | Ramp marketing — AI agent + coding grid | [`ramp-bill-pay-series-ap-agent`](./ramp-bill-pay-series-ap-agent/findings.md) |
-| 3 | Bill Pay Series: **1099's** | Ramp — vendor tax reporting | [`ramp-bill-pay-series-1099-s`](./ramp-bill-pay-series-1099-s/findings.md) |
-| 4 | Accounting Series: **Universal CSV Export** | Ramp — export to ERP | [`ramp-accounting-series-bill-pay-ucsv-export`](./ramp-accounting-series-bill-pay-ucsv-export/findings.md) |
-| 5 | Import Bills — **NetSuite** | Ramp — integration seam | [`ramp-bill-pay-series-import-bills-netsuite`](./ramp-bill-pay-series-import-bills-netsuite/findings.md) |
-| 6 | Import Bills — **QuickBooks Online** | Ramp — integration seam | [`ramp-bill-pay-series-import-bills-quick-books-online`](./ramp-bill-pay-series-import-bills-quick-books-online/findings.md) |
-| 7 | Importing Bills — **Sage Intacct** | Ramp — integration seam | [`ramp-bill-pay-series-importing-bills-sage-intacct`](./ramp-bill-pay-series-importing-bills-sage-intacct/findings.md) |
-| 8 | Import Bills — **Xero** | Ramp — integration seam | [`ramp-bill-pay-series-import-bills-xero`](./ramp-bill-pay-series-import-bills-xero/findings.md) |
-| 9 | Introducing **1099 Filing** (teaser) | Ramp — e-file promo | [`introducing-1099-filing-in-ramp-bill-pay`](./introducing-1099-filing-in-ramp-bill-pay/findings.md) |
-| 10 | **Does Ramp Live Up to the Hype?** | Third-party review — real messy invoices | [`does-ramp-live-up-to-the-hype-testing-accounts-payable-in-ra`](./does-ramp-live-up-to-the-hype-testing-accounts-payable-in-ra/findings.md) |
+| #   | Video                                       | Lens                                     | Folder                                                                                                                                       |
+| --- | ------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Ramp Bill Pay **Product Overview**          | Ramp marketing — full lifecycle          | [`ramp-bill-pay-product-overview`](./ramp-bill-pay-product-overview/findings.md)                                                             |
+| 2   | Bill Pay Series: **AP Agent**               | Ramp marketing — AI agent + coding grid  | [`ramp-bill-pay-series-ap-agent`](./ramp-bill-pay-series-ap-agent/findings.md)                                                               |
+| 3   | Bill Pay Series: **1099's**                 | Ramp — vendor tax reporting              | [`ramp-bill-pay-series-1099-s`](./ramp-bill-pay-series-1099-s/findings.md)                                                                   |
+| 4   | Accounting Series: **Universal CSV Export** | Ramp — export to ERP                     | [`ramp-accounting-series-bill-pay-ucsv-export`](./ramp-accounting-series-bill-pay-ucsv-export/findings.md)                                   |
+| 5   | Import Bills — **NetSuite**                 | Ramp — integration seam                  | [`ramp-bill-pay-series-import-bills-netsuite`](./ramp-bill-pay-series-import-bills-netsuite/findings.md)                                     |
+| 6   | Import Bills — **QuickBooks Online**        | Ramp — integration seam                  | [`ramp-bill-pay-series-import-bills-quick-books-online`](./ramp-bill-pay-series-import-bills-quick-books-online/findings.md)                 |
+| 7   | Importing Bills — **Sage Intacct**          | Ramp — integration seam                  | [`ramp-bill-pay-series-importing-bills-sage-intacct`](./ramp-bill-pay-series-importing-bills-sage-intacct/findings.md)                       |
+| 8   | Import Bills — **Xero**                     | Ramp — integration seam                  | [`ramp-bill-pay-series-import-bills-xero`](./ramp-bill-pay-series-import-bills-xero/findings.md)                                             |
+| 9   | Introducing **1099 Filing** (teaser)        | Ramp — e-file promo                      | [`introducing-1099-filing-in-ramp-bill-pay`](./introducing-1099-filing-in-ramp-bill-pay/findings.md)                                         |
+| 10  | **Does Ramp Live Up to the Hype?**          | Third-party review — real messy invoices | [`does-ramp-live-up-to-the-hype-testing-accounts-payable-in-ra`](./does-ramp-live-up-to-the-hype-testing-accounts-payable-in-ra/findings.md) |
 
 ## Cross-video synthesis
 
@@ -40,7 +40,7 @@ Every video confirms the same **five-tab shell**: `Overview · Drafts · For
 approval · For payment · History`, with a `New bill` primary (yellow) button and
 `Recurring bills` secondary. The **Overview groups in-flight bills by status
 section** (`Missing info` → `Payment details needed` → `Awaiting approvals`)
-rather than being a sortable-only table (video 10). Status is a *place you live*,
+rather than being a sortable-only table (video 10). Status is a _place you live_,
 not just a column.
 
 The visible lifecycle transition proof: **approve flips the row `0 of 1 → 1 of 1`
@@ -63,7 +63,7 @@ Async UX (video 10): batch upload → `Uploading N invoices` toast → optimisti
 
 **OCR failure is a first-class state, not an error to hide** (video 10): a
 multi-invoice-in-one-PDF or a dense/handwritten invoice extracts only
-`Total + Previous balance` and leaves `Line items: Incomplete`; an AI-*generated*
+`Total + Previous balance` and leaves `Line items: Incomplete`; an AI-_generated_
 description summarizes the doc. Our simulated OCR must model both outcomes:
 clean → coded draft; degenerate → `missing_info` bucket + `Incomplete` lines.
 
@@ -81,7 +81,7 @@ discriminator in the wild (video 10). A **`Save as default coding for future
 bills`** checkbox persists per-vendor defaults, and **`Collapse line items`**
 simplifies many lines into one.
 
-The dropdown *options are synced records*, not free text — the exact seam our
+The dropdown _options are synced records_, not free text — the exact seam our
 model reserves `external_id` + `source` for.
 
 → Build: one `bill_line_items` table, per-line dimensions FK'd to seeded
@@ -93,7 +93,7 @@ reference tables (`gl_accounts`, `departments`, `classes`, `locations`,
 ### 4. The accounting integration is a bidirectional seam (videos 5–8, unanimous)
 
 All four import videos show an **identical pattern** across NetSuite / QuickBooks /
-Sage Intacct / Xero — strong evidence this is *the* shape to reproduce:
+Sage Intacct / Xero — strong evidence this is _the_ shape to reproduce:
 
 - **One toggle** under `Bill Pay settings → Importing` enables continuous sync
   (`Import bills from {provider}`). No per-field mapping UI shown → convention +
@@ -102,7 +102,7 @@ Sage Intacct / Xero — strong evidence this is *the* shape to reproduce:
   account for reconciliation.
 - **Provenance on every imported bill**: an `Imported · {date}` label, a
   `last updated {timestamp}` banner with manual `Refresh`, and an **`Open in
-  {provider}`** deep link. The provider's bill number becomes the Ramp invoice #.
+{provider}`** deep link. The provider's bill number becomes the Ramp invoice #.
 - **Imported bills skip approval** — they land in `For payment` (already approved
   upstream), not `For approval`. Implies a `source`-driven routing / approval-
   bypass flag.
@@ -111,7 +111,7 @@ Sage Intacct / Xero — strong evidence this is *the* shape to reproduce:
 - Core fields (vendor, amount, invoice #, dates) are **read-only** on imported
   bills; only Ramp payment metadata is editable — source system stays truth.
 
-→ Build: this *validates and sharpens* our seam. Columns/tables to carry:
+→ Build: this _validates and sharpens_ our seam. Columns/tables to carry:
 `bills.external_id`, `bills.source`, `bills.imported_at`, `bills.last_synced_at`,
 a `source`-driven approval-bypass path, and a stored provider instance URL for
 deep-link construction. We simulate the sync (no live rails) but keep the shape
@@ -121,12 +121,13 @@ honest.
 
 Configure payment **inline on the draft** (`Payment details`: method, pay-from
 account, `Schedule now/later`, computed arrival "2 business days", overdue banner
-+ same-day upsell — videos 1, 10), then confirm in a compact **"When do you want
-to pay this bill?"** modal (video 10). Methods: **ACH · wire (domestic/intl) ·
-check · Ramp card** (cashback upsell when the vendor accepts cards — videos 1, 5,
-6, 7, 8). Bulk release **batches bills by vendor** into one payment while
-preserving individual invoice references, with a `Batched` badge and a grouped
-review modal (videos 1, 5).
+
+- same-day upsell — videos 1, 10), then confirm in a compact **"When do you want
+  to pay this bill?"** modal (video 10). Methods: **ACH · wire (domestic/intl) ·
+  check · Ramp card** (cashback upsell when the vendor accepts cards — videos 1, 5,
+  6, 7, 8). Bulk release **batches bills by vendor** into one payment while
+  preserving individual invoice references, with a `Batched` badge and a grouped
+  review modal (videos 1, 5).
 
 → Build: inline schedule + confirm modal; method picker; `payments` 1:N `bills`
 (batch); simulated `scheduled → initiated → paid` + one seeded failure
@@ -175,7 +176,7 @@ e-files to IRS + state.
 
 → Build: **out of golden-path scope** (roadmap ⚪/🔵). Value captured here: 1099
 status is a first-class vendor field; box-mapping is GL-category-driven. Reproduce
-the *vendor tax fields*; document filing as a roadmap line.
+the _vendor tax fields_; document filing as a roadmap line.
 
 ### 9. CSV / Universal-CSV export (video 4)
 
@@ -193,6 +194,6 @@ vendors as separate CSVs; a saved column template.
 - **Design system**: [`../design-system.md` §8](../design-system.md) links this corpus
   as the product-surface evidence behind token reproduction.
 - **Data model**: [`../ANALYSIS.md` §4](../ANALYSIS.md) — the line-item + dimension
-  + `external_id`/`source` tables the import videos validate.
+  - `external_id`/`source` tables the import videos validate.
 - **Scope**: [`../roadmap.md` §1](../roadmap.md) — every capability above maps to an
   explicit In / Simulated / Nice-to-have / Cut decision.

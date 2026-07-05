@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx';
 import { AnimatePresence, motion } from 'motion/react';
-import { type ReactNode,useId, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 
 import { SegmentedControl } from '../SegmentedControl/SegmentedControl';
 
@@ -59,13 +59,18 @@ export function SegmentedArea({
   };
 
   return (
-    <div className={clsx('flex flex-col rounded-square', className)}>
+    <div className={clsx('rounded-square flex flex-col', className)}>
       <SegmentedControl
         options={tabs.map(({ value: tabValue, label }) => ({ value: tabValue, label }))}
         value={active}
         onValueChange={select}
       />
-      <div id={panelId} role="tabpanel" className="bg-canvas p-rui-3" data-testid="segmented-area-panel">
+      <div
+        id={panelId}
+        role="tabpanel"
+        className="bg-canvas p-rui-3"
+        data-testid="segmented-area-panel"
+      >
         {/* mode="wait": the leaving panel fades out fully before the next fades in. */}
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

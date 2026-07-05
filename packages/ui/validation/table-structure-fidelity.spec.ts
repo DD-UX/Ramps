@@ -94,9 +94,10 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
       return { position: s.position, left: Number.parseFloat(s.left) };
     });
     expect(firstStyles.position, 'first data column is sticky').toBe('sticky');
-    expect(firstStyles.left, 'first data column has left offset (checkbox width)').toBeGreaterThanOrEqual(
-      50,
-    );
+    expect(
+      firstStyles.left,
+      'first data column has left offset (checkbox width)',
+    ).toBeGreaterThanOrEqual(50);
 
     // Last column (Actions): sticky right.
     const lastHeader = table.locator('thead th').last();
@@ -131,7 +132,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
    */
   test('Selection Map survives pagination (cross-page persistence)', async ({ page }) => {
     await page.goto(storyUrl('primitives-table--cross-page-selection'));
-    const selectionCount = page.locator('#storybook-root div:has-text("selected across all pages")').first();
+    const selectionCount = page
+      .locator('#storybook-root div:has-text("selected across all pages")')
+      .first();
     await expect(selectionCount).toBeVisible();
 
     // Initial: 0 selected
@@ -200,7 +203,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
    * a middle data cell carries a 1px limestone border-left; the row's FIRST
    * cell does not (no divider on the table's outer edge).
    */
-  test('Vertical column dividers are limestone hairlines (product-overview 02)', async ({ page }) => {
+  test('Vertical column dividers are limestone hairlines (product-overview 02)', async ({
+    page,
+  }) => {
     await page.goto(storyUrl('primitives-table--frame-6-replica'));
     const firstRow = page.locator('#storybook-root tbody tr').first();
     await expect(firstRow).toBeVisible();
@@ -214,8 +219,8 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     expect(middleStyles.color, 'divider is limestone').toBe(hexToRgb(RUI['--rui-limestone']));
 
     const firstCell = firstRow.locator('td').first();
-    const firstWidth = await firstCell.evaluate(
-      (el) => Number.parseFloat(getComputedStyle(el).borderLeftWidth),
+    const firstWidth = await firstCell.evaluate((el) =>
+      Number.parseFloat(getComputedStyle(el).borderLeftWidth),
     );
     expect(firstWidth, 'no divider on the table outer edge').toBe(0);
   });
@@ -299,9 +304,7 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     await firstCheckbox.check();
     await expect(firstCheckbox).toBeChecked();
     const bg = await firstCheckbox.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg, 'checked checkbox fill is positive green').toBe(
-      hexToRgb(RUI['--rui-positive']),
-    );
+    expect(bg, 'checked checkbox fill is positive green').toBe(hexToRgb(RUI['--rui-positive']));
   });
 
   /**
@@ -318,7 +321,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     await expect(checkboxHeader).toBeVisible();
     const headerBox = await checkboxHeader.boundingBox();
     expect(headerBox, 'checkbox header cell exists').not.toBeNull();
-    expect(Math.abs((headerBox?.width ?? 0) - 56), 'checkbox th is 56px wide').toBeLessThanOrEqual(1);
+    expect(Math.abs((headerBox?.width ?? 0) - 56), 'checkbox th is 56px wide').toBeLessThanOrEqual(
+      1,
+    );
 
     const checkboxCell = page.locator('#storybook-root tbody td').first();
     const cellBox = await checkboxCell.boundingBox();
@@ -372,7 +377,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
    * at 1px on ap-agent/6 (y634/640 sample #fbfaf6, the canvas token; the
    * table surface above is pure white).
    */
-  test('Pagination band sits on canvas with a limestone top hairline (frame 6)', async ({ page }) => {
+  test('Pagination band sits on canvas with a limestone top hairline (frame 6)', async ({
+    page,
+  }) => {
     await page.goto(storyUrl('primitives-table--pagination-footer'));
     const tfoot = page.locator('#storybook-root tfoot').first();
     await expect(tfoot).toBeVisible();
@@ -394,7 +401,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
    * chevron sits outside it). Assert: the underlined span is hushed and
    * does NOT contain the svg; the svg lives beside it in the trigger.
    */
-  test('Pagination "Select" is hushed + underlined with a non-underlined chevron (frame 6)', async ({ page }) => {
+  test('Pagination "Select" is hushed + underlined with a non-underlined chevron (frame 6)', async ({
+    page,
+  }) => {
     await page.goto(storyUrl('primitives-table--pagination-footer'));
     const trigger = page.locator('#storybook-root tfoot [role="button"]').first();
     await expect(trigger).toBeVisible();
@@ -539,10 +548,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
       .locator('td')
       .first()
       .textContent();
-    expect(
-      firstRowAfterScroll,
-      'after scrolling, a different row is visible',
-    ).not.toContain('Vendor 1');
+    expect(firstRowAfterScroll, 'after scrolling, a different row is visible').not.toContain(
+      'Vendor 1',
+    );
   });
 
   /**
@@ -572,9 +580,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     await page.goto(storyUrl('primitives-table--flagged-bills'));
     const annotationRow = page.locator('[data-testid="table-annotation-row"]').first();
     await expect(annotationRow).toBeVisible();
-    const textColor = await annotationRow.locator('div.text-alert').evaluate((el) =>
-      getComputedStyle(el).color,
-    );
+    const textColor = await annotationRow
+      .locator('div.text-alert')
+      .evaluate((el) => getComputedStyle(el).color);
     expect(textColor, 'annotation text is alert red').toBe(hexToRgb(RUI['--rui-alert']));
   });
 
@@ -595,10 +603,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     });
     expect(styles.textDecoration, 'annotation link is underlined').toBe('underline');
     // The decoration color should be alert (or inherit from parent text-alert)
-    expect(
-      styles.textDecorationColor,
-      'annotation link underline color is alert',
-    ).toBe(hexToRgb(RUI['--rui-alert']));
+    expect(styles.textDecorationColor, 'annotation link underline color is alert').toBe(
+      hexToRgb(RUI['--rui-alert']),
+    );
   });
 
   /**
@@ -666,10 +673,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     await page.waitForTimeout(100);
 
     const clickedAfter = consoleMessages.filter((msg) => msg.startsWith('Clicked:'));
-    expect(
-      clickedAfter.length,
-      'parent data row click triggers onRowClick',
-    ).toBeGreaterThanOrEqual(1);
+    expect(clickedAfter.length, 'parent data row click triggers onRowClick').toBeGreaterThanOrEqual(
+      1,
+    );
   });
 
   /**
@@ -677,7 +683,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
    * produce overlapping rows. Assert: the DOM row count stays bounded and
    * no visual overlap occurs (sanity check: scroll and verify row stability).
    */
-  test('Virtualized table with annotations: no overlapping rows during scroll', async ({ page }) => {
+  test('Virtualized table with annotations: no overlapping rows during scroll', async ({
+    page,
+  }) => {
     await page.goto(storyUrl('primitives-table--large-dataset'));
     const tbody = page.locator('#storybook-root tbody').first();
     await expect(tbody).toBeVisible();
@@ -700,9 +708,8 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
       .first()
       .evaluate((el) => el.getBoundingClientRect().top);
     const tbodyTop = await tbody.evaluate((el) => el.getBoundingClientRect().top);
-    expect(
-      firstRowTop,
-      'first visible row is not above tbody (no overlap)',
-    ).toBeGreaterThanOrEqual(tbodyTop - 100); // Allow some overscan margin
+    expect(firstRowTop, 'first visible row is not above tbody (no overlap)').toBeGreaterThanOrEqual(
+      tbodyTop - 100,
+    ); // Allow some overscan margin
   });
 });

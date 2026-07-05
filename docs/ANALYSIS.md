@@ -1,6 +1,6 @@
 # Ramps — Initial Analysis & Execution Plan
 
-**Track:** Design engineer (Ramp design system reproduction is the *baseline*, not a bonus)
+**Track:** Design engineer (Ramp design system reproduction is the _baseline_, not a bonus)
 **Time budget:** ~1 week
 **Guiding principle:** The first impression is the only impression. Every decision below is
 optimized for what a reviewer experiences in their first 10 minutes: README → setup → demo
@@ -28,8 +28,8 @@ Key domain insights from the Ramp docs (these are what "grokking the workflow" m
    money movement. One bill → one or more payments, each with independent statuses.
    Modeling this correctly is a strong domain-understanding signal.
 2. **The bill lifecycle is a state machine.** Ramp's statuses: `Missing info → Ready →
-   Awaiting approval → Scheduled → Initiated → Paid`, plus terminal states `Rejected`,
-   `Archived`, `Payment failed`. The UI is organized *around* this lifecycle (tabs:
+Awaiting approval → Scheduled → Initiated → Paid`, plus terminal states `Rejected`,
+   `Archived`, `Payment failed`. The UI is organized _around_ this lifecycle (tabs:
    Drafts / Approvals / Payment / History) — the IA mirrors the state machine.
 3. **Vendors are first-class.** Vendor records own payment details, default accounting
    coding, and a "vendor owner" (person responsible). Bills route based on vendor config.
@@ -43,15 +43,15 @@ Key domain insights from the Ramp docs (these are what "grokking the workflow" m
 
 ## 2. Evaluation criteria → strategy mapping
 
-| Criterion | Our answer |
-|---|---|
-| Product taste | Organize IA around the bill lifecycle like Ramp does; realistic seed data that tells a story (overdue bills, a rejected bill, a failed payment) |
-| Design/UI | Reproduce Ramp's design system as a real `packages/ui` with tokens + documented components; ship 2–3 written opinions on where Ramp's design falls short |
-| Scope judgment | Explicit in/out list in README; cut real payment rails, real OCR, real auth — simulate all three convincingly |
-| UX quality | Empty states, loading skeletons, optimistic updates, keyboard support in tables, toasts, drawer-based detail views (Ramp pattern) |
-| Grok complex workflows | Correct state machine, bill↔payment separation, policy-driven approval chains, audit/activity log |
-| Simple, robust systems | Zod as single source of truth, thin API layer, DB constraints + enums, state transitions validated server-side |
-| Raw output | Monorepo scaffolding + design system built first so features compound fast in days 3–6 |
+| Criterion              | Our answer                                                                                                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Product taste          | Organize IA around the bill lifecycle like Ramp does; realistic seed data that tells a story (overdue bills, a rejected bill, a failed payment)          |
+| Design/UI              | Reproduce Ramp's design system as a real `packages/ui` with tokens + documented components; ship 2–3 written opinions on where Ramp's design falls short |
+| Scope judgment         | Explicit in/out list in README; cut real payment rails, real OCR, real auth — simulate all three convincingly                                            |
+| UX quality             | Empty states, loading skeletons, optimistic updates, keyboard support in tables, toasts, drawer-based detail views (Ramp pattern)                        |
+| Grok complex workflows | Correct state machine, bill↔payment separation, policy-driven approval chains, audit/activity log                                                        |
+| Simple, robust systems | Zod as single source of truth, thin API layer, DB constraints + enums, state transitions validated server-side                                           |
+| Raw output             | Monorepo scaffolding + design system built first so features compound fast in days 3–6                                                                   |
 
 ---
 
@@ -96,10 +96,10 @@ Key domain insights from the Ramp docs (these are what "grokking the workflow" m
   same domain modeling without integration risk.
 - **Real OCR** — deterministic fake keeps the demo reliable; interface designed so a
   real extractor slots in.
-- **Real auth (signup/login)** — seeded users + a role switcher demos *authorization*
-  (the interesting part: approver permissions) without burning a day on *authentication*.
-- **Accounting *sync* (QuickBooks/NetSuite/Sage), multi-entity, intl FX, email invoice
-  ingest, mobile** — noted as roadmap in README to show awareness. Note: we *do* model
+- **Real auth (signup/login)** — seeded users + a role switcher demos _authorization_
+  (the interesting part: approver permissions) without burning a day on _authentication_.
+- **Accounting _sync_ (QuickBooks/NetSuite/Sage), multi-entity, intl FX, email invoice
+  ingest, mobile** — noted as roadmap in README to show awareness. Note: we _do_ model
   the accounting **dimensions** these integrations provide (GL account, department,
   class, location, tax code) as seeded local reference tables with `external_id`
   provenance — only the live sync is cut. This keeps line-item coding real and demoable
@@ -207,6 +207,7 @@ activity_events  (id, bill_id, actor_id, type, payload_json, created_at)  # audi
 ```
 
 Design notes:
+
 - **Money as integer cents** — floating point money in a fintech take-home is disqualifying.
 - **Status transitions validated server-side** — a `transitionBill()` function with an
   explicit allowed-transitions map; illegal transitions 422. Small, cheap, high-signal.
@@ -216,13 +217,13 @@ Design notes:
 - **Coding is line-level, not header-level** (Ramp-founded, confirmed in the AP Agent
   video frame at t=46 and Ramp's "Bill Pay accounting" docs). One bill mixes codings
   across lines; each line owns its `gl_account / department / class / location / tax_code
-  / billable`.
+/ billable`.
 - **One line-item table — NO separate `bill_entries` / GL-distribution table.** Some AP
-  systems split *invoice line* from *GL distribution* (a separate journal-entry table);
-  Ramp does **not** expose that. Per Ramp's docs a **split *replaces* a line with N
+  systems split _invoice line_ from _GL distribution_ (a separate journal-entry table);
+  Ramp does **not** expose that. Per Ramp's docs a **split _replaces_ a line with N
   lines**, each with its own amount + coding — so we model splits as sibling rows tagged
   by `split_group_id`, not as child entries. We stay faithful to Ramp's presentation.
-- **`kind: expense|item`** is Ramp's one real line *type* distinction: `expense` codes to
+- **`kind: expense|item`** is Ramp's one real line _type_ distinction: `expense` codes to
   a GL account (+ dimensions); `item` references a product with qty/unit price. Ramp
   forbids mixing the two on one line, so it's a per-row discriminator, not two tables.
 - **Dimensions carry `external_id` + `source` provenance** — nullable columns that say
@@ -233,23 +234,23 @@ Design notes:
 
 ### Stack decisions
 
-| Decision | Choice | Rationale |
-|---|---|---|
-| Framework | Next.js App Router, server components + route handlers | Required; server components keep the table pages fast |
-| DB | Supabase (local via CLI) | Free realistic Postgres, `db reset` + seed = one-command demo data |
-| Data access | Supabase JS client from server only, wrapped by SDK | Avoid exposing DB shape to browser; API is the contract |
-| Validation | Zod everywhere | Stated goal; single source of truth |
-| Styling | Tailwind + CSS custom properties for Ramp tokens | Tokens as CSS vars = themable, inspectable, honest design-system work |
-| Components | Radix primitives skinned to Ramp + hand-built table | Accessibility for free; effort spent on look/feel, not reinventing focus traps |
-| Forms | react-hook-form + zodResolver | Contract reuse in the UI layer |
-| Component workbench | Storybook 8 in `packages/ui` (a11y addon, static build deployed) | Design system auditable in isolation; per-component definition of done |
-| Deploy | Vercel + hosted Supabase (plus full local instructions) | A live link is the strongest first impression there is |
+| Decision            | Choice                                                           | Rationale                                                                      |
+| ------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Framework           | Next.js App Router, server components + route handlers           | Required; server components keep the table pages fast                          |
+| DB                  | Supabase (local via CLI)                                         | Free realistic Postgres, `db reset` + seed = one-command demo data             |
+| Data access         | Supabase JS client from server only, wrapped by SDK              | Avoid exposing DB shape to browser; API is the contract                        |
+| Validation          | Zod everywhere                                                   | Stated goal; single source of truth                                            |
+| Styling             | Tailwind + CSS custom properties for Ramp tokens                 | Tokens as CSS vars = themable, inspectable, honest design-system work          |
+| Components          | Radix primitives skinned to Ramp + hand-built table              | Accessibility for free; effort spent on look/feel, not reinventing focus traps |
+| Forms               | react-hook-form + zodResolver                                    | Contract reuse in the UI layer                                                 |
+| Component workbench | Storybook 8 in `packages/ui` (a11y addon, static build deployed) | Design system auditable in isolation; per-component definition of done         |
+| Deploy              | Vercel + hosted Supabase (plus full local instructions)          | A live link is the strongest first impression there is                         |
 
 ---
 
 ## 5. Ramp design system reproduction (design-engineer baseline)
 
-This is a *deliverable*, not styling. Treat it as its own workstream.
+This is a _deliverable_, not styling. Treat it as its own workstream.
 
 **Research phase: DONE — see `docs/design-system.md`.** Headline findings (all from
 primary sources — Ramp's shipped CSS/JS):
@@ -301,40 +302,40 @@ The demo must feel alive without real integrations:
   `scheduled → initiated → paid` on a timer or via a discreet "advance clock" dev
   control; one seeded payment fails to demo the failure workflow.
 - **Users:** role switcher in the top bar ("Viewing as: Maya — CFO") to walk through
-  the approval flow live in one browser session. This is a *demo feature*, framed as such.
+  the approval flow live in one browser session. This is a _demo feature_, framed as such.
 
 ---
 
 ## 7. Week plan
 
-| Day | Focus | Exit criteria |
-|---|---|---|
-| **1** | Scaffolding (design research ✅ done — `docs/design-system.md`) | Monorepo builds; supabase migrations + seed run; zod schemas for all models; Storybook boots with tokens page; reference screenshot library assembled |
-| **2** | Design system core + app shell | `packages/ui` with tokens, Button/Input/Badge/Tabs/Drawer/AppShell — each with stories; navigable empty app that already *looks like Ramp* |
-| **3** | Bills workspace + vendors | DataTable with lifecycle tabs, filters, status pills; bill detail drawer (read-only); vendors list/detail; all against seed data |
-| **4** | Create bill + approvals | Upload → fake OCR → confirm form; approval policies + chain; approve/reject with comments; role switcher; activity timeline |
-| **5** | Payments + lifecycle | Schedule payment flow, payments view, simulator, failure path; server-side transition guards; dashboard if time permits |
-| **6** | Polish + realism | Empty/loading/error states everywhere; seed data storytelling pass; microinteractions; a11y pass; nice-to-haves only if everything above is done |
-| **7** | Ship | README (the assignment's exact 5 bullets, in order); design-opinions writeup; Vercel + hosted Supabase deploy; fresh-clone setup test on a clean machine; screenshots/demo GIF; buffer |
+| Day   | Focus                                                           | Exit criteria                                                                                                                                                                          |
+| ----- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | Scaffolding (design research ✅ done — `docs/design-system.md`) | Monorepo builds; supabase migrations + seed run; zod schemas for all models; Storybook boots with tokens page; reference screenshot library assembled                                  |
+| **2** | Design system core + app shell                                  | `packages/ui` with tokens, Button/Input/Badge/Tabs/Drawer/AppShell — each with stories; navigable empty app that already _looks like Ramp_                                             |
+| **3** | Bills workspace + vendors                                       | DataTable with lifecycle tabs, filters, status pills; bill detail drawer (read-only); vendors list/detail; all against seed data                                                       |
+| **4** | Create bill + approvals                                         | Upload → fake OCR → confirm form; approval policies + chain; approve/reject with comments; role switcher; activity timeline                                                            |
+| **5** | Payments + lifecycle                                            | Schedule payment flow, payments view, simulator, failure path; server-side transition guards; dashboard if time permits                                                                |
+| **6** | Polish + realism                                                | Empty/loading/error states everywhere; seed data storytelling pass; microinteractions; a11y pass; nice-to-haves only if everything above is done                                       |
+| **7** | Ship                                                            | README (the assignment's exact 5 bullets, in order); design-opinions writeup; Vercel + hosted Supabase deploy; fresh-clone setup test on a clean machine; screenshots/demo GIF; buffer |
 
 **Sequencing rationale:** design system before features (design-engineer track — every
 screen built afterward is automatically on-brand, no retrofit); table before forms (it's
 the centerpiece and hardest component); README and deploy get a full protected day
-because they *are* the first impression.
+because they _are_ the first impression.
 
 ---
 
 ## 8. Risks & mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Design-fidelity rabbit hole (pixel-hunting Ramp) | Timebox research to day 1; tokens + 5 signature patterns > pixel perfection; document intentional deviations as "opinions" (assignment invites this) |
-| Monorepo/SDK read as over-engineering | Keep each package tiny and justified in README; no premature abstractions inside them; if it slows us down by day 2, collapse SDK into the app and keep `schemas` + `ui` |
-| Table complexity sink | Start from TanStack Table headless; ruthlessly cap features (sort, filter, select — no virtualization, no column DnD) |
-| Approval-policy scope creep | Amount-threshold rules only; no arbitrary rule builder |
-| Demo breaks on reviewer's machine | Deployed link as primary path; `supabase start && pnpm setup && pnpm dev` tested from a fresh clone on day 7 |
-| Supabase local friction (Docker) | Deployed instance is the fallback for reviewers without Docker; say so in README |
-| Day 4–5 overrun | Nice-to-haves are pre-cut; the golden path (upload → approve → schedule → paid) is sacred, everything else is negotiable |
+| Risk                                             | Mitigation                                                                                                                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Design-fidelity rabbit hole (pixel-hunting Ramp) | Timebox research to day 1; tokens + 5 signature patterns > pixel perfection; document intentional deviations as "opinions" (assignment invites this)                     |
+| Monorepo/SDK read as over-engineering            | Keep each package tiny and justified in README; no premature abstractions inside them; if it slows us down by day 2, collapse SDK into the app and keep `schemas` + `ui` |
+| Table complexity sink                            | Start from TanStack Table headless; ruthlessly cap features (sort, filter, select — no virtualization, no column DnD)                                                    |
+| Approval-policy scope creep                      | Amount-threshold rules only; no arbitrary rule builder                                                                                                                   |
+| Demo breaks on reviewer's machine                | Deployed link as primary path; `supabase start && pnpm setup && pnpm dev` tested from a fresh clone on day 7                                                             |
+| Supabase local friction (Docker)                 | Deployed instance is the fallback for reviewers without Docker; say so in README                                                                                         |
+| Day 4–5 overrun                                  | Nice-to-haves are pre-cut; the golden path (upload → approve → schedule → paid) is sacred, everything else is negotiable                                                 |
 
 ---
 
@@ -352,7 +353,7 @@ because they *are* the first impression.
    authored (defense in depth), exercised via the server role. Authorization logic
    (who may approve/pay) stays real; only the identity mechanism is seeded.
 
-   *Switcher mechanics:* a **foldable drawer** (collapsed by default) lists the seeded
+   _Switcher mechanics:_ a **foldable drawer** (collapsed by default) lists the seeded
    users/roles. Selecting one writes a **server-readable cookie** (`acting_role` /
    `acting_user_id`) and calls `router.refresh()` so the current route re-renders
    server-side already in that role's context (correct first paint). If the new role
@@ -361,23 +362,24 @@ because they *are* the first impression.
    access {page}"). Because `redirect()` can't raise a toast directly, the redirect
    carries a short-lived flash marker (cookie or `?notice=`) that the destination
    reads once, renders, and clears.
+
 2. ~~**Permissions model:**~~ **Resolved — unified policy model (role = sum of policies;
    user = role + overrides).** A **policy** is one atomic capability (e.g. `bill.create`).
    A **role** is the sum of a set of policies. A **user** has a role **plus**
    `includedPolicies[]` (additive) and `excludedPolicies[]` (subtractive):
    `effective(user) = (policies(role) ∪ included) \ excluded` — **exclude wins**. This
-   encodes both directions: a policy can grant beyond a role *and* remove despite it
+   encodes both directions: a policy can grant beyond a role _and_ remove despite it
    (Ramp's Separation of Duties = the subtractive case). Stored as **data** (seeded
    `role_policies` + per-user override rows, RLS-mirrored, queryable); the policy
    **catalog** is the SSoT in `packages/schemas` (zod enum). Roles are seeded, **not**
-   runtime-editable — only *policies* are edited at runtime (see Settings, below).
+   runtime-editable — only _policies_ are edited at runtime (see Settings, below).
 
-   *Policy catalog (demo):* `employee.all` (non-AP realm — the employee dashboard),
+   _Policy catalog (demo):_ `employee.all` (non-AP realm — the employee dashboard),
    `billpay.view`, `bill.create`, `bill.submit`, `bill.edit`, `bill.approve`,
    `bill.pay`, `vendor.view`, `vendor.manage`, `payment.view`, `policy.manage`,
    `user.manage`.
 
-   *Role → policies:*
+   _Role → policies:_
    - `admin` — all policies (incl. `policy.manage` / `user.manage`).
    - `accounts_payable` — Bill Pay set (view/create/submit/edit/pay, vendors, payments)
      **but not** `bill.approve` (separation of duties) nor the admin levers; plus
@@ -385,20 +387,20 @@ because they *are* the first impression.
    - `employee` — **only** `employee.all`. Blocked from Bill Pay → redirected to the
      employee dashboard. Gains `bill.approve` only when a policy names them (approver).
 
-   *UI:* the role selector shows a **badge** per user; users with overrides read
+   _UI:_ the role selector shows a **badge** per user; users with overrides read
    **"Customized,"** and hovering lists their `+ included` / `− excluded` policies.
 
-   *Settings tab (admin-only, gated by `policy.manage`):* admin adds/removes approval
+   _Settings tab (admin-only, gated by `policy.manage`):_ admin adds/removes approval
    **policies** — this is the demo's "boom" lever (AP creates a bill → employee can't
    approve → admin adds a policy → employee approves). Roles/permission-catalog are not
    editable here; only policies.
 
-   *Employee dashboard (non-AP realm):* a **minimal** "Employee Home" landing page,
+   _Employee dashboard (non-AP realm):_ a **minimal** "Employee Home" landing page,
    granted by `employee.all`. Doubles as the **redirect target** when an off-Bill-Pay
    employee hits a Bill Pay route, and makes role switches visually obvious.
 
-   *Approval routing (how Ramp does per-bill without manual work — verified against
-   support.ramp.com):* admins configure **rules once** (`condition → approver`, e.g.
+   _Approval routing (how Ramp does per-bill without manual work — verified against
+   support.ramp.com):_ admins configure **rules once** (`condition → approver`, e.g.
    `amount ≥ $X → user`); on **bill submit** Ramp auto-evaluates active rules and
    materializes per-bill `approvals` rows. No manual per-bill assignment. Ramp is
    **non-retroactive** (a rule added later does not backfill existing bills), but
@@ -429,13 +431,13 @@ because they *are* the first impression.
 
    The mechanic we build:
    - **Add approver to this bill** — the Settings/bill action writes one `approvals` row
-     against the *specific* in-flight bill (Ramp's "add to in-flight chain"). Rules stay
+     against the _specific_ in-flight bill (Ramp's "add to in-flight chain"). Rules stay
      **non-retroactive**; nothing recomputes globally. Most faithful.
    - **Phantom approvers auto-approve** — bills seed with a chain of `M` approvers. The
      seeded ("phantom") approvers never appear in the role-switcher drawer; on submit
      they auto-approve after a **simulated delay** (same device as the payment
      simulator), advancing the counter `0 of M → (M-1) of M`.
-   - **The human is the stopper** — the one approver the demo user *assigns* is the real
+   - **The human is the stopper** — the one approver the demo user _assigns_ is the real
      employee. The bill parks at `(M-1) of M` / `Needs your approval` until that human
      clicks `Approve`, at which point it clears to `M of M` and moves to `For payment`.
 

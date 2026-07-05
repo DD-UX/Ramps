@@ -12,7 +12,15 @@ const DotsIcon = (
 );
 
 const DownloadIcon = (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    aria-hidden
+  >
     <path d="M8 2v8m0 0 3-3m-3 3L5 7" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M2.5 11.5v1a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" strokeLinecap="round" />
   </svg>
@@ -30,7 +38,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Ghost: Story = { args: { label: 'More actions', icon: DotsIcon } };
-export const Subtle: Story = { args: { label: 'Download invoice', icon: DownloadIcon, variant: 'subtle' } };
+export const Subtle: Story = {
+  args: { label: 'Download invoice', icon: DownloadIcon, variant: 'subtle' },
+};
 export const Small: Story = { args: { label: 'More actions', icon: DotsIcon, size: 'sm' } };
 
 /** Pill shape — same `rounded` contract as Button (the frame-1 toolbar treatment). */

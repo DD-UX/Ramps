@@ -45,23 +45,28 @@ scratch state (gitignored), never committed.
    # Handoff — <one-line task title> (<YYYY-MM-DD>)
 
    ## 1. Goal
+
    What we are ultimately trying to achieve and WHY. Include the user's
    binding directives, quoted verbatim.
 
    ## 2. Current State
+
    Where things stand right now: what works, what is verified (and HOW it
    was verified — commands, gates, tests), what is committed vs uncommitted,
    any holds the user placed (e.g. "do not commit X yet").
 
    ## 3. Active Files
+
    Bullet list: `path` — one-line role in this task. Mark (NEW) / (MODIFIED)
    / (uncommitted). Include key read-only references (specs, analysis docs).
 
    ## 4. Changes Made
+
    What was changed and the intent behind each change. Reference commits by
    hash + subject; describe uncommitted edits precisely.
 
    ## 5. Failed Attempts
+
    Each: what was tried → exact failure (error message verbatim) → root
    cause → what to do instead. Include tooling hazards discovered.
 
@@ -73,6 +78,7 @@ scratch state (gitignored), never committed.
    than trust anything this session concluded about it.
 
    ## 6. Next Steps
+
    Ordered, actionable list. First item = the exact point work stopped, with
    the concrete command/edit to resume. Include verification steps (build,
    typecheck, gates) and the intended commit message if one was planned.

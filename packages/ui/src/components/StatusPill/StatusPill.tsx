@@ -60,7 +60,7 @@ export function StatusPill({ status, className }: StatusPillProps) {
     <span
       // A pill: fully-rounded, small, tinted. Weight/spacing come from tokens.
       className={clsx(
-        'inline-flex items-center gap-rui-1 rounded-pill px-rui-3 py-rui-1 text-xs font-heading whitespace-nowrap',
+        'gap-rui-1 rounded-pill px-rui-3 py-rui-1 text-xs font-heading inline-flex items-center whitespace-nowrap',
         TONE_STYLE[tone],
         className,
       )}

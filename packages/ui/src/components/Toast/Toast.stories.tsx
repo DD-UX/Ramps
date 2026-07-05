@@ -109,8 +109,8 @@ function AnimatedDemo() {
   const [shown, setShown] = useState(true);
 
   return (
-    <div className="flex flex-col items-center gap-rui-4">
-      <div className="grid grid-cols-3 gap-rui-2">
+    <div className="gap-rui-4 flex flex-col items-center">
+      <div className="gap-rui-2 grid grid-cols-3">
         {PRESET_GRID.flat().map((name) => (
           <Button
             key={name}
@@ -132,13 +132,13 @@ function AnimatedDemo() {
           exiting toast keeps ITS corner while the next preset's layer
           mounts elsewhere — motion's presence context still reaches the
           nested Toast to play its exit. */}
-      <div className="relative h-96 w-[720px] overflow-hidden border border-bone bg-limestone">
+      <div className="h-96 border-bone bg-limestone relative w-[720px] overflow-hidden border">
         <AnimatePresence mode="wait">
           {shown && (
             <div
               key={`${preset}-${seq}`}
               className={clsx(
-                'pointer-events-none absolute inset-0 flex p-rui-4',
+                'inset-0 p-rui-4 pointer-events-none absolute flex',
                 PLACEMENT[preset],
               )}
             >
@@ -148,7 +148,7 @@ function AnimatedDemo() {
                 tone="positive"
                 transition={TOAST_VARIANTS[preset]}
                 onDismiss={() => setShown(false)}
-                className="pointer-events-auto w-80"
+                className="w-80 pointer-events-auto"
               />
             </div>
           )}

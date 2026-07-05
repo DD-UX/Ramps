@@ -78,7 +78,7 @@ export function DraggablePanel({
     <div
       ref={containerRef}
       className={clsx(
-        'flex w-full items-stretch overflow-hidden rounded-square border border-bone bg-white',
+        'rounded-square border-bone bg-white flex w-full items-stretch overflow-hidden border',
         dragging && 'select-none',
         className,
       )}
@@ -104,8 +104,8 @@ export function DraggablePanel({
         }}
         onKeyDown={onKeyDown}
         className={clsx(
-          'group relative flex w-px shrink-0 cursor-col-resize items-center justify-center bg-bone p-0',
-          'outline-none focus-visible:ring-2 focus-visible:ring-control-ring',
+          'group bg-bone p-0 relative flex w-px shrink-0 cursor-col-resize items-center justify-center',
+          'focus-visible:ring-control-ring outline-none focus-visible:ring-2',
         )}
       >
         <span
@@ -114,8 +114,8 @@ export function DraggablePanel({
             // Frame 7 at 10x + 1px sampling: a circular STONE chip, soft
             // shadow, ink dots — no border; a full step darker than the
             // panes so it keeps contrast on the limestone canvas too.
-            'absolute flex size-7 items-center justify-center rounded-pill bg-stone text-ink',
-            'shadow-card transition-shadow group-hover:shadow-popover',
+            'size-7 rounded-pill bg-stone text-ink absolute flex items-center justify-center',
+            'shadow-card group-hover:shadow-popover transition-shadow',
             dragging && 'shadow-popover',
           )}
         >
@@ -126,7 +126,7 @@ export function DraggablePanel({
       {/* Right pane = the preview CANVAS. Frames 7/8/10 sample #f6f5f1–#fbfaf6
           out there — the warm limestone wash the white invoice sheet floats
           on — never the same white as the form pane. */}
-      <div className="min-w-0 flex-1 overflow-auto bg-limestone">{right}</div>
+      <div className="min-w-0 bg-limestone flex-1 overflow-auto">{right}</div>
     </div>
   );
 }

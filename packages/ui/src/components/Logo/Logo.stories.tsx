@@ -21,7 +21,7 @@ export const Default: Story = {};
  */
 export const OnLimestone: Story = {
   render: () => (
-    <div className="inline-flex bg-limestone p-rui-4">
+    <div className="bg-limestone p-rui-4 inline-flex">
       <Logo />
     </div>
   ),
@@ -30,7 +30,7 @@ export const OnLimestone: Story = {
 /** Scales cleanly — the lockup stays 2:1 at any size. */
 export const Sizes: Story = {
   render: () => (
-    <div className="flex items-end gap-rui-4">
+    <div className="gap-rui-4 flex items-end">
       <Logo size={12} />
       <Logo size={16} />
       <Logo size={24} />
@@ -45,7 +45,7 @@ export const Sizes: Story = {
  */
 export const Inverted: Story = {
   render: () => (
-    <div className="inline-flex bg-ink p-rui-4">
+    <div className="bg-ink p-rui-4 inline-flex">
       <Logo className="text-limestone" size={24} />
     </div>
   ),

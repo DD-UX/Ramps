@@ -71,7 +71,7 @@ export function Badge({
     <span
       aria-label={ariaLabel}
       className={clsx(
-        'inline-flex items-center gap-rui-1 px-rui-2 py-0.5 text-xs font-heading whitespace-nowrap',
+        'gap-rui-1 px-rui-2 py-0.5 text-xs font-heading inline-flex items-center whitespace-nowrap',
         shape === 'pill' ? 'rounded-pill' : 'rounded-square',
         style,
         className,

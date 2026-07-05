@@ -5,6 +5,7 @@
 **Summary:** Comprehensive walkthrough of Ramp's 1099 tax reporting workflow, from vendor eligibility tracking through W-9 collection, box mappings, and IRS e-filing.
 
 **Resources:**
+
 - [Full captions (VTT)](./captions.vtt)
 - [Snapshots](./snapshots/)
 
@@ -33,6 +34,7 @@ This video demonstrates Ramp's end-to-end 1099 filing automation, showing how th
 ### 2. 1099 Dashboard: Multi-Tab Layout (0:30–0:40)
 
 **SAW:** A full-page drawer opens titled "1099 vendors for [Company Name]" with a company dropdown. The interface has five tabs:
+
 - **Overview** (active)
 - **Needs review** (badge: 2)
 - **Ready to file** (badge: 3)
@@ -44,6 +46,7 @@ A blue info banner at the top states: "We recommend mapping 3 Accounting Categor
 The table below has filter toggles (Meets reporting threshold: Yes, 1099-eligible vendor: Yes) and columns: Vendor, Status, Total uncategorized, 1099-NEC total, 1099-MISC total, 1099 box, Default contact, Actions.
 
 Each vendor row shows:
+
 - Status badge (e.g., "Ready to file", "Missing tax details")
 - Dollar amounts for NEC/MISC totals
 - Box assignment (e.g., "Nonemployee compensation - Box 1", "Multiple")
@@ -55,6 +58,7 @@ Each vendor row shows:
 **Snapshot:** `02-1099-dashboard-overview.jpeg`
 
 **Significance:**
+
 - Clear progressive disclosure: vendors move through a staged workflow.
 - Real-time tracking: vendors auto-populate when they cross reporting thresholds.
 - Data transparency: totals are broken out by form type (NEC vs. MISC) and box.
@@ -83,6 +87,7 @@ Each vendor row shows:
 **Snapshot:** `04-needs-review-tab-bulk-action.jpeg`
 
 **Significance:**
+
 - Bulk operations: users can select multiple vendors and request W-9 forms + e-consent in one action.
 - Status-driven workflow: "Missing tax details" is a blocker state that triggers the request flow.
 
@@ -93,6 +98,7 @@ Each vendor row shows:
 **SAW:** A modal titled "Review suggested 1099 mappings" appears. Subtitle: "We matched 3 Accounting Categories to their 1099 boxes." The modal shows:
 
 **Form 1099-MISC**
+
 - **Box 1 - Rents**
   Tag: "Rent & Lease Expense" (removable)
 - **Box 10 - Gross proceeds paid to an attorney**
@@ -105,6 +111,7 @@ Buttons: "Skip" (ghost) and "Confirm" (yellow primary).
 **Snapshot:** `05-ai-mappings-modal.jpeg`
 
 **Significance:**
+
 - AI-powered intelligence: Ramp automatically maps GL categories to 1099 boxes based on IRS rules.
 - User control: mappings are presented as suggestions, not auto-applied.
 - Efficiency: reduces manual classification work.
@@ -114,6 +121,7 @@ Buttons: "Skip" (ghost) and "Confirm" (yellow primary).
 ### 6. Vendor Detail: Tax Details Section (1:15)
 
 **SAW:** Clicking into a vendor (e.g., "Brookside Research Group") opens a right-side drawer. The "Tax details" section (marked "Complete" in green) shows:
+
 - **Vendor legal name:** Brookside Research Group
 - **Federal tax classification:** Partnership
 - **Taxpayer Identification Number (TIN):** ••••••• (masked, with lock icon)
@@ -131,6 +139,7 @@ Below, a collapsible "Bill line items" section (marked "Ready to file") shows th
 **Snapshot:** `06-vendor-tax-details-drawer.jpeg`
 
 **Significance:**
+
 - Comprehensive tax profile: legal name, TIN, classification, address all in one place.
 - Multi-year tracking: separate 1099 status fields for each tax year.
 - TIN verification: Ramp validates TINs (likely via IRS TIN Matching).
@@ -141,11 +150,13 @@ Below, a collapsible "Bill line items" section (marked "Ready to file") shows th
 ### 7. Box Mapping: Per-Vendor Customization (1:08–1:15)
 
 **SAW:** In the vendor drawer, under "Bill line items," each line shows:
+
 - Invoice number + description
 - 1099 box dropdown (e.g., "Nonemployee compensation - Box 1" with lightning bolt icon)
 - Amount
 
 A dropdown is open, showing box options:
+
 - Search field
 - **1099-NEC**
   - Nonemployee compensation - Box 1 (selected, checkmark)
@@ -165,6 +176,7 @@ At the bottom: "+ Add additional spend" link.
 **Snapshots:** `07-box-mapping-dropdown.jpeg`, `08-box-options-list.jpeg`
 
 **Significance:**
+
 - Granular control: users can override AI suggestions at the invoice line-item level.
 - Comprehensive box coverage: all 1099-NEC and 1099-MISC boxes are available.
 - Manual adjustments: "+ Add additional spend" allows entry of off-platform transactions.
@@ -181,6 +193,7 @@ At the bottom: "+ Add additional spend" link.
 Info callout: "The deadline for 1099 filing for the 2025 tax year is Feb 2, 2026"
 
 **Steps:**
+
 1. Confirm your company information
 2. Review the vendors you're filing for
 3. Select your filing and delivery method
@@ -195,6 +208,7 @@ Small disclaimer text: "This feature is provided for your convenience only and d
 **Snapshot:** `09-filing-wizard-start.jpeg`
 
 **Significance:**
+
 - Clear expectations: deadline prominently displayed.
 - Staged wizard: 4-step process keeps users oriented.
 - Legal compliance: disclaimer sets appropriate expectations.
@@ -210,6 +224,7 @@ Small disclaimer text: "This feature is provided for your convenience only and d
 Subtitle: "This information will appear in the 'Payer' boxes on 1099 forms"
 
 Fields displayed:
+
 - **Payer's name:** [Company Name]'s Company
 - **Payer's TIN:** 123456789
 - **Tax address:** —
@@ -224,6 +239,7 @@ Yellow "Continue" button at bottom.
 **Snapshot:** `10-business-info-review.jpeg`
 
 **Significance:**
+
 - Data validation: users must confirm company TIN and address before filing.
 - Editable: "Edit" button allows corrections without exiting the wizard.
 
@@ -238,6 +254,7 @@ Yellow "Continue" button at bottom.
 Subtitle: "The IRS requires 1099 delivery to vendors by February 2, 2026"
 
 Two radio card options:
+
 - **Deliver digitally to vendors with e-consent** (selected, green border, "Recommended" badge)
   - $0.00 per digital form
   - "Mailing fees apply to vendors without e-consent" (note)
@@ -252,6 +269,7 @@ Yellow "Continue" button below.
 **Snapshot:** `11-delivery-method-selection.jpeg`
 
 **Significance:**
+
 - Cost transparency: per-form fees are disclosed upfront.
 - Recommended path: Ramp nudges users toward digital delivery (faster, cheaper).
 - Hybrid model: users without e-consent automatically receive mailed copies.
@@ -267,6 +285,7 @@ Yellow "Continue" button below.
 Info callout: "The total cost will be charged on your next Ramp Services statement"
 
 **Line items:**
+
 - Federal filing: $0.65 per form × 4 forms = $2.60
 - State filing: Free × 4 forms = $0.00 (info icon)
 - Mail delivery: $1.85 per form × 4 forms = $7.40
@@ -280,6 +299,7 @@ Large yellow "Purchase and file" button.
 **Snapshot:** `12-purchase-summary.jpeg`
 
 **Significance:**
+
 - Transparent pricing: federal filing ($0.65/form), state filing (free in this case), mail delivery ($1.85/form).
 - Single transaction: all fees are bundled into one Ramp Services charge.
 - Turnkey filing: after this step, Ramp submits forms to IRS and states on the user's behalf.

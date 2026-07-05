@@ -28,12 +28,16 @@ export function EmptyState({ title, description, icon, action, className }: Empt
         // zones (icon / text / action) while the inner gap-rui-1 keeps title
         // and description reading as one block — the flat single-gap stack
         // read cluttered.
-        'flex flex-col items-center justify-center gap-rui-4 rounded-square border border-dashed border-bone bg-limestone px-rui-6 py-rui-8 text-center',
+        'gap-rui-4 rounded-square border-bone bg-limestone px-rui-6 py-rui-8 flex flex-col items-center justify-center border border-dashed text-center',
         className,
       )}
     >
-      {icon && <span className="text-hushed" aria-hidden>{icon}</span>}
-      <div className="flex flex-col items-center gap-rui-1">
+      {icon && (
+        <span className="text-hushed" aria-hidden>
+          {icon}
+        </span>
+      )}
+      <div className="gap-rui-1 flex flex-col items-center">
         <p className="font-heading text-ink">{title}</p>
         {description && <p className="max-w-sm text-sm font-body text-hushed">{description}</p>}
       </div>

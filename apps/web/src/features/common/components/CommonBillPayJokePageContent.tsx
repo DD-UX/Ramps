@@ -14,15 +14,13 @@ export function CommonBillPayJokePageContent() {
   const router = useRouter();
 
   return (
-    <div className="flex min-h-full flex-1 items-center justify-center bg-white">
-      <div className="flex flex-col items-center gap-rui-4 text-center">
+    <div className="bg-white flex min-h-full flex-1 items-center justify-center">
+      <div className="gap-rui-4 flex flex-col items-center text-center">
         {/* Big icon — the kit's bills glyph, sized once here */}
         <ReceiptText width={64} height={64} strokeWidth={1.5} className="text-hushed" aria-hidden />
 
         {/* Heading */}
-        <h1 className="font-heading text-2xl text-ink">
-          Are you looking for Bill Pay?
-        </h1>
+        <h1 className="font-heading text-2xl text-ink">Are you looking for Bill Pay?</h1>
 
         {/* Sub-heading with emoji */}
         <p className="font-body text-hushed">Sure you are 😉</p>

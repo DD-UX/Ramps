@@ -34,7 +34,7 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
   return (
     <div
       role="tablist"
-      className={clsx('flex items-center gap-rui-4 border-b border-bone', className)}
+      className={clsx('gap-rui-4 border-bone flex items-center border-b', className)}
     >
       {tabs.map((tab) => {
         const active = tab.value === value;
@@ -46,7 +46,7 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
             aria-selected={active}
             onClick={() => onValueChange?.(tab.value)}
             className={clsx(
-              'relative -mb-px inline-flex cursor-pointer items-center gap-rui-2 px-rui-1 py-rui-3 text-sm font-heading',
+              'gap-rui-2 px-rui-1 py-rui-3 text-sm font-heading relative -mb-px inline-flex cursor-pointer items-center',
               active ? 'text-ink' : 'text-hushed hover:text-ink',
             )}
           >
@@ -65,7 +65,7 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
               <motion.span
                 layoutId="tab-underline"
                 data-testid="tab-underline"
-                className="absolute inset-x-0 -bottom-px h-0.5 rounded-pill bg-ink"
+                className="inset-x-0 h-0.5 rounded-pill bg-ink absolute -bottom-px"
                 transition={{ type: 'spring', stiffness: 500, damping: 40 }}
               />
             )}

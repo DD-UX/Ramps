@@ -19,7 +19,7 @@ export const Single: Story = {};
 /** The ⌘ ↵ combo from the "Create bill" submit (snapshot 9) — one chip per key. */
 export const CommandReturn: Story = {
   render: () => (
-    <span className="inline-flex items-center gap-1">
+    <span className="gap-1 inline-flex items-center">
       <Kbd>⌘</Kbd>
       <Kbd>↵</Kbd>
     </span>
@@ -29,9 +29,9 @@ export const CommandReturn: Story = {
 /** On the lime primary surface — exactly the frame-9 context. */
 export const OnAccent: Story = {
   render: () => (
-    <span className="inline-flex items-center gap-2 bg-accent px-rui-3 py-rui-2 text-sm font-heading text-ink">
+    <span className="gap-2 bg-accent px-rui-3 py-rui-2 text-sm font-heading text-ink inline-flex items-center">
       Create bill
-      <span className="inline-flex items-center gap-1">
+      <span className="gap-1 inline-flex items-center">
         <Kbd>⌘</Kbd>
         <Kbd>↵</Kbd>
       </span>

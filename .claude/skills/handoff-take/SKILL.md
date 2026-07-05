@@ -18,11 +18,11 @@ verify it, question it, then act.
 
 2. **Verify against reality.** The repo may have moved since the handoff.
    Run in parallel and diff against what the file claims:
-   - `git status --porcelain` — do the uncommitted files in *Active Files*
+   - `git status --porcelain` — do the uncommitted files in _Active Files_
      still exist / still match?
    - `git log --oneline -10` — do the referenced commits exist? Any NEW
      commits after the handoff was written?
-   - Spot-check 1–2 key files from *Active Files* actually exist.
+   - Spot-check 1–2 key files from _Active Files_ actually exist.
 
    Note every mismatch — these become questions.
 
@@ -32,18 +32,18 @@ verify it, question it, then act.
      the tree is clean — was it committed/reverted?").
    - **Ambiguities** in the handoff — anything a stranger couldn't act on.
    - **Standing holds** — e.g. "do not commit X yet": is the hold still on?
-   - **Priority** — confirm the first item in *Next Steps* is still the
+   - **Priority** — confirm the first item in _Next Steps_ is still the
      priority, or whether the user wants to reorder/drop items.
 
    Keep it to the questions that actually change what you'd do (1–4).
 
-4. **Build the todo list** (TodoWrite) from *Next Steps*, adjusted by the
+4. **Build the todo list** (TodoWrite) from _Next Steps_, adjusted by the
    user's answers. First actionable item → `in_progress`.
 
-5. **Resume work** at that first item, honoring everything in *Failed
-   Attempts* (do not retry known-dead approaches) and any user directives
-   quoted in *Goal*.
-   - If *Failed Attempts* contains an `UNRESOLVED LOOP` entry, treat the
+5. **Resume work** at that first item, honoring everything in _Failed
+   Attempts_ (do not retry known-dead approaches) and any user directives
+   quoted in _Goal_.
+   - If _Failed Attempts_ contains an `UNRESOLVED LOOP` entry, treat the
      previous session's diagnosis as untrusted: START with fresh research
      (re-read primary sources, reproduce the symptom yourself) before
      attempting any fix. Only the raw facts (error messages, repro steps)

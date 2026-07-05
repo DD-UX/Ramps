@@ -7,11 +7,7 @@ const meta = {
   component: Menu,
   parameters: { layout: 'centered' },
   args: {
-    items: [
-      { label: 'Edit' },
-      { label: 'Duplicate' },
-      { label: 'Delete', tone: 'destructive' },
-    ],
+    items: [{ label: 'Edit' }, { label: 'Duplicate' }, { label: 'Delete', tone: 'destructive' }],
   },
 } satisfies Meta<typeof Menu>;
 

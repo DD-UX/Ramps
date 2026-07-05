@@ -30,15 +30,13 @@ function OptionCard({
   return (
     <div
       className={clsx(
-        'relative flex flex-col items-center justify-center gap-rui-3 rounded-square border px-rui-4 py-rui-6',
+        'gap-rui-3 rounded-square px-rui-4 py-rui-6 relative flex flex-col items-center justify-center border',
         selected ? 'border-ink' : 'border-bone',
       )}
     >
       <span className="text-ink">{icon}</span>
       <span className="text-sm text-ink">{label}</span>
-      {selected && (
-        <Check size={14} className="absolute bottom-rui-2 right-rui-2 text-positive" />
-      )}
+      {selected && <Check size={14} className="bottom-rui-2 right-rui-2 text-positive absolute" />}
     </div>
   );
 }
@@ -51,7 +49,7 @@ export const PayByCard: Story = {
         value: 'new',
         label: 'New card',
         content: (
-          <div className="grid grid-cols-3 gap-rui-3">
+          <div className="gap-rui-3 grid grid-cols-3">
             <OptionCard
               icon={<MousePointerClick size={20} strokeWidth={1.5} />}
               label="Pay automatically"

@@ -18,7 +18,7 @@ export const Circle: Story = { args: { circle: true, className: 'size-10' } };
 /** The "Processing 1 document" row from the bulk-upload flow. */
 export const ProcessingRow: StoryObj = {
   render: () => (
-    <div style={{ maxWidth: 420 }} className="rounded-square border border-bone bg-limestone">
+    <div style={{ maxWidth: 420 }} className="rounded-square border-bone bg-limestone border">
       <SkeletonRow />
       <SkeletonRow />
     </div>

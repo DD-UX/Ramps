@@ -22,18 +22,18 @@ paid (history)`. We reproduce the tab bar as the primary navigation for bills.
 
 The **For approval** table is the single most important frame. Columns:
 
-| Column          | Observed values                                              |
-| --------------- | ------------------------------------------------------------ |
+| Column             | Observed values                                           |
+| ------------------ | --------------------------------------------------------- |
 | Vendor / submitter | Figma / Salesforce / Slack / UPS / … · submitter + date   |
-| Suggested action | `Review recommended` (amber) · `Ready to approve` (green)   |
-| Status          | `0 of 2 approvals`, `0 of 1 approval`, `0 of 3 approvals`     |
-| Next approver   | `Needs your approval`                                        |
-| Amount          | e.g. `$150,042.75`                                            |
-| Actions         | per-row `Approve` button + overflow                          |
+| Suggested action   | `Review recommended` (amber) · `Ready to approve` (green) |
+| Status             | `0 of 2 approvals`, `0 of 1 approval`, `0 of 3 approvals` |
+| Next approver      | `Needs your approval`                                     |
+| Amount             | e.g. `$150,042.75`                                        |
+| Actions            | per-row `Approve` button + overflow                       |
 
 Confirmed mechanics:
 
-- **N of M approvals** — each bill carries an approval *chain* of M approvers;
+- **N of M approvals** — each bill carries an approval _chain_ of M approvers;
   the counter tracks how many have signed. A bill clears only when `M of M`.
 - **Sequential** — one `Next approver` at a time (`Needs your approval`), not a
   free-for-all. Approvers are surfaced in order.
@@ -45,7 +45,7 @@ Confirmed mechanics:
 The user's find: the real Ramp UI lets you **add an approver** to an in-flight
 bill. We simulate the chain with **phantom approver users** — seeded approvers
 that never appear in the role-switcher drawer. On submit they auto-approve after
-a **simulated delay** (same trick as the payment simulator). The one *real*
+a **simulated delay** (same trick as the payment simulator). The one _real_
 stopper is the custom employee the demo user assigns: the bill parks at
 `(M-1) of M` until that human approves. See ANALYSIS.md §9 open-question 7.
 
@@ -81,14 +81,14 @@ panel: each line (`01 Office Chairs · $12,000`) expands into a coding grid of
 **"Accounting X" dropdowns** — the fields normally absorbed from the accounting
 integration:
 
-| Ramp field (frame 9)   | Our column (§4)   |
-| ---------------------- | ----------------- |
-| Accounting Category    | `gl_account_id`   |
-| Accounting Department  | `department_id`   |
-| Accounting Class       | `class_id`        |
-| Accounting Location    | `location_id`     |
-| Accounting Tax Code    | `tax_code_id`     |
-| Accounting Billable    | `billable`        |
+| Ramp field (frame 9)  | Our column (§4) |
+| --------------------- | --------------- |
+| Accounting Category   | `gl_account_id` |
+| Accounting Department | `department_id` |
+| Accounting Class      | `class_id`      |
+| Accounting Location   | `location_id`   |
+| Accounting Tax Code   | `tax_code_id`   |
+| Accounting Billable   | `billable`      |
 
 Also on the frame: `⚡ Ramp can simplify these into a single line item`,
 `Collapse line items`, and a **"Save as default coding for future bills"**
@@ -101,11 +101,11 @@ invoice with a matching line table (Office Chairs / Standing Desks / Monitors �
 ["Expense vs. item"](https://support.ramp.com/hc/en-us/articles/10859570893203-Invoice-line-items-Expense-vs-item)):
 
 1. **Coding is line-level.** Every dimension is per-line; one bill mixes codings.
-2. **No separate GL-distribution table.** Some AP systems split *invoice line*
-   from *GL distribution* (a journal-entry table); **Ramp does not.** A split
-   *replaces* a line with N lines, each with its own amount + coding. So we keep
+2. **No separate GL-distribution table.** Some AP systems split _invoice line_
+   from _GL distribution_ (a journal-entry table); **Ramp does not.** A split
+   _replaces_ a line with N lines, each with its own amount + coding. So we keep
    **one** `bill_line_items` table (split = sibling rows), not item+entry. Ramp's
-   only line *type* split is `expense` vs `item` — a per-row discriminator.
+   only line _type_ split is `expense` vs `item` — a per-row discriminator.
 
 ### Note on the accounting-integration seam
 

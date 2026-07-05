@@ -43,7 +43,7 @@ export function Money({
   return (
     <span
       className={clsx(
-        'font-body tabular-nums whitespace-nowrap',
+        'font-body whitespace-nowrap tabular-nums',
         align === 'right' ? 'text-right' : 'text-left',
         muted ? 'text-hushed' : 'text-ink',
         className,

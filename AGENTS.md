@@ -3,7 +3,7 @@
 Technical rulebook for working in **ramps**. Read this before writing code.
 Full reasoning lives in [docs/ANALYSIS.md](docs/ANALYSIS.md) (product, scope, architecture)
 and [docs/design-system.md](docs/design-system.md) (verified Ramp tokens, Storybook playbook).
-This file is the *how*; those are the *why*.
+This file is the _how_; those are the _why_.
 
 ## What this repo is
 
@@ -27,7 +27,7 @@ supabase/           Migrations + realistic seed data
   permission for safe commands. **Verify before declaring done** — run the relevant
   check, fix, re-run, report real status.
 - **Recoverable changes only.** No destructive git/fs commands without explicit ask.
-- **Commits:** conventional prefix, body explains *why*, atomic. **Never add a
+- **Commits:** conventional prefix, body explains _why_, atomic. **Never add a
   co-author line or AI attribution.**
 - Docs and code never drift: scope/decision changes get reflected in `docs/`.
 
@@ -37,7 +37,8 @@ supabase/           Migrations + realistic seed data
 pnpm dev                      # app + storybook via turbo
 pnpm --filter web dev         # Next.js only
 pnpm --filter ui storybook    # design system workbench
-pnpm typecheck && pnpm lint && pnpm test   # run before every commit
+pnpm format                                # prettier --write (run after editing)
+pnpm format:check && pnpm typecheck && pnpm lint && pnpm test   # before every commit
 supabase start && supabase db reset        # local DB + migrations + seed
 ```
 
@@ -46,6 +47,13 @@ supabase start && supabase db reset        # local DB + migrations + seed
 ---
 
 ## General rules of thumb (repo-wide)
+
+### Formatting
+
+- **Prettier is the source of truth for layout** (config in `.prettierrc.json`).
+  Run `pnpm format` after editing any file, and `pnpm format:check` must pass
+  before a commit. Never hand-format against it — no manual spacing/import
+  ordering that the formatter would rewrite.
 
 ### TypeScript
 
@@ -69,7 +77,7 @@ interface Bill { id: string; amountCents: number }   // parallel truth, will dri
 // ✅ DO
 function payBill(billId: BillModel['id']) {}
 // ❌ DON'T
-function payBill(billId: string) {}   // loses the link to the entity
+function payBill(billId: string) {} // loses the link to the entity
 ```
 
 - **Values first, types derived.** No hand-written unions that mirror a list:
@@ -103,6 +111,25 @@ export type BillStatusType = 'draft' | 'awaiting_approval';   // free to drift f
   merge `className` last. Variant styling via lookup map, never ternary chains.
 - `"use client"` only for state/effects/handlers — presentational components stay
   server-renderable.
+- **`children` → `PropsWithChildren`, always.** When a component accepts children,
+  type its props with React's `PropsWithChildren`. Never hand-write
+  `children: ReactNode` or `children?: ReactNode` in the interface — it drifts from
+  React's own type and trips Storybook CSF (a required `children` forces every
+  render-only story to pass `args`). This is repo-wide (`apps/web` + `packages/ui`),
+  not just the kit.
+
+```tsx
+// ✅ DO
+import type { PropsWithChildren } from 'react';
+export interface CardProps extends PropsWithChildren {
+  title: string;
+}
+// ❌ DON'T
+export interface CardProps {
+  title: string;
+  children: ReactNode;
+}
+```
 
 ### Files & naming
 
@@ -206,7 +233,7 @@ Deep dive: [ANALYSIS §9.2 — data access decision](docs/ANALYSIS.md#9-open-que
 const data = await http.get(`/api/bills/${id}`);
 return BillSchema.parse(data);
 // ❌ DON'T
-return (await fetch(url)).json() as BillModel;   // cast instead of runtime proof
+return (await fetch(url)).json() as BillModel; // cast instead of runtime proof
 ```
 
 - No React in the SDK. Hooks that wrap SDK calls live in the app's features.

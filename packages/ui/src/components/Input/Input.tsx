@@ -44,11 +44,11 @@ export function Input({
       className={clsx(
         // White fill, near-square corners, thin border — the snapshot-9 field.
         // The toolbar search (snapshot 1) is the pill exception.
-        'w-full border bg-white text-sm font-body text-ink',
+        'bg-white text-sm font-body text-ink w-full border',
         rounded ? 'rounded-pill' : 'rounded-square',
         'h-10 px-rui-3 py-rui-2',
         'placeholder:text-control-placeholder',
-        'focus:outline-none focus:ring-2 focus:ring-control-ring',
+        'focus:ring-control-ring focus:ring-2 focus:outline-none',
         invalid
           ? 'border-destructive focus:border-destructive'
           : 'border-control-border focus:border-control-border-focus',
@@ -68,13 +68,13 @@ export function Input({
   return (
     <div className="relative inline-flex w-full items-center">
       {leadingIcon ? (
-        <span className="pointer-events-none absolute left-3 flex items-center text-hushed">
+        <span className="left-3 text-hushed pointer-events-none absolute flex items-center">
           {leadingIcon}
         </span>
       ) : null}
       {input}
       {trailingIcon ? (
-        <span className="pointer-events-none absolute right-3 flex items-center text-hushed">
+        <span className="right-3 text-hushed pointer-events-none absolute flex items-center">
           {trailingIcon}
         </span>
       ) : null}

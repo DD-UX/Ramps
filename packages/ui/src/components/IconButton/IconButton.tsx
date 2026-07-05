@@ -53,7 +53,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={clsx(
-        'inline-flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-control-ring',
+        'focus:ring-control-ring inline-flex items-center justify-center transition-colors focus:ring-2 focus:outline-none',
         rounded ? 'rounded-pill' : 'rounded-square',
         // Interactive affordance: pointer when enabled, dimmed + not-allowed when disabled.
         'cursor-pointer disabled:cursor-not-allowed disabled:opacity-40',

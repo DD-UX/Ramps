@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx';
 import { motion } from 'motion/react';
-import { type ReactNode,useId } from 'react';
+import { type ReactNode, useId } from 'react';
 
 /**
  * SegmentedControl — the `[ New card | Existing card ]` switch on the
@@ -49,7 +49,7 @@ export function SegmentedControl({
     <div
       role="tablist"
       className={clsx(
-        'grid auto-cols-fr grid-flow-col rounded-square border border-bone bg-stone',
+        'rounded-square border-bone bg-stone grid auto-cols-fr grid-flow-col border',
         className,
       )}
     >
@@ -62,7 +62,7 @@ export function SegmentedControl({
             role="tab"
             aria-selected={active}
             onClick={() => onValueChange?.(option.value)}
-            className="relative cursor-pointer px-rui-4 py-rui-2 text-sm font-heading text-ink"
+            className="px-rui-4 py-rui-2 text-sm font-heading text-ink relative cursor-pointer"
           >
             {active && (
               <motion.span
@@ -70,7 +70,7 @@ export function SegmentedControl({
                 data-testid="segment-plate"
                 // The plate paints UNDER the label (label is z-10) and draws
                 // the selected segment's darker hairline over the stone strip.
-                className="absolute inset-0 rounded-square border border-hushed bg-white"
+                className="inset-0 rounded-square border-hushed bg-white absolute border"
                 transition={{ type: 'spring', stiffness: 500, damping: 40 }}
               />
             )}

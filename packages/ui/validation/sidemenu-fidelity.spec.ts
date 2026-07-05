@@ -94,7 +94,11 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
   test('Badge background is accent (vetted #fbff85–#f8ff77)', async ({ page }) => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
     // Home has badge 90
-    const badge = page.locator('nav li').filter({ hasText: 'Home' }).locator('span[aria-label]').first();
+    const badge = page
+      .locator('nav li')
+      .filter({ hasText: 'Home' })
+      .locator('span[aria-label]')
+      .first();
     await expect(badge).toBeVisible();
     const bg = await badge.evaluate((el) => getComputedStyle(el).backgroundColor);
     expect(bg, 'badge background is accent').toBe(hexToRgb(RUI['--rui-accent']));
@@ -105,7 +109,11 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
    */
   test('Badge text is ink', async ({ page }) => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
-    const badge = page.locator('nav li').filter({ hasText: 'Home' }).locator('span[aria-label]').first();
+    const badge = page
+      .locator('nav li')
+      .filter({ hasText: 'Home' })
+      .locator('span[aria-label]')
+      .first();
     await expect(badge).toBeVisible();
     const color = await badge.evaluate((el) => getComputedStyle(el).color);
     expect(color, 'badge text is ink').toBe(hexToRgb(RUI['--rui-ink']));
@@ -118,7 +126,9 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
     const nav = page.locator('nav[aria-label*="navigation"]').first();
     await expect(nav).toBeVisible();
-    const radius = await nav.evaluate((el) => Number.parseFloat(getComputedStyle(el).borderTopLeftRadius));
+    const radius = await nav.evaluate((el) =>
+      Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    );
     expect(radius, 'nav container corner is 0px').toBeLessThanOrEqual(1);
   });
 
@@ -129,7 +139,9 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
     const item = page.locator('nav li a, nav li button').first();
     await expect(item).toBeVisible();
-    const radius = await item.evaluate((el) => Number.parseFloat(getComputedStyle(el).borderTopLeftRadius));
+    const radius = await item.evaluate((el) =>
+      Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
+    );
     expect(radius, 'menu item corner is 0px').toBeLessThanOrEqual(1);
   });
 
@@ -140,7 +152,11 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
    */
   test('Badge is a pill (fully rounded, like the Tabs count badges)', async ({ page }) => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
-    const badge = page.locator('nav li').filter({ hasText: 'Home' }).locator('span[aria-label]').first();
+    const badge = page
+      .locator('nav li')
+      .filter({ hasText: 'Home' })
+      .locator('span[aria-label]')
+      .first();
     await expect(badge).toBeVisible();
     const { radius, height } = await badge.evaluate((el) => ({
       radius: Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
@@ -178,7 +194,11 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
   test('Badge count renders correctly', async ({ page }) => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
     // Home badge: 90
-    const homeBadge = page.locator('nav li').filter({ hasText: 'Home' }).locator('span[aria-label]').first();
+    const homeBadge = page
+      .locator('nav li')
+      .filter({ hasText: 'Home' })
+      .locator('span[aria-label]')
+      .first();
     await expect(homeBadge).toBeVisible();
     await expect(homeBadge).toHaveText('90');
     await expect(homeBadge).toHaveAttribute('aria-label', '90 items');
@@ -198,7 +218,11 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
    */
   test('Icons render for menu items', async ({ page }) => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
-    const homeItem = page.locator('nav li').filter({ hasText: 'Home' }).locator('a, button').first();
+    const homeItem = page
+      .locator('nav li')
+      .filter({ hasText: 'Home' })
+      .locator('a, button')
+      .first();
     await expect(homeItem).toBeVisible();
     // Icon is aria-hidden and rendered as an SVG (Lucide icons)
     const icon = homeItem.locator('span[aria-hidden] svg').first();
@@ -227,7 +251,10 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
     const item = page.locator('nav li a, nav li button').first();
     await expect(item).toBeVisible();
-    const itemText = item.locator('span').filter({ hasText: /Home|Bill Pay/ }).first();
+    const itemText = item
+      .locator('span')
+      .filter({ hasText: /Home|Bill Pay/ })
+      .first();
     const fontWeight = await itemText.evaluate((el) => getComputedStyle(el).fontWeight);
     // Font weight 300 can be reported as "300" or computed as numeric 300
     expect(['300'].includes(fontWeight), `font-weight is 300 (got: ${fontWeight})`).toBe(true);
@@ -293,10 +320,9 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
     const ulBox = await nav.locator('ul').first().boundingBox();
     expect(logoBox, 'logo has a box').not.toBeNull();
     expect(ulBox, 'item list has a box').not.toBeNull();
-    expect(
-      logoBox!.y + logoBox!.height,
-      'logo sits above the item list',
-    ).toBeLessThanOrEqual(ulBox!.y + 1);
+    expect(logoBox!.y + logoBox!.height, 'logo sits above the item list').toBeLessThanOrEqual(
+      ulBox!.y + 1,
+    );
   });
 
   /**
@@ -357,8 +383,9 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
     await homeItem.click();
     await page.waitForTimeout(100);
 
-    expect(logs.some((log) => log.includes('Navigate to Home')), 'onClick fired for Home').toBe(
-      true,
-    );
+    expect(
+      logs.some((log) => log.includes('Navigate to Home')),
+      'onClick fired for Home',
+    ).toBe(true);
   });
 });

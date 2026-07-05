@@ -77,19 +77,19 @@ export function Toast({
       className={clsx(
         // White, near-square card on a thin border with a soft popover shadow —
         // the snapshot-3 surface.
-        'flex items-start gap-rui-3 rounded-square border border-bone bg-white px-rui-4 py-rui-3 shadow-popover',
+        'gap-rui-3 rounded-square border-bone bg-white px-rui-4 py-rui-3 shadow-popover flex items-start border',
         className,
       )}
     >
       {/* The icon box matches the title's 20px line so a single-line toast
           reads centred; with a description it stays pinned to the first line. */}
-      <span className="flex h-5 shrink-0 items-center" aria-hidden>
+      <span className="h-5 flex shrink-0 items-center" aria-hidden>
         {loading ? <Spinner size="sm" className="text-hushed" /> : TONE_ICON[tone]}
       </span>
 
       {/* gap, not margins: the column owns the rhythm whether the toast is one
           line (title only) or two (title + description). */}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div className="min-w-0 gap-0.5 flex flex-1 flex-col">
         <p className="text-sm font-heading text-ink">{title}</p>
         {description && <p className="text-xs font-body text-hushed">{description}</p>}
       </div>

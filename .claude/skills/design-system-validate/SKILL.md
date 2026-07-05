@@ -25,15 +25,15 @@ routes), this skill is not required.
 Three steps, run against the **static** Storybook build (exactly what ships to
 `/storybook` in the web app — no dev-server drift):
 
-1. **build-storybook** *(HARD)* — regenerate `storybook-static/`. If the build
+1. **build-storybook** _(HARD)_ — regenerate `storybook-static/`. If the build
    breaks, stop.
-2. **token-fidelity** *(HARD gate)* — render each primitive story chrome-free
+2. **token-fidelity** _(HARD gate)_ — render each primitive story chrome-free
    and assert its browser-computed styles resolve to the `--rui-*` values parsed
    live from `tokens.css` (zero hardcoded colours). Guards the rules that
    matter: accent surfaces pair with ink, destructive/critical stay orange
    (never raw red), radii + heading weight are exact. **A drift here blocks the
    push.**
-3. **visual-advisory** *(ADVISORY — never blocks)* — capture a gallery
+3. **visual-advisory** _(ADVISORY — never blocks)_ — capture a gallery
    screenshot of every catalogued story and attach the Ramp video frame it
    echoes side-by-side in the HTML report, for a human eyeball. Reported, not
    enforced.

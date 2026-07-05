@@ -129,8 +129,8 @@ export function Menu({
           id={menuId}
           role="menu"
           className={clsx(
-            'absolute z-20 min-w-44 overflow-hidden rounded-square border border-bone bg-white py-rui-1 shadow-lg',
-            side === 'bottom' ? 'top-full mt-rui-1' : 'bottom-full mb-rui-1',
+            'min-w-44 rounded-square border-bone bg-white py-rui-1 shadow-lg absolute z-20 overflow-hidden border',
+            side === 'bottom' ? 'mt-rui-1 top-full' : 'mb-rui-1 bottom-full',
             align === 'end' ? 'right-0' : 'left-0',
           )}
         >
@@ -146,8 +146,8 @@ export function Menu({
                 item.onSelect?.();
               }}
               className={clsx(
-                'flex w-full cursor-pointer items-center gap-rui-2 px-rui-3 py-rui-2 text-left text-sm font-body transition-colors',
-                'focus:outline-none focus:bg-limestone disabled:opacity-40 disabled:pointer-events-none',
+                'gap-rui-2 px-rui-3 py-rui-2 text-sm font-body flex w-full cursor-pointer items-center text-left transition-colors',
+                'focus:bg-limestone focus:outline-none disabled:pointer-events-none disabled:opacity-40',
                 ITEM_TONE[item.tone ?? 'default'],
               )}
             >

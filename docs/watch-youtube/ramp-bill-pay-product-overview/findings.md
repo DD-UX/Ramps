@@ -16,7 +16,9 @@ This video demonstrates Ramp's Bill Pay product, positioning it as an "agentic A
 **Frames:** `01-dashboard-drafts-tab.jpeg`
 
 ### Tab Structure
+
 The Bill Pay interface uses a horizontal tab navigation organizing bills by lifecycle stage:
+
 - **Overview** - All bills aggregate view
 - **Drafts** - Bills in draft state
 - **For approval** - Bills awaiting approval
@@ -26,7 +28,9 @@ The Bill Pay interface uses a horizontal tab navigation organizing bills by life
 **Additional UI element:** A custom "bills due this month" filter/view appears to the right of the tabs.
 
 ### Table Columns
+
 The drafts table displays:
+
 - Checkbox for bulk selection
 - **Vendor/submitter** - Vendor name with avatar/logo, submitter name, and date
 - **Status** - Pill-style status badges (Missing info, Ready for review, Queued)
@@ -36,6 +40,7 @@ The drafts table displays:
 - **Actions** - "Review" button + overflow menu (three dots)
 
 ### Toolbar Controls
+
 - **Search or add filter...** - Search bar with filter dropdown
 - **Status filter chips** - Quick filters: "Missing info", "Ready for review", "Queued"
 - **View toggles** - Card view, table view, calendar view icons
@@ -53,6 +58,7 @@ The drafts table displays:
 **Frames:** `02-fraud-duplicate-warnings.jpeg`, `03-bill-detail-drawer-fraud-alert.jpeg`
 
 ### Warning Banners
+
 Ramp displays inline yellow warning banners directly in the table:
 
 1. **Fraud warning (Action Inc):**
@@ -64,7 +70,9 @@ Ramp displays inline yellow warning banners directly in the table:
    - Yellow/beige background, clickable invoice reference
 
 ### Fraud Detail Screen
+
 When viewing a flagged bill (`03-bill-detail-drawer-fraud-alert.jpeg`), the system displays:
+
 - Large yellow alert box: "Make sure this invoice is legitimate"
 - Warning text: "We weren't able to verify your vendor's information..."
 - Call-to-action: "Contact your vendor to make sure the invoice is coming from them."
@@ -78,12 +86,15 @@ When viewing a flagged bill (`03-bill-detail-drawer-fraud-alert.jpeg`), the syst
 **Frames:** `04-drag-drop-upload.jpeg`, `18-new-bill-menu-ingestion-options.jpeg`
 
 ### Drag-and-Drop Upload
+
 Full-screen drop zone appears with:
+
 - Upload icon
 - Text: "Drop multiple invoices here to bulk upload them!"
 - Visual indicator showing file being dragged (blue badge: "ACME Inc. INV-202...S2...pdf")
 
 ### New Bill Menu (`18-new-bill-menu-ingestion-options.jpeg`)
+
 Clicking "New bill" dropdown reveals multiple ingestion methods:
 
 1. **Forward invoices to Ramp** (Recommended badge)
@@ -105,12 +116,16 @@ Clicking "New bill" dropdown reveals multiple ingestion methods:
 **Frames:** `05-invoice-preview-vendor-section.jpeg`, `06-vendor-actions-menu.jpeg`
 
 ### Layout
+
 The bill detail view uses a side-by-side layout:
+
 - **Left pane:** PDF/image of the invoice (zoomable)
 - **Right pane:** Structured bill data with tabs (Invoice, Documents, Overview, Activity)
 
 ### Vendor Section
+
 Under the "Vendor" heading:
+
 - Vendor avatar/logo (circular)
 - **Vendor name** (ACME)
 - Last paid amount and date: "Last paid $87,750.00 on Sep 12, 2025"
@@ -121,6 +136,7 @@ Under the "Vendor" heading:
   - View vendor
 
 ### Bill Details Fields
+
 - **Create bill under:** Dropdown showing entity (Bill Pay Inc.)
 - **Invoice #**
 - **Invoice date** and **Due date** (with date pickers)
@@ -137,18 +153,23 @@ Under the "Vendor" heading:
 **Frames:** `07-line-items-autocoded.jpeg`, `08-drawing-mode-highlight-coding.jpeg`, `09-add-context-modal.jpeg`
 
 ### Line Items Table
+
 The "Line items" section displays:
+
 - Header: "Line items" with "Change currency" link
 - **Smart action:** "Ramp can simplify these into a single line item" with "Collapse line items" button
 
 Each line item shows:
+
 - **Line number** (01, 02, etc.)
 - **Description** (e.g., "Office Chairs")
 - **Amount** (right-aligned: $12,000.00)
 - **Overflow menu** (three dots)
 
 ### Autocoded Fields
+
 Below each line item, the system displays pre-filled accounting codes:
+
 - **NetSuite Category** dropdown: "6300 - Office Su..."
 - **NetSuite Location** dropdown: "7 - Boston" with "Coded by Ramp" badge
 - **NetSuite Department** dropdown: "1 - Admin"
@@ -163,6 +184,7 @@ Checkbox: "Save as default coding for future bills"
 ### Drawing Mode for Coding Updates (`08-drawing-mode-highlight-coding.jpeg`)
 
 The system allows users to select regions of the invoice PDF to update coding:
+
 - **"Exit drawing mode"** button appears when active
 - User highlights a specific field on the invoice (e.g., "Bill To" address showing "28 W 23rd St, New York, NY 10010")
 - This triggers the "Add context" modal
@@ -170,6 +192,7 @@ The system allows users to select regions of the invoice PDF to update coding:
 ### Add Context Modal (`09-add-context-modal.jpeg`)
 
 Modal appears with:
+
 - **Title:** "Add context"
 - **Description:** "Highlight details from the invoice to help us automatically code better"
 - **Prompt:** "What is the correct value in this case?"
@@ -190,6 +213,7 @@ Modal appears with:
 The "Payment details" section offers multiple payment methods via dropdown:
 
 **ACH (Direct deposit)** - Default view (`10-payment-details-ach.jpeg`):
+
 - **Pay from account** dropdown - Selects source account (e.g., "Checking (...9752)")
 - **Send payment to** dropdown - Selects vendor account (e.g., "Bank of America (...0000)")
 - **Payment schedule** - Toggle: "Schedule now" / "Schedule later"
@@ -198,12 +222,14 @@ The "Payment details" section offers multiple payment methods via dropdown:
 
 **Account Picker** (`11-payment-account-picker.jpeg`):
 When clicking the account dropdown, options include:
+
 - **Checking (...9752)** - USD Savings Account with balance $4,779,707.46 (with checkmark, currently selected)
 - **Business Account** - USD with balance $170,575.82 (highlighted in yellow, labeled "REBATE")
 - Footer text: "Free same-day ACH and wires - Bill Pay Inc."
 
 **Card Payment Options** (`12-pay-by-card-options.jpeg`):
 Selecting "Pay with Ramp Card" reveals:
+
 - **New card** / **Existing card** tabs
 - Three card delivery options with icons:
   1. **Pay automatically** (selected, checkmark) - "We'll charge a single-use virtual card in ACME's portal on the due date. This card allows charges only up to the bill's total and locks after use."
@@ -212,6 +238,7 @@ Selecting "Pay with Ramp Card" reveals:
 - **Memo for vendor** - Text field with pre-filled memo
 
 **Cashback Banner:**
+
 - Prominent callout: "Earn up to $87,750 cashback without the swipe"
 - Subtext: "We'll charge your Ramp Card automatically in ACME's portal on the due date"
 - "Pay with Ramp Card" button + "Learn more" link
@@ -219,6 +246,7 @@ Selecting "Pay with Ramp Card" reveals:
 ### Virtual Card Creation (`13-virtual-card-details-approvers.jpeg`)
 
 When creating a virtual card:
+
 - **Card details preview:**
   - "Virtual INV# 2025-00125 from ACME"
   - **Name on card:** "Visible after approval"
@@ -240,12 +268,14 @@ When creating a virtual card:
 ### Review Recommended State (`14-approval-review-recommended.jpeg`)
 
 The approval view displays a large yellow callout box labeled "Review recommended" (Beta):
+
 - **Summary:** "We found issues on this $87,750.00 bill for ACME"
 - **Warning icon items:**
   - "Payment method changed from CARD to ACH, even though bill amounts aligned"
   - "Invoice number 'INV-00012000' has too many digits. Similar bills use fewer digits."
 
 **Checks passed** (with green checkmarks):
+
 - "Accounting coding for bill and line items aligns with previous similar bills"
 - "Entity (Bill Pay Inc.) matches most recent bill"
 - "Payment is scheduled to arrive on time"
@@ -253,6 +283,7 @@ The approval view displays a large yellow callout box labeled "Review recommende
 **"Show less"** link to collapse details
 
 **Action buttons:**
+
 - **Edit** (secondary)
 - **Reject** (secondary, red outline)
 - **Approve & schedule** (primary, green)
@@ -264,10 +295,12 @@ The approval view displays a large yellow callout box labeled "Review recommende
 ### Ready to Approve State (`15-approval-ready-to-approve.jpeg`)
 
 Alternative approval state displays:
+
 - Green callout: "Ready to approve" (Beta)
 - **Summary:** "This $150,042.75 bill for Figma passed all automated checks"
 
 **Checks passed** (4 items with green checkmarks):
+
 - "Accounting coding for this bill and line items aligns with previous similar bills"
 - "Bill amount aligns with similar bills for Figma"
 - "Entity (Bill Pay Inc.) matches most recent bill"
@@ -284,6 +317,7 @@ Alternative approval state displays:
 ### For Payment Tab (`16-for-payment-tab.jpeg`)
 
 The "For payment" tab shows approved bills ready for release:
+
 - Filter chips: "Ready for release", "Scheduled", "Initiated"
 - All rows have checkboxes for bulk selection
 - **Status indicators:**
@@ -291,6 +325,7 @@ The "For payment" tab shows approved bills ready for release:
   - "Payment details needed" (warning icon)
 
 **Bottom selection bar:**
+
 - "31 bills selected"
 - "$14,293,124.54 total"
 - **Edit** dropdown
@@ -299,6 +334,7 @@ The "For payment" tab shows approved bills ready for release:
 ### Bulk Payment Review Modal (`17-bulk-payment-review.jpeg`)
 
 The review modal displays:
+
 - **Title:** "Review payments"
 - **Total amount:** "$855,258.42" (large display)
 - **Schedule selector:** "Today" dropdown with estimated arrival "Oct 8 - 15, 2025"
@@ -306,12 +342,14 @@ The review modal displays:
 
 **Grouped by vendor:**
 Each vendor shows:
+
 - Vendor avatar + name
 - Bill count and payment method (e.g., "0/3 bills • ACH (Direct deposit) • Bank of America (...0000)")
 - Total amount
 - Status badge: "Batched" (gray)
 
 Example entries:
+
 - Amazon - $748,988.58
 - Docusign - $3,269.84
 - Staples - $0.00 (0/2 bills, Check by mail)
@@ -320,6 +358,7 @@ Example entries:
 **Additional vendors collapsed under "Mutiny..."**
 
 **Action buttons:**
+
 - **Cancel** (secondary)
 - **"Release payments"** (primary, yellow)
 

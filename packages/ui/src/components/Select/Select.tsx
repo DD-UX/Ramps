@@ -23,11 +23,10 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
-export interface SelectProps
-  extends Omit<
-    SelectHTMLAttributes<HTMLSelectElement>,
-    'children' | 'value' | 'defaultValue' | 'multiple' | 'size' | 'onChange'
-  > {
+export interface SelectProps extends Omit<
+  SelectHTMLAttributes<HTMLSelectElement>,
+  'children' | 'value' | 'defaultValue' | 'multiple' | 'size' | 'onChange'
+> {
   options: SelectOption[];
   /** The floating label (rises when filled). Falls back to `placeholder`. */
   label?: string;
@@ -72,10 +71,10 @@ export function Select({
           data-testid="select-label"
           data-floated={hasValue || undefined}
           className={clsx(
-            'pointer-events-none absolute left-3 z-10 origin-left font-body transition-all duration-150',
+            'left-3 font-body pointer-events-none absolute z-10 origin-left transition-all duration-150',
             hasValue
               ? 'top-1 text-xs text-hushed'
-              : 'top-1/2 -translate-y-1/2 text-sm text-control-placeholder',
+              : 'text-sm text-control-placeholder top-1/2 -translate-y-1/2',
           )}
         >
           {labelText}
@@ -90,10 +89,12 @@ export function Select({
         aria-invalid={invalid || undefined}
         className={clsx(
           // Sharp square white field with room for the floated label on top.
-          'h-12 w-full cursor-pointer appearance-none rounded-square border bg-white pl-3 pr-8 text-sm font-body text-ink',
+          'h-12 rounded-square bg-white pl-3 pr-8 text-sm font-body text-ink w-full cursor-pointer appearance-none border',
           labelText ? 'pt-4 pb-1' : undefined,
-          'outline-none focus-visible:ring-2 focus-visible:ring-control-ring',
-          invalid ? 'border-destructive' : 'border-control-border focus:border-control-border-focus',
+          'focus-visible:ring-control-ring outline-none focus-visible:ring-2',
+          invalid
+            ? 'border-destructive'
+            : 'border-control-border focus:border-control-border-focus',
           'disabled:cursor-not-allowed disabled:opacity-60',
         )}
         {...props}
@@ -111,7 +112,7 @@ export function Select({
       <ChevronDown
         size={16}
         aria-hidden
-        className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-hushed"
+        className="right-3 text-hushed pointer-events-none absolute top-1/2 -translate-y-1/2"
       />
     </label>
   );

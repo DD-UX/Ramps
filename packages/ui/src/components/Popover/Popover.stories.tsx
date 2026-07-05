@@ -18,7 +18,7 @@ type Story = StoryObj<typeof meta>;
 function VendorCard() {
   return (
     <Popover.Content>
-      <div className="flex items-center gap-rui-2">
+      <div className="gap-rui-2 flex items-center">
         <Avatar name="Staples" size="sm" />
         <span className="text-sm font-heading text-ink">Staples</span>
       </div>
@@ -27,10 +27,10 @@ function VendorCard() {
         Massachusetts.
       </p>
       {/* Frame 7's footer is a plain single-line text meta row — no avatar. */}
-      <div className="mt-rui-3 flex items-center gap-rui-2 border-t border-bone pt-rui-3 text-xs text-hushed">
+      <div className="mt-rui-3 gap-rui-2 border-bone pt-rui-3 text-xs text-hushed flex items-center border-t">
         <span>David Wallace &amp; 0 more</span>
         <span aria-hidden>·</span>
-        <span className="inline-flex items-center gap-1">
+        <span className="gap-1 inline-flex items-center">
           <Tag size={12} /> Legal &amp; HR
         </span>
       </div>
@@ -64,7 +64,7 @@ export const VendorHovercard: Story = {
  */
 export const OnClick: Story = {
   render: () => (
-    <div className="flex justify-center p-8 pb-56">
+    <div className="p-8 pb-56 flex justify-center">
       <Popover>
         <Popover.Trigger>
           <span className="text-sm font-heading text-ink underline decoration-dotted">Staples</span>
@@ -99,7 +99,7 @@ export const NearViewportEdges: Story = {
   parameters: { layout: 'fullscreen' },
   render: () => (
     <div className="relative h-screen">
-      <div className="absolute left-2 top-2">
+      <div className="left-2 top-2 absolute">
         <Popover>
           <Popover.Trigger>
             <span className="text-sm font-heading text-ink underline decoration-dotted">
@@ -109,7 +109,7 @@ export const NearViewportEdges: Story = {
           <VendorCard />
         </Popover>
       </div>
-      <div className="absolute right-2 top-2">
+      <div className="right-2 top-2 absolute">
         <Popover>
           <Popover.Trigger>
             <span className="text-sm font-heading text-ink underline decoration-dotted">
@@ -119,7 +119,7 @@ export const NearViewportEdges: Story = {
           <VendorCard />
         </Popover>
       </div>
-      <div className="absolute bottom-2 left-2">
+      <div className="bottom-2 left-2 absolute">
         <Popover>
           <Popover.Trigger>
             <span className="text-sm font-heading text-ink underline decoration-dotted">
@@ -129,7 +129,7 @@ export const NearViewportEdges: Story = {
           <VendorCard />
         </Popover>
       </div>
-      <div className="absolute bottom-2 right-2">
+      <div className="bottom-2 right-2 absolute">
         <Popover>
           <Popover.Trigger>
             <span className="text-sm font-heading text-ink underline decoration-dotted">

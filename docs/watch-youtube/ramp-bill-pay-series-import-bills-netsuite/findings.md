@@ -53,12 +53,14 @@ The settings panel shows:
 **Main Section:** "Pay bills from NetSuite on Ramp"
 
 **Toggle Setting:**
+
 - Label: "Import bills from NetSuite"
 - State: **ENABLED** (green toggle, ON position)
 - Help text visible: "Ramp will now import bills from NetSuite"
 - Link: "Learn more about importing bills"
 
 **Additional Features:**
+
 - Diagram showing PO/Invoice/Item receipt relationship flow
 - "Automatically import purchase orders" section (Plus badge)
   - Description: "Ramp will automatically import your POs from NetSuite to match invoices and link bills"
@@ -79,6 +81,7 @@ The bills list shows imported bills with these indicators:
 **Filter/Status Pills:** Status: Ready for release | Scheduled | Initiated | +7 | Vendor: Amazon
 
 **Table Columns:**
+
 - Vendor / owner
 - Status (yellow badges: "Ready for release")
 - Amount
@@ -88,6 +91,7 @@ The bills list shows imported bills with these indicators:
 - Actions (Release button)
 
 **Imported Bill Indicators:**
+
 - Each Amazon bill row shows: "Imported · Feb 3, 2025"
 - Icon: small building/institution icon (likely indicating external source)
 - All bills are from same vendor (Amazon) with various amounts: $3,544.20, $5,464.98, $2,538.53, $3,514.92, etc.
@@ -105,14 +109,17 @@ The bills list shows imported bills with these indicators:
 The bill detail panel shows:
 
 **Header:**
+
 - Vendor: Amazon
 - Subtitle: "Finance's Tofu Speakeasy · INV# # 513581 · **Imported on 2/3/25** · **Open in NetSuite** 🔗"
 
 **Payment Status Progress:**
+
 - Current: "Overdue — Unscheduled"
 - Stages: Awaiting approvals | Scheduled | Payment initiated | Payment delivered
 
 **Bill Details Section:**
+
 - Vendor: Amazon (johndoe@ramp.com)
 - Invoice number: **# 513581**
 - Invoice date: 6/5/2024
@@ -173,17 +180,20 @@ Same view with cursor hovering over "Open in NetSuite" link, confirming interact
 **Panel Header:** "Review payments"
 
 **Summary:**
+
 - Total amount: **$25,923.29**
 - Payment date: **Today** (dropdown)
 - Estimated arrival: Mar 4, 2025
 - Debit from: Checking — Manual account (•••• 1873)
 
 **Batched Vendor:**
+
 - Amazon (icon: A in circle)
 - "8 bills · ACH (Direct deposit)" — **Batched** badge
 - Amount: **$25,923.29**
 
 **Individual Bills Expanded:**
+
 - INV# # 3564561 — $3,544.20
 - INV# 776644 — $5,464.98
 - INV# 101 — $2,538.53
@@ -206,6 +216,7 @@ Same view with cursor hovering over "Open in NetSuite" link, confirming interact
 NetSuite now shows a **Bill Payment** record (not just a Bill):
 
 **Primary Information:**
+
 - **Transaction Number:** 13
 - **Payee:** Amazon
 - **Account:** 1011 Cash : Checking - US East
@@ -218,6 +229,7 @@ NetSuite now shows a **Bill Payment** record (not just a Bill):
 - **Check #:** 3
 
 **Classification:**
+
 - **Subsidiary:** US East MA
 - **Department:** (empty)
 - **Class:** (empty)
@@ -226,10 +238,12 @@ NetSuite now shows a **Bill Payment** record (not just a Bill):
 **RAMP_RECEIPT_URL:** (custom field, populated by integration)
 
 **Apply Tab (bottom section):**
+
 - Shows "Applied To 3,514.92" / "Credits Applied 0.00"
 - **Line item:** Date Due 6/5/2024 | Type: Bill | Ref No. 513581 | Orig. Amt. 3,514.92 | Amt. Due 3,514.92 | Currency USA | Disc. Date/Avail/Taken (empty) | Payment 3,514.92
 
 **Key insight:** After Ramp processes the payment, the integration creates a Bill Payment record in NetSuite that:
+
 1. Links back to the original Bill (ref 513581) via the "Apply" tab
 2. Records the payment amount and date
 3. Assigns a check number (even for ACH, likely for reconciliation)
@@ -245,12 +259,14 @@ This demonstrates **bidirectional sync** — bills flow from NetSuite → Ramp f
 ### 1. External ID / Source Provenance Model
 
 **What Ramp does:**
+
 - Preserves NetSuite invoice number (513581) as the bill identifier
 - Shows "Imported on 2/3/25" timestamp
 - Provides "Open in NetSuite" deep link back to source record
 - Uses icon badge to indicate external origin
 
 **For our build:**
+
 - Bills table needs `external_id` (NetSuite internal ID or transaction number)
 - Bills table needs `source` enum (netsuite, quickbooks, sage, xero, manual)
 - Bills table needs `imported_at` timestamp
@@ -262,12 +278,14 @@ This demonstrates **bidirectional sync** — bills flow from NetSuite → Ramp f
 ### 2. Dimension Mapping & Classification Sync
 
 **What Ramp syncs from NetSuite:**
+
 - Subsidiary (US East MA)
 - Department, Class, Location (shown as columns in line items)
 - Custom segments (CUSTOM_SEGMENT HEADER ONLY, CUSTOM_SEGMENT BOTH)
 - Account codes (2010 Accounts Payable, 6060 Expenses:Selling Expenses:Advertising)
 
 **For our build:**
+
 - Need `accounting_dimensions` JSONB on bills and line_items tables
 - Schema should support: `{subsidiary, department, class, location, account_code, custom_segments: {...}}`
 - Integration must map NetSuite classifications → Ramp entities (or preserve as-is)
@@ -279,12 +297,14 @@ This demonstrates **bidirectional sync** — bills flow from NetSuite → Ramp f
 ### 3. Bidirectional Sync Architecture
 
 **What we observed:**
+
 - **Inbound (NetSuite → Ramp):** Bill records flow in when "Import bills from NetSuite" is enabled
 - **Outbound (Ramp → NetSuite):** Bill Payment records flow back after payment execution
 - **Field Mapping:** Invoice number, vendor, amount, dates, classification dimensions
 - **Link Preservation:** Ramp stores NetSuite record ID; NetSuite stores RAMP_RECEIPT_URL
 
 **For our build:**
+
 - Integration layer needs webhook listeners for NetSuite bill creation/updates
 - Payment processor must trigger outbound sync after payment completion
 - Need `sync_status` tracking (pending, synced, failed) on bills
@@ -297,11 +317,13 @@ This demonstrates **bidirectional sync** — bills flow from NetSuite → Ramp f
 ### 4. Import Configuration & Entity Scoping
 
 **What Ramp shows:**
+
 - Settings scoped per entity ("Editing settings for Finance's Tofu Speakeasy")
 - Simple toggle: "Import bills from NetSuite" (ON/OFF)
 - Additional feature: "Automatically import purchase orders" (Plus tier)
 
 **For our build:**
+
 - `accounting_integrations` table with columns: entity_id, provider (netsuite/qbo/xero), import_enabled, sync_frequency
 - `integration_settings` JSONB for provider-specific config (subsidiary filter, account mappings)
 - Entity-level scoping: each legal entity can have different integration config
@@ -312,11 +334,13 @@ This demonstrates **bidirectional sync** — bills flow from NetSuite → Ramp f
 ### 5. Payment Batching & Vendor Consolidation
 
 **What Ramp does:**
+
 - Batches 8 bills to Amazon into single $25,923.29 payment
 - Each bill retains distinct invoice number
 - UI shows "Batched" badge explicitly
 
 **For our build:**
+
 - Payment execution layer must group by vendor+payment_method+payment_date
 - `payments` table schema: one payment → many bills (via junction table or bills.payment_id FK)
 - UI must show batch summary with expandable bill list
@@ -327,11 +351,13 @@ This demonstrates **bidirectional sync** — bills flow from NetSuite → Ramp f
 ### 6. Status Model & Approval Workflow
 
 **What Ramp shows:**
+
 - Imported bills land in "Ready for release" status (not auto-released)
 - Payment status stages: Awaiting approvals → Scheduled → Payment initiated → Payment delivered
 - User must explicitly click "Release payment" button
 
 **For our build:**
+
 - Bill status enum: `imported, awaiting_approval, approved, scheduled, payment_initiated, paid`
 - Payment status enum: `pending, scheduled, processing, completed, failed`
 - Approval workflow separate from payment execution
@@ -342,10 +368,12 @@ This demonstrates **bidirectional sync** — bills flow from NetSuite → Ramp f
 ### 7. Deep Linking & Round-Trip Audit
 
 **What Ramp provides:**
+
 - "Open in NetSuite" link from bill detail
 - Likely format: `https://{instance}.netsuite.com/app/accounting/transactions/vendbill.nl?id={internal_id}`
 
 **For our build:**
+
 - Store NetSuite instance URL in integration config
 - Construct deep links dynamically: `{instance_url}/app/accounting/transactions/{record_type}.nl?id={external_id}`
 - UI component: "View in NetSuite" button/link on imported bill details
@@ -356,10 +384,12 @@ This demonstrates **bidirectional sync** — bills flow from NetSuite → Ramp f
 ### 8. Payment Method Intelligence
 
 **What Ramp shows:**
+
 - Flags card payment opportunities with "1% cashback" badge
 - Offers 6 payment methods: ACH, Wire, Check, International Wire, Card, Manual
 
 **For our build:**
+
 - Payment method enum: `ach, domestic_wire, international_wire, check, card, manual`
 - Vendor payment_methods junction table (vendor accepts card: yes/no)
 - Payment optimizer: if vendor accepts card, flag for cashback opportunity

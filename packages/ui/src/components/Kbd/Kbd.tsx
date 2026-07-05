@@ -21,8 +21,8 @@ export function Kbd({ className, children, ...props }: KbdProps) {
     <kbd
       className={clsx(
         // A raised white square keycap: hairline + 1px drop via shadow-key.
-        'inline-flex h-5 min-w-5 items-center justify-center rounded-square bg-white px-1',
-        'font-sans text-xs font-body leading-none text-ink shadow-key select-none',
+        'h-5 min-w-5 rounded-square bg-white px-1 inline-flex items-center justify-center',
+        'font-sans text-xs font-body text-ink shadow-key leading-none select-none',
         className,
       )}
       {...props}

@@ -169,10 +169,7 @@ export const NoIcons: Story = {
 export const Interactive: Story = {
   render: () => (
     <SideMenu>
-      <SideMenuItem
-        icon={<Home size={16} />}
-        onClick={() => console.log('Navigate to Home')}
-      >
+      <SideMenuItem icon={<Home size={16} />} onClick={() => console.log('Navigate to Home')}>
         Home
       </SideMenuItem>
       <SideMenuItem
@@ -182,10 +179,7 @@ export const Interactive: Story = {
       >
         Bill Pay
       </SideMenuItem>
-      <SideMenuItem
-        icon={<Users size={16} />}
-        onClick={() => console.log('Navigate to Vendors')}
-      >
+      <SideMenuItem icon={<Users size={16} />} onClick={() => console.log('Navigate to Vendors')}>
         Vendors
       </SideMenuItem>
     </SideMenu>

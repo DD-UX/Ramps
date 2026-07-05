@@ -18,6 +18,7 @@ This short promotional video introduces Ramp's new 1099 e-filing capability inte
 **SAW: Three pain points in white text on black background** ([01-pain-points.jpeg](./snapshots/01-pain-points.jpeg))
 
 The opening frames highlight common 1099 filing frustrations:
+
 - "Emailing vendors?"
 - "Manual entries?"
 - "Chasing W9s?"
@@ -47,6 +48,7 @@ The claim "from weeks to minutes" is visually reinforced with animation. This po
 **SAW: Modal showing "1099 MISC" form with categorized payments** ([04-auto-categorize.jpeg](./snapshots/04-auto-categorize.jpeg))
 
 A key workflow screenshot shows:
+
 - Header: "Step 2"
 - Left text: "Automatically categorizes payments"
 - Right panel: "1099 MISC" heading
@@ -74,11 +76,13 @@ The left text reads "Generates 1099s" with a right panel showing a blurred/place
 A detailed table view shows:
 
 **Tabs:**
+
 - "Needs filing" (5)
 - "Completed" (2)
 - "Excluded vendors"
 
 **Columns:**
+
 - **Status**: All shown as "Ready to file"
 - **Total NEC to report**: Consistent $1,234.56 for all rows
 - **Total MISC to report**: Varies ($1,234.56, $6,742.12, $2,156.09, $12,065.54, $67,671.89, $23,995.27, $9,381.48, $923.91)
@@ -86,6 +90,7 @@ A detailed table view shows:
 - **Total to report**: Final amounts per vendor
 
 **Key observations:**
+
 - Multi-vendor batch processing with per-vendor totals
 - Support for both 1099-NEC and 1099-MISC in same workflow
 - "Multiple" box indicator when vendor receives payments across categories

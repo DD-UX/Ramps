@@ -26,12 +26,7 @@ import { Spinner } from '../Spinner/Spinner';
  * be pixel-identical to its enabled base.
  */
 export type ButtonVariant =
-  | 'primary'
-  | 'secondary'
-  | 'subtle'
-  | 'ink'
-  | 'underline'
-  | 'destructive';
+  'primary' | 'secondary' | 'subtle' | 'ink' | 'underline' | 'destructive';
 export type ButtonSize = 'sm' | 'md';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -80,8 +75,7 @@ const VARIANT_STYLE: Record<ButtonVariant, string> = {
   ink: 'bg-ink text-white hover:bg-ink-strong focus-visible:ring-control-ring',
   underline:
     'bg-transparent text-ink underline decoration-1 underline-offset-2 hover:text-ink-strong focus-visible:ring-control-ring',
-  destructive:
-    'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-control-ring',
+  destructive: 'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-control-ring',
 };
 
 /**
@@ -90,10 +84,12 @@ const VARIANT_STYLE: Record<ButtonVariant, string> = {
  * limestone or the tone surface) so hover always reads.
  */
 const OUTLINE_STYLE: Record<ButtonVariant, string> = {
-  primary: 'bg-transparent text-ink border border-accent hover:bg-accent/15 focus-visible:ring-control-ring',
+  primary:
+    'bg-transparent text-ink border border-accent hover:bg-accent/15 focus-visible:ring-control-ring',
   secondary:
     'bg-transparent text-ink border border-bone hover:bg-limestone focus-visible:ring-control-ring',
-  subtle: 'bg-transparent text-ink border border-bone hover:bg-limestone focus-visible:ring-control-ring',
+  subtle:
+    'bg-transparent text-ink border border-bone hover:bg-limestone focus-visible:ring-control-ring',
   ink: 'bg-transparent text-ink border border-ink hover:bg-limestone focus-visible:ring-control-ring',
   underline:
     'bg-transparent text-ink border border-bone underline decoration-1 underline-offset-2 hover:bg-limestone focus-visible:ring-control-ring',
@@ -131,9 +127,9 @@ export function Button({
       className={clsx(
         // Layout + shape: square corners (0px, per the frames) — except the
         // toolbar pills (snapshot 1) — heading weight, inline icon rows.
-        'inline-flex items-center justify-center font-heading whitespace-nowrap',
+        'font-heading inline-flex items-center justify-center whitespace-nowrap',
         rounded ? 'rounded-pill' : 'rounded-square',
-        'outline-none transition-colors focus-visible:ring-2 focus-visible:ring-offset-2',
+        'transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         // Real interactive affordances: pointer when enabled, dimmed +
         // not-allowed when disabled — never pixel-identical to the base.
         'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
@@ -149,7 +145,7 @@ export function Button({
       {keys && keys.length > 0 ? (
         // One raised keycap per key (frame 9 shows discrete ⌘ and ↵ chips) —
         // the row rhythm is the button's own gap, chips sit gap-1 apart.
-        <span className="inline-flex items-center gap-1" aria-hidden>
+        <span className="gap-1 inline-flex items-center" aria-hidden>
           {keys.map((key) => (
             <Kbd key={key}>{key}</Kbd>
           ))}

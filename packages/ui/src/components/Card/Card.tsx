@@ -51,7 +51,7 @@ export function Card({ children, tone = 'default', elevation = 'card', className
       className={clsx(
         // One white, square, uniformly padded surface on a thin tinted border
         // (snapshot 8). The column gap — not margins — spaces header and body.
-        'flex flex-col gap-rui-3 rounded-square border bg-white p-rui-4',
+        'gap-rui-3 rounded-square bg-white p-rui-4 flex flex-col border',
         TONE_BORDER[tone],
         ELEVATION_STYLE[elevation],
         className,
@@ -74,7 +74,7 @@ export type CardHeaderProps = PropsWithChildren<{
  */
 function CardHeader({ children, action, className }: CardHeaderProps) {
   return (
-    <div className={clsx('flex items-center justify-between gap-rui-3', className)}>
+    <div className={clsx('gap-rui-3 flex items-center justify-between', className)}>
       <div className="min-w-0 text-sm font-heading text-ink">{children}</div>
       {action && <div className="shrink-0">{action}</div>}
     </div>

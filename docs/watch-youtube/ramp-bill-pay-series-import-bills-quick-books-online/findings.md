@@ -5,6 +5,7 @@
 **Summary:** Demonstrates Ramp's bill import integration with QuickBooks Online, showing how bills created in QBO automatically sync to Ramp for payment while maintaining bidirectional sync.
 
 **Related artifacts:**
+
 - [Video captions](./captions.vtt)
 - [Screenshots](./snapshots/)
 
@@ -23,6 +24,7 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 **Screenshot:** `01-qbo-bills-view.jpeg` (at 0:18)
 
 **What we SAW:**
+
 - QuickBooks Online Expenses interface showing vendor "Amazon Business" with multiple bills
 - Bill list displays: Date (01/22/2025), Type (Bill), Number (ABZ#), Payee, Category (Equipment Rental), Total, and Action (Schedule payment)
 - Bills shown with status indicators and "Schedule payment" buttons
@@ -30,6 +32,7 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 - Summary panel displays "Open balance" and "Overdue payment" totals
 
 **What was NARRATED:**
+
 > "Here we are looking at open bills in our accounting system. These are bills that have already been created and approved."
 
 **Integration insight:** Bills originate in QuickBooks Online with full accounting metadata (category, vendor, invoice number) before syncing to Ramp.
@@ -42,6 +45,7 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 **Screenshot:** `03-import-settings-tab.jpeg` (at 0:27)
 
 **What we SAW:**
+
 - Ramp "Bill Pay settings" modal with tabs: Payments, Permissions, Approvals, Accounting, **Importing** (active)
 - Success notification: "Ramp will now import bills from QuickBooks"
 - Toggle: "Import bills from QuickBooks" (enabled/green)
@@ -51,6 +55,7 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 - Link: "Learn more about importing bills"
 
 **What was NARRATED:**
+
 > "By enabling Bill importing these bills sync automatically into ramp no manual uploads or extra steps needed."
 
 **Integration insight:** The import is a simple toggle in settings. Once enabled, it's a one-way sync from QBO → Ramp. The presence of "Automatically import purchase orders" suggests PO-to-invoice matching capability.
@@ -62,6 +67,7 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 **Screenshot:** `04-for-payment-tab-imported-bills.jpeg` (at 0:40)
 
 **What we SAW:**
+
 - Ramp Bills interface with tab navigation: Overview, Drafts, For approval, **For payment** (active), History
 - Yellow banner: "Imported bills last updated Jan 24, 2025, 10:30 AM" with "Refresh" button
 - Bill list showing multiple "Amazon Business" bills, all marked "Imported - Jan 23, 2025"
@@ -71,9 +77,11 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 - Filter chips: Status (Ready for release, Scheduled, Initiated, +7), Vendor (Amazon Business), + Filter
 
 **What was NARRATED:**
+
 > "Imported bills land in the for payment tab ready to be scheduled and as new bills are created we automatically bring them in too so nothing gets missed."
 
 **Integration insight:**
+
 - Bills land directly in "For payment" tab, not requiring approval workflow (already approved in QBO)
 - "Imported" label + import timestamp appears on each bill
 - Sync is continuous ("as new bills are created we automatically bring them in")
@@ -87,6 +95,7 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 **Screenshot:** `07-bill-details-full.jpeg` (at 0:57)
 
 **What we SAW:**
+
 - Bill header: "Amazon Business →" with external link indicator
 - Import metadata: "INV# ABZ3 · Imported on 1/23/25 · **Open in QuickBooks**" (clickable link)
 - Payment status: "Overdue — Unscheduled" with progress bar
@@ -100,9 +109,11 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 - "Schedule payment" button in top right
 
 **What was NARRATED:**
+
 > "Imported bills include all key details like vendor amount and invoice number you can also easily navigate to your accounting system to reference the original bill."
 
 **Integration insight:**
+
 - "Open in QuickBooks" deep link enables round-trip navigation back to source system
 - Invoice number (ABZ3) is preserved from QBO as the external reference ID
 - This demonstrates the **external_id/source** concept: Ramp maintains a link to the originating system's record
@@ -114,6 +125,7 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 **Screenshot:** `08-payment-methods-selector.jpeg` (at 1:05)
 
 **What we SAW:**
+
 - Payment method dropdown showing options:
   - **ACH (Direct deposit)** - "Pay directly from your bank account"
   - **Domestic wire** - "Pay US-based bank accounts" (New badge)
@@ -123,9 +135,11 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 - Promotional banner: "Get $5703 cashback when you pay by card"
 
 **What was NARRATED:**
+
 > "With ramp you have multiple ways to pay ACH check wire or card ramp even Flags opportunities to pay by card helping you maximize cash back whenever possible."
 
 **Integration insight:**
+
 - Ramp offers more payment methods than typical accounting systems
 - Intelligent cashback opportunity detection
 - Even if not paying via Ramp, bill can still be tracked in the system
@@ -137,6 +151,7 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 **Screenshot:** `09-batch-payment-review.jpeg` (at 1:25)
 
 **What we SAW:**
+
 - "Review payments" modal showing:
   - Total amount: $135,520.25
   - Payment date: "Today" with estimated arrival Jan 31 - Feb 6, 2025
@@ -146,9 +161,11 @@ This video showcases Ramp's accounting system integration for bill importing, sp
   - "Pay now" button (green)
 
 **What was NARRATED:**
+
 > "Now let's prepare our payment here we can bulk select and see that ramp has batched payments going to the same vendor. We're also able to schedule when we want our payments to go out let's schedule these payments for today."
 
 **Integration insight:**
+
 - Intelligent batching for same vendor (7 bills → 1 check)
 - Mixed payment methods in single batch (ACH + Check)
 - Scheduling UI shows estimated delivery windows
@@ -160,15 +177,18 @@ This video showcases Ramp's accounting system integration for bill importing, sp
 **Screenshot:** `10-qbo-bills-updated-paid.jpeg` (at 1:45)
 
 **What we SAW:**
+
 - Back in QuickBooks Online interface
 - Bills now showing "Paid" status (green checkmarks) with payment date "Jan 24, 2025"
 - "Categorize" button tooltip visible, suggesting bulk categorization workflow
 - Same bill list as beginning, but with updated status
 
 **What was NARRATED:**
+
 > "And just like that all of our imported bills are set for payment once bills are paid in ramp they're automatically updated in your accounting system keeping everything in sync without extra work."
 
 **Integration insight:**
+
 - **Bidirectional sync**: Payment status flows back from Ramp → QuickBooks
 - Bills marked as "Paid" in QBO after Ramp processes payment
 - Payment date recorded in source system
@@ -226,8 +246,8 @@ The video doesn't show how these dimensions are mapped in Ramp's UI, but the Cat
 interface Bill {
   id: string;
   source: 'ramp' | 'quickbooks' | 'xero' | 'sage' | 'netsuite';
-  externalId?: string;        // Invoice number from source system
-  externalUrl?: string;        // Deep link to source record
+  externalId?: string; // Invoice number from source system
+  externalUrl?: string; // Deep link to source record
   importedAt?: Date;
   lastSyncedAt?: Date;
   // ... other fields

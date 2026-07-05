@@ -7,7 +7,7 @@ identity invariants, one-folder-per-component, stories-or-not-done) still applie
 ## The golden rule: the kit is served, not just built
 
 `/design-system` in the web app embeds a **static Storybook copy** at
-`apps/web/public/storybook`. That copy is a *build artifact* — it does NOT update
+`apps/web/public/storybook`. That copy is a _build artifact_ — it does NOT update
 when you edit a component. If you add/rename/remove a component or story and don't
 rebuild it, the running app shows a **stale** design system (e.g. a new `Avatar`
 is invisible at `/design-system` even though its story exists).
@@ -27,7 +27,7 @@ pnpm --filter web build                 # runs prebuild → build:storybook
 `sync:web` writes to `../../apps/web/public/storybook`. After it, reload
 `/design-system` and confirm your component appears.
 
-> Dev note: `pnpm --filter web dev` serves whatever is *currently* in
+> Dev note: `pnpm --filter web dev` serves whatever is _currently_ in
 > `public/storybook`. It does not regenerate it. Run `sync:web` after kit edits
 > even in dev, or run `pnpm --filter @ramps/ui storybook` (port 6006) for a live
 > workbench while iterating.
@@ -49,7 +49,7 @@ bash .claude/skills/design-system-validate/validate.sh   # token-fidelity gate +
   visual-advisory (advisory). Exit 0 = safe. Never bypass the hard gate.
 
 A change that skips `sync:web` is **not done**, no matter how green the tests are —
-the gate validates the kit, but the *app* serves the stale copy.
+the gate validates the kit, but the _app_ serves the stale copy.
 
 ## Component prop conventions
 

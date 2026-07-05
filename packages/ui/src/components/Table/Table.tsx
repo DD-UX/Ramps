@@ -269,11 +269,7 @@ export function TableAnnotationLink({
   ...props
 }: React.ComponentPropsWithoutRef<'a'>) {
   return (
-    <a
-      href={href}
-      className="underline decoration-alert underline-offset-2"
-      {...props}
-    >
+    <a href={href} className="decoration-alert underline underline-offset-2" {...props}>
       {children}
     </a>
   );
@@ -339,12 +335,23 @@ export function Table<T, K extends string | number = string>({
     const end = Math.min(data.length, start + visibleCount + overscan * 2);
     const offset = start * effectiveRowHeight;
     return { visibleStart: start, visibleEnd: end, offsetY: offset };
-  }, [isVirtualized, scrollTop, rowHeight, annotationHeight, overscan, data.length, viewportHeight, getRowAnnotation]);
+  }, [
+    isVirtualized,
+    scrollTop,
+    rowHeight,
+    annotationHeight,
+    overscan,
+    data.length,
+    viewportHeight,
+    getRowAnnotation,
+  ]);
 
   const visibleData = isVirtualized ? data.slice(visibleStart, visibleEnd) : data;
   const effectiveRowHeight = getRowAnnotation ? rowHeight + annotationHeight : rowHeight;
   const totalHeight = isVirtualized ? data.length * effectiveRowHeight : undefined;
-  const spacerHeight = isVirtualized ? totalHeight! - (visibleEnd - visibleStart) * effectiveRowHeight : 0;
+  const spacerHeight = isVirtualized
+    ? totalHeight! - (visibleEnd - visibleStart) * effectiveRowHeight
+    : 0;
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -427,7 +434,7 @@ export function Table<T, K extends string | number = string>({
       className={clsx(
         // No outer border — the frames show the table sitting borderless on
         // the page canvas; every hairline lives INSIDE (header/dividers).
-        'overflow-hidden rounded-square bg-white',
+        'rounded-square bg-white overflow-hidden',
         className,
       )}
     >
@@ -438,12 +445,12 @@ export function Table<T, K extends string | number = string>({
       >
         {/* border-separate + per-cell borders: sticky cells carry their own
             hairlines (border-collapse borders stay behind and paint seams). */}
-        <table className="w-full border-separate border-spacing-0 text-sm">
-          <thead className="sticky top-0 z-20 bg-white">
+        <table className="border-spacing-0 text-sm w-full border-separate">
+          <thead className="top-0 bg-white sticky z-20">
             <tr>
               {selectable && (
                 <th
-                  className="sticky left-0 z-10 border-b border-limestone bg-white px-rui-3 py-rui-2 align-middle"
+                  className="left-0 border-limestone bg-white px-rui-3 py-rui-2 sticky z-10 border-b align-middle"
                   style={checkboxCellStyle}
                 >
                   {/* th centers inline content by default — the flex wrapper
@@ -461,8 +468,7 @@ export function Table<T, K extends string | number = string>({
               )}
               {columns.map((col) => {
                 const isSticky = col === stickyLeft || col === stickyRight;
-                const stickyLeftOffset =
-                  col === stickyLeft ? checkboxWidth : undefined;
+                const stickyLeftOffset = col === stickyLeft ? checkboxWidth : undefined;
                 const stickyRightOffset = col === stickyRight ? 0 : undefined;
 
                 return (
@@ -473,10 +479,10 @@ export function Table<T, K extends string | number = string>({
                       // Sentence case — the product never uppercases labels.
                       // Vertical limestone dividers between every column
                       // (persistence-scanned on product-overview/02).
-                      'border-b border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed whitespace-nowrap',
+                      'border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed border-b whitespace-nowrap',
                       'border-l first:border-l-0',
                       ALIGN_CLASS[col.align ?? 'left'],
-                      isSticky && 'sticky z-10 bg-white',
+                      isSticky && 'bg-white sticky z-10',
                     )}
                     style={{
                       width: col.width,
@@ -490,13 +496,7 @@ export function Table<T, K extends string | number = string>({
               })}
             </tr>
           </thead>
-          <tbody
-            style={
-              isVirtualized
-                ? { transform: `translateY(${offsetY}px)` }
-                : undefined
-            }
-          >
+          <tbody style={isVirtualized ? { transform: `translateY(${offsetY}px)` } : undefined}>
             {visibleData.map((row) => {
               const id = getRowId(row);
               const isSelected = selection.has(id);
@@ -515,7 +515,7 @@ export function Table<T, K extends string | number = string>({
                       // without it they stayed white and read as vertical
                       // bands over hovered/selected rows.
                       'group/row transition-colors',
-                      isClickable && 'cursor-pointer hover:bg-limestone',
+                      isClickable && 'hover:bg-limestone cursor-pointer',
                       isSelected && 'bg-tone-selected-surface',
                     )}
                     style={isVirtualized ? { height: rowHeight } : undefined}
@@ -523,7 +523,7 @@ export function Table<T, K extends string | number = string>({
                     {selectable && (
                       <td
                         className={clsx(
-                          'sticky left-0 z-10 border-b border-limestone px-rui-3 py-rui-3 align-middle',
+                          'left-0 border-limestone px-rui-3 py-rui-3 sticky z-10 border-b align-middle',
                           isSelected ? 'bg-tone-selected-surface' : 'bg-white',
                           isClickable && !isSelected && 'group-hover/row:bg-limestone',
                         )}
@@ -541,25 +541,31 @@ export function Table<T, K extends string | number = string>({
                     )}
                     {columns.map((col) => {
                       const isSticky = col === stickyLeft || col === stickyRight;
-                      const stickyLeftOffset =
-                        col === stickyLeft ? checkboxWidth : undefined;
+                      const stickyLeftOffset = col === stickyLeft ? checkboxWidth : undefined;
                       const stickyRightOffset = col === stickyRight ? 0 : undefined;
 
                       return (
                         <td
                           key={col.id}
                           className={clsx(
-                            'border-b border-limestone px-rui-3 py-rui-3 text-ink align-middle',
+                            'border-limestone px-rui-3 py-rui-3 text-ink border-b align-middle',
                             'border-l first:border-l-0',
                             ALIGN_CLASS[col.align ?? 'left'],
                             isSticky && 'sticky z-10',
                             isSticky && (isSelected ? 'bg-tone-selected-surface' : 'bg-white'),
-                            isSticky && isClickable && !isSelected && 'group-hover/row:bg-limestone',
+                            isSticky &&
+                              isClickable &&
+                              !isSelected &&
+                              'group-hover/row:bg-limestone',
                           )}
                           style={{
                             width: col.width,
-                            left: stickyLeftOffset !== undefined ? `${stickyLeftOffset}px` : undefined,
-                            right: stickyRightOffset !== undefined ? `${stickyRightOffset}px` : undefined,
+                            left:
+                              stickyLeftOffset !== undefined ? `${stickyLeftOffset}px` : undefined,
+                            right:
+                              stickyRightOffset !== undefined
+                                ? `${stickyRightOffset}px`
+                                : undefined,
                           }}
                         >
                           {col.cell(row)}
@@ -578,13 +584,13 @@ export function Table<T, K extends string | number = string>({
                     >
                       <td
                         colSpan={columns.length + (selectable ? 1 : 0)}
-                        className="border-b border-limestone px-rui-3 py-rui-2"
+                        className="border-limestone px-rui-3 py-rui-2 border-b"
                         // The ↳ hook starts under the FIRST DATA column, past
                         // the checkbox gutter (frame 01: hook at x≈265 with
                         // the table edge at ~210).
                         style={selectable ? { paddingLeft: checkboxWidth } : undefined}
                       >
-                        <div className="sticky left-0 inline-flex items-start gap-rui-2 text-sm text-alert">
+                        <div className="left-0 gap-rui-2 text-sm text-alert sticky inline-flex items-start">
                           <CornerDownRight size={14} className="mt-0.5 shrink-0" />
                           <span>{annotation}</span>
                         </div>
@@ -598,7 +604,7 @@ export function Table<T, K extends string | number = string>({
           {footer.type !== 'none' && (
             <tfoot
               className={clsx(
-                'sticky bottom-0 z-20',
+                'bottom-0 sticky z-20',
                 // The pagination band sits on CANVAS (#fbfaf6 sampled at 1px
                 // on frame 6 y634/640) — the other footer kinds stay on the
                 // white table surface.
@@ -609,9 +615,9 @@ export function Table<T, K extends string | number = string>({
                 <tr>
                   <td
                     colSpan={columns.length + (selectable ? 1 : 0)}
-                    className="border-t border-limestone px-rui-3 py-rui-2"
+                    className="border-limestone px-rui-3 py-rui-2 border-t"
                   >
-                    <div className="flex items-center justify-between gap-rui-4 text-sm text-hushed">
+                    <div className="gap-rui-4 text-sm text-hushed flex items-center justify-between">
                       {/* Left — "Select ⌄": hushed underlined text + a chevron
                           that is NOT underlined (8x zoom, frame 6). The menu
                           contents are INFERRED (never shown open in a frame):
@@ -621,8 +627,8 @@ export function Table<T, K extends string | number = string>({
                         align="start"
                         label="Selection options"
                         trigger={
-                          <span className="inline-flex items-center gap-rui-1 text-sm text-hushed">
-                            <span className="underline decoration-hushed underline-offset-2">
+                          <span className="gap-rui-1 text-sm text-hushed inline-flex items-center">
+                            <span className="decoration-hushed underline underline-offset-2">
                               Select
                             </span>
                             <ChevronDown size={14} strokeWidth={1.5} aria-hidden />
@@ -666,13 +672,13 @@ export function Table<T, K extends string | number = string>({
                               }).format(totalCents / 100)
                             : undefined;
                         return (
-                          <div className="flex items-center gap-rui-1 whitespace-nowrap">
+                          <div className="gap-rui-1 flex items-center whitespace-nowrap">
                             <Menu
                               side="top"
                               align="end"
                               label="Go to page"
                               trigger={
-                                <span className="text-sm tabular-nums text-hushed underline decoration-hushed underline-offset-2">
+                                <span className="text-sm text-hushed decoration-hushed tabular-nums underline underline-offset-2">
                                   {rangeStart}–{rangeEnd}
                                 </span>
                               }
@@ -708,14 +714,13 @@ export function Table<T, K extends string | number = string>({
                 <tr>
                   {selectable && (
                     <td
-                      className="sticky left-0 z-10 border-t border-limestone bg-white px-rui-3 py-rui-2"
+                      className="left-0 border-limestone bg-white px-rui-3 py-rui-2 sticky z-10 border-t"
                       style={checkboxCellStyle}
                     />
                   )}
                   {columns.map((col) => {
                     const isSticky = col === stickyLeft || col === stickyRight;
-                    const stickyLeftOffset =
-                      col === stickyLeft ? checkboxWidth : undefined;
+                    const stickyLeftOffset = col === stickyLeft ? checkboxWidth : undefined;
                     const stickyRightOffset = col === stickyRight ? 0 : undefined;
 
                     let content: ReactNode = null;
@@ -726,9 +731,7 @@ export function Table<T, K extends string | number = string>({
                         currency,
                       }).format(cents / 100);
                       content = (
-                        <span className="font-heading tabular-nums text-ink">
-                          {formatted}
-                        </span>
+                        <span className="font-heading text-ink tabular-nums">{formatted}</span>
                       );
                     } else if (col.footer?.type === 'count') {
                       const { count, label = 'items' } = col.footer;
@@ -745,15 +748,17 @@ export function Table<T, K extends string | number = string>({
                       <td
                         key={col.id}
                         className={clsx(
-                          'border-t border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed',
+                          'border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed border-t',
                           'border-l first:border-l-0',
                           ALIGN_CLASS[col.align ?? 'left'],
-                          isSticky && 'sticky z-10 bg-white',
+                          isSticky && 'bg-white sticky z-10',
                         )}
                         style={{
                           width: col.width,
-                          left: stickyLeftOffset !== undefined ? `${stickyLeftOffset}px` : undefined,
-                          right: stickyRightOffset !== undefined ? `${stickyRightOffset}px` : undefined,
+                          left:
+                            stickyLeftOffset !== undefined ? `${stickyLeftOffset}px` : undefined,
+                          right:
+                            stickyRightOffset !== undefined ? `${stickyRightOffset}px` : undefined,
                         }}
                       >
                         {content}
@@ -765,7 +770,7 @@ export function Table<T, K extends string | number = string>({
                 <tr>
                   <td
                     colSpan={columns.length + (selectable ? 1 : 0)}
-                    className="border-t border-limestone px-rui-3 py-rui-2 text-sm text-ink"
+                    className="border-limestone px-rui-3 py-rui-2 text-sm text-ink border-t"
                   >
                     {footer.content}
                   </td>
@@ -775,9 +780,7 @@ export function Table<T, K extends string | number = string>({
           )}
         </table>
         {/* Spacer to push content down when virtualized (bottom spacer) */}
-        {isVirtualized && spacerHeight > 0 && (
-          <div style={{ height: spacerHeight }} aria-hidden />
-        )}
+        {isVirtualized && spacerHeight > 0 && <div style={{ height: spacerHeight }} aria-hidden />}
       </div>
     </div>
   );

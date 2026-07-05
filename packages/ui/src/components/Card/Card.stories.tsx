@@ -54,7 +54,7 @@ export const Glow: Story = {
     <Card tone="positive" elevation="glow" className="max-w-lg">
       <Card.Header
         action={
-          <div className="flex items-center gap-1">
+          <div className="gap-1 flex items-center">
             <IconButton label="Approve" icon={<ThumbsUp size={16} />} />
             <IconButton label="Reject" icon={<ThumbsDown size={16} />} />
           </div>
@@ -62,14 +62,14 @@ export const Glow: Story = {
       >
         {/* Frame 8: the title AND its "?" hint are the same positive green,
             a step larger than body copy. The tooltip carries the "how". */}
-        <span className="inline-flex items-center gap-1.5 text-base text-tone-positive-on">
+        <span className="gap-1.5 text-base text-tone-positive-on inline-flex items-center">
           Ready to approve
           <Tooltip label="Ramp's agent checked this bill's coding, amount and timing against similar bills.">
             <HelpCircle size={14} className="cursor-help" />
           </Tooltip>
         </span>
       </Card.Header>
-      <Card.Body className="flex flex-col gap-rui-3 text-sm text-ink">
+      <Card.Body className="gap-rui-3 text-sm text-ink flex flex-col">
         <p>
           This $6,442.46 bill for{' '}
           <Badge tone="neutral" className="text-sm">
@@ -77,13 +77,13 @@ export const Glow: Story = {
           </Badge>{' '}
           is for office supplies for the Boston office for December.
         </p>
-        <div className="flex flex-col gap-1">
+        <div className="gap-1 flex flex-col">
           <p className="font-heading">Checks passed:</p>
-          <ul className="flex flex-col gap-1">
+          <ul className="gap-1 flex flex-col">
             {CHECKS.map(({ text, docs }) => (
-              <li key={text} className="flex items-start gap-rui-2">
+              <li key={text} className="gap-rui-2 flex items-start">
                 {/* h-5 box matches the text-sm 20px line so the check pins to line one. */}
-                <span className="flex h-5 shrink-0 items-center" aria-hidden>
+                <span className="h-5 flex shrink-0 items-center" aria-hidden>
                   <Check size={14} className="text-tone-positive-on" />
                 </span>
                 <span>

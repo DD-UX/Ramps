@@ -86,7 +86,7 @@ function OptionRow({
       disabled={option.disabled}
       data-testid="dropdown-option"
       className={clsx(
-        'flex cursor-pointer items-center gap-2 rounded-square px-2 py-1.5 outline-none select-none',
+        'gap-2 rounded-square px-2 py-1.5 flex cursor-pointer items-center outline-none select-none',
         'data-[highlighted]:bg-limestone data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
       )}
     >
@@ -95,22 +95,22 @@ function OptionRow({
       ) : (
         <>
           {option.glyph ? (
-            <span aria-hidden className="shrink-0 text-hushed">
+            <span aria-hidden className="text-hushed shrink-0">
               {option.glyph}
             </span>
           ) : null}
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-body text-ink">{option.label}</span>
+            <span className="text-sm font-body text-ink block truncate">{option.label}</span>
             {option.description ? (
-              <span className="block truncate text-xs font-body text-hushed">
+              <span className="text-xs font-body text-hushed block truncate">
                 {option.description}
               </span>
             ) : null}
           </span>
           {option.meta ? (
-            <span className="shrink-0 text-xs font-body text-hushed">{option.meta}</span>
+            <span className="text-xs font-body text-hushed shrink-0">{option.meta}</span>
           ) : null}
-          <Combobox.ItemIndicator className="shrink-0 text-ink">
+          <Combobox.ItemIndicator className="text-ink shrink-0">
             <Check size={16} />
           </Combobox.ItemIndicator>
         </>
@@ -160,9 +160,9 @@ export function Dropdown({
           aria-invalid={invalid || undefined}
           className={clsx(
             // The sharp square coding cell from the line-item grid.
-            'flex h-12 w-full cursor-pointer items-center gap-2 rounded-square border bg-white px-3 text-left',
+            'h-12 gap-2 rounded-square bg-white px-3 flex w-full cursor-pointer items-center border text-left',
             'text-sm font-body text-ink outline-none',
-            'focus-visible:ring-2 focus-visible:ring-control-ring',
+            'focus-visible:ring-control-ring focus-visible:ring-2',
             invalid
               ? 'border-destructive'
               : 'border-control-border data-[popup-open]:border-control-border-focus',
@@ -175,21 +175,21 @@ export function Dropdown({
               selected ? (
                 <span className={TRIGGER_CONTENT_STYLE}>
                   {selected.glyph ? (
-                    <span aria-hidden className="shrink-0 text-hushed">
+                    <span aria-hidden className="text-hushed shrink-0">
                       {selected.glyph}
                     </span>
                   ) : null}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{selected.label}</span>
                     {selected.description ? (
-                      <span className="block truncate text-xs text-hushed">
+                      <span className="text-xs text-hushed block truncate">
                         {selected.description}
                       </span>
                     ) : null}
                   </span>
                 </span>
               ) : (
-                <span className="flex-1 truncate text-control-placeholder">{placeholder}</span>
+                <span className="text-control-placeholder flex-1 truncate">{placeholder}</span>
               )
             }
           </Combobox.Value>
@@ -199,7 +199,7 @@ export function Dropdown({
         {clearable ? (
           <Combobox.Clear
             aria-label="Clear selection"
-            className="absolute right-8 cursor-pointer rounded-square p-0.5 text-hushed outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-control-ring"
+            className="right-8 rounded-square p-0.5 text-hushed hover:text-ink focus-visible:ring-control-ring absolute cursor-pointer outline-none focus-visible:ring-2"
           >
             <X size={14} />
           </Combobox.Clear>
@@ -207,7 +207,7 @@ export function Dropdown({
         <ChevronDown
           size={16}
           aria-hidden
-          className="pointer-events-none absolute right-3 text-hushed"
+          className="right-3 text-hushed pointer-events-none absolute"
         />
       </div>
 
@@ -216,7 +216,7 @@ export function Dropdown({
           <Combobox.Popup
             data-testid="dropdown"
             className={clsx(
-              'flex max-h-80 w-[var(--anchor-width)] min-w-56 flex-col rounded-square border border-bone bg-white',
+              'max-h-80 min-w-56 rounded-square border-bone bg-white flex w-[var(--anchor-width)] flex-col border',
               'shadow-popover',
               'origin-top transition-[opacity,transform] duration-150',
               'data-[starting-style]:scale-95 data-[starting-style]:opacity-0',
@@ -224,15 +224,15 @@ export function Dropdown({
             )}
           >
             {/* Search row — input left, magnifier right (frame 08). */}
-            <div className="relative border-b border-bone">
+            <div className="border-bone relative border-b">
               <Combobox.Input
                 placeholder={searchPlaceholder}
-                className="h-9 w-full bg-transparent pr-8 pl-3 text-sm font-body text-ink outline-none placeholder:text-control-placeholder"
+                className="h-9 pr-8 pl-3 text-sm font-body text-ink placeholder:text-control-placeholder w-full bg-transparent outline-none"
               />
               <Search
                 size={14}
                 aria-hidden
-                className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-hushed"
+                className="right-3 text-hushed pointer-events-none absolute top-1/2 -translate-y-1/2"
               />
             </div>
 
@@ -240,7 +240,7 @@ export function Dropdown({
               No results
             </Combobox.Empty>
 
-            <Combobox.List className="flex-1 overflow-auto p-1">
+            <Combobox.List className="p-1 flex-1 overflow-auto">
               {groups
                 ? (group: GroupItems) => (
                     <Combobox.Group key={group.value} items={group.items}>
@@ -265,7 +265,7 @@ export function Dropdown({
 
             {/* Pinned, separated footer row ("Not reportable" — frame 07). */}
             {footer ? (
-              <div className="border-t border-bone px-3 py-2 text-sm font-body text-ink">
+              <div className="border-bone px-3 py-2 text-sm font-body text-ink border-t">
                 {footer}
               </div>
             ) : null}

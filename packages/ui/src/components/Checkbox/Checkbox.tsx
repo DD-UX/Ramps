@@ -15,14 +15,14 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
 
 export function Checkbox({ label, className, id, ...props }: CheckboxProps) {
   const control = (
-    <span className="relative inline-flex size-4 shrink-0">
+    <span className="size-4 relative inline-flex shrink-0">
       <input
         id={id}
         type="checkbox"
         className={clsx(
-          'peer size-4 cursor-pointer appearance-none rounded-square border border-control-border bg-white',
+          'peer size-4 rounded-square border-control-border bg-white cursor-pointer appearance-none border',
           'checked:border-positive checked:bg-positive',
-          'focus:outline-none focus:ring-2 focus:ring-control-ring',
+          'focus:ring-control-ring focus:ring-2 focus:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-60',
           className,
         )}
@@ -32,9 +32,16 @@ export function Checkbox({ label, className, id, ...props }: CheckboxProps) {
       <svg
         aria-hidden
         viewBox="0 0 16 16"
-        className="pointer-events-none absolute inset-0 hidden size-4 text-white peer-checked:block"
+        className="inset-0 size-4 text-white pointer-events-none absolute hidden peer-checked:block"
       >
-        <path d="M4 8.5 7 11.5 12 5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M4 8.5 7 11.5 12 5"
+          stroke="currentColor"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     </span>
   );
@@ -47,7 +54,7 @@ export function Checkbox({ label, className, id, ...props }: CheckboxProps) {
       // The WHOLE label is the hit area: pointer when enabled, and when the
       // input is disabled the not-allowed cursor covers the label text too —
       // clicking "Tax details (W-9)" must feel as inert as the box itself.
-      className="inline-flex cursor-pointer items-center gap-rui-2 text-sm font-body text-ink has-[input:disabled]:cursor-not-allowed"
+      className="gap-rui-2 text-sm font-body text-ink inline-flex cursor-pointer items-center has-[input:disabled]:cursor-not-allowed"
     >
       {control}
       {label}

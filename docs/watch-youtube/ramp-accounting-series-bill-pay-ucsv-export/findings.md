@@ -16,6 +16,7 @@ This video demonstrates Ramp's Universal CSV (UCSV) export feature for Bill Pay,
 ## Navigation & Entry Point
 
 **SAW (0:11-0:17):** The Bill Pay export functionality lives within a dedicated accounting workflow:
+
 - **Primary Navigation:** Accounting tab (top-level navigation)
 - **Secondary Navigation:** Bill Pay subtab (under Accounting)
 - **View:** Table showing bills and payments with Status, Expense/Payment columns, amounts, dates
@@ -28,6 +29,7 @@ The Bill Pay view provides an overview of both bill expenses and payments in a u
 ## Export Trigger
 
 **SAW (0:22-0:25):** Export is initiated through a prominent action in the top-right toolbar:
+
 - **Location:** "Export all" button in page header (lime green/yellow accent color)
 - **Context:** User can select individual bills or use "Select all" to choose all bills
 - **Selection State:** Selected bills show checkmarks in leftmost column; bottom toast shows count ("7 bills selected - $89,177.43 total")
@@ -42,6 +44,7 @@ The export button is consistently visible and does not require opening a dropdow
 ## Review & Export Modal
 
 **SAW (0:25-0:30):** Clicking "Export all" opens a "Review & export" modal with preview and customization:
+
 - **Modal Title:** "Review & export"
 - **Header Text:** "Bills and payments will be exported as two distinct CSVs. Edit your export formats here. Any newly paid vendors will be exported as a CSV as well."
 - **Info Banner:** Blue info box stating "Improved Bill Pay exports - Bills and payments are now exported as separate files"
@@ -64,6 +67,7 @@ The export button is consistently visible and does not require opening a dropdow
 **SAW (0:28-0:38):** Clicking "Customize exports" opens dedicated CSV Export Settings modal:
 
 ### Settings Modal Structure
+
 - **Modal Title:** "CSV Export Settings"
 - **Back Navigation:** "← Back" link (returns to Review & export)
 - **Tabs:** Three tabs for different export types:
@@ -74,6 +78,7 @@ The export button is consistently visible and does not require opening a dropdow
 - **Screenshots:** `05-csv-export-settings-bill-expense.jpeg`, `06-csv-export-settings-bill-payment.jpeg`
 
 ### Universal CSV (UCSV) Configuration
+
 **SAW + NARRATED (0:30-0:38):** "Bills and payments are exported separately and can have their own CSV template."
 
 - **Section 1: Set up your CSV**
@@ -94,6 +99,7 @@ The export button is consistently visible and does not require opening a dropdow
 **SAW (0:41-0:50):** The Review & export modal shows expandable previews of what will be exported:
 
 ### Bills Preview
+
 - **Columns Shown:**
   - Vendor (e.g., HubSpot, Cybertec International, Deckhand, Bold Tech, Nightfall, Mutiny, Amazon)
   - Category (e.g., "1100 Salaries and Wages", "3100 Legal and Consulting Fees", "6100 Software Subscription", "6300 Office Supplies")
@@ -102,6 +108,7 @@ The export button is consistently visible and does not require opening a dropdow
 - **Screenshot:** `07-bills-preview-export.jpeg`
 
 ### Payments Preview
+
 - **Columns Shown:**
   - Vendor (e.g., Cybertec International, Deckhand, Bold Tech, Nightfall)
   - Category (same as bills)
@@ -110,6 +117,7 @@ The export button is consistently visible and does not require opening a dropdow
 - **Screenshot:** `08-payments-vendors-preview.jpeg`
 
 ### Vendors Preview
+
 - **List Shown:** Simple vendor name list (9 vendors total including Amazon, Bold Tech, Cybertec International, Deckhand, HubSpot, Mutiny, Nightfall, Salesforce, Test Vendor - marketing)
 
 **NARRATED (0:41-0:50):** "Furthermore Ramp offers a preview of both bills being exported, payments that will be exported, and all associated vendors."
@@ -121,6 +129,7 @@ The export button is consistently visible and does not require opening a dropdow
 **SAW (0:52-1:01):** After clicking "Export CSV", the resulting file opens showing the actual CSV structure:
 
 ### Bills CSV Columns (visible in export)
+
 - Bill Id
 - Vendor ID
 - Invoice Number
@@ -141,9 +150,11 @@ The export button is consistently visible and does not require opening a dropdow
 **Screenshot:** `09-exported-csv-columns.jpeg`
 
 ### Payments CSV
+
 **NARRATED (0:56-1:01):** "Ramp will download two separate CSV files: one for expenses, the other for payments."
 
 The Payments CSV appears as a separate sheet/file with columns:
+
 - Vendor
 - Vendor ID
 - Invoice Number
@@ -159,31 +170,37 @@ The Payments CSV appears as a separate sheet/file with columns:
 ## Key Observations
 
 ### Export Scope & Filtering
+
 - **SAW:** The export operates on selected bills from the Bill Pay table
 - **SAW:** Selection includes a total count and dollar amount shown in bottom toast
 - **No explicit date range filter shown in this demo**, but the table likely supports filtering before export
 
 ### Separate Bills vs. Payments Exports
+
 - **SAW + NARRATED:** Bills and payments are always exported as two distinct CSV files
 - **SAW:** Each can have its own customized CSV template (via the tabbed settings)
 - **SAW:** Vendors associated with the selected bills/payments are also exported as a third CSV
 
 ### Universal CSV Concept
+
 - **SAW:** Users can upload a "past CSV" (their existing ERP format)
 - **SAW:** Ramp will then format future exports to match that uploaded template
 - **Benefit:** Eliminates need for manual column mapping or reformatting for ERP import
 
 ### Export Action Location
+
 - **SAW:** "Export all" button is prominently placed in page header (not buried in a menu)
 - **SAW:** "Customize exports" is accessible via link in the export modal (not primary flow)
 - **Pattern:** Quick export for regular use; settings available when customization is needed
 
 ### Preview Before Export
+
 - **SAW:** The "Review & export" modal shows exactly what will be exported
 - **SAW:** Three collapsible sections for Bills, Payments, and Vendors
 - **SAW:** Preview shows key columns (Vendor, Category, Amount, Payment Date) for verification
 
 ### Multi-Entity Export
+
 - **SAW:** Not just bills — also exports payments and vendors in separate files
 - **SAW:** Vendors list appears to include all vendors associated with the selected bills/payments
 - **Use Case:** Ensures vendor master data is available for ERP systems that need it

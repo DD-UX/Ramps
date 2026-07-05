@@ -3,14 +3,7 @@
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import {
-  createContext,
-  type PropsWithChildren,
-  useContext,
-  useEffect,
-  useId,
-  useRef,
-} from 'react';
+import { createContext, type PropsWithChildren, useContext, useEffect, useId, useRef } from 'react';
 
 import { useClickAway } from '../../hooks/useClickAway';
 import { IconButton } from '../IconButton/IconButton';
@@ -84,7 +77,7 @@ export function Modal({ open, onClose, className, children }: ModalProps) {
         {open && (
           <motion.div
             data-testid="modal-overlay"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-white/75 p-rui-4"
+            className="inset-0 bg-white/75 p-rui-4 fixed z-50 flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.15, ease: 'easeIn' } }}
@@ -101,11 +94,16 @@ export function Modal({ open, onClose, className, children }: ModalProps) {
               data-testid="modal"
               initial={{ opacity: 0, scale: 0.96, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 8, transition: { duration: 0.15, ease: 'easeIn' } }}
+              exit={{
+                opacity: 0,
+                scale: 0.96,
+                y: 8,
+                transition: { duration: 0.15, ease: 'easeIn' },
+              }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className={clsx(
                 // One padded surface — no divider rows; the gap carries the rhythm.
-                'flex w-full max-w-md flex-col gap-rui-4 rounded-square border border-bone bg-white p-rui-6',
+                'max-w-md gap-rui-4 rounded-square border-bone bg-white p-rui-6 flex w-full flex-col border',
                 'shadow-popover',
                 className,
               )}
@@ -125,7 +123,7 @@ export type ModalHeaderProps = PropsWithChildren<{ className?: string }>;
 function ModalHeader({ children, className }: ModalHeaderProps) {
   const { onClose, titleId } = useModalContext('Header');
   return (
-    <div className={clsx('flex items-start justify-between gap-rui-3', className)}>
+    <div className={clsx('gap-rui-3 flex items-start justify-between', className)}>
       <h2 id={titleId} className="text-lg font-heading text-ink">
         {children}
       </h2>
@@ -138,7 +136,9 @@ export type ModalBodyProps = PropsWithChildren<{ className?: string }>;
 
 /** Body slot — callers own the copy/fields; hushed sm reads as the default. */
 function ModalBody({ children, className }: ModalBodyProps) {
-  return <div className={clsx('flex flex-col gap-rui-4 text-sm text-ink', className)}>{children}</div>;
+  return (
+    <div className={clsx('gap-rui-4 text-sm text-ink flex flex-col', className)}>{children}</div>
+  );
 }
 
 export type ModalFooterProps = PropsWithChildren<{ className?: string }>;
@@ -146,7 +146,7 @@ export type ModalFooterProps = PropsWithChildren<{ className?: string }>;
 /** Footer — "Cancel" hugs the left, the primary CTA the right (frame 13). */
 function ModalFooter({ children, className }: ModalFooterProps) {
   return (
-    <div className={clsx('mt-rui-2 flex items-center justify-between gap-rui-3', className)}>
+    <div className={clsx('mt-rui-2 gap-rui-3 flex items-center justify-between', className)}>
       {children}
     </div>
   );

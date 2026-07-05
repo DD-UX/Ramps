@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Avatar } from '../Avatar/Avatar';
 import { Button } from '../Button/Button';
 import { Money } from '../Money/Money';
-import { type BillStatus,StatusPill } from '../StatusPill/StatusPill';
+import { type BillStatus, StatusPill } from '../StatusPill/StatusPill';
 import { Table, TableAnnotationLink, type TableColumn } from './Table';
 
 const meta = {
@@ -67,8 +67,7 @@ const makeSimpleBills = (count: number): Bill[] =>
     }),
   );
 
-const sumCents = (bills: Bill[]): number =>
-  bills.reduce((sum, bill) => sum + bill.amountCents, 0);
+const sumCents = (bills: Bill[]): number => bills.reduce((sum, bill) => sum + bill.amountCents, 0);
 
 /** Vendor + "submitter · date" subline with avatar — the product's lead column. */
 const vendorSubmitterColumn = (
@@ -77,9 +76,9 @@ const vendorSubmitterColumn = (
   id: 'vendor',
   header: 'Vendor / submitter',
   cell: (row) => (
-    <div className="flex items-center gap-rui-2">
+    <div className="gap-rui-2 flex items-center">
       <Avatar name={row.vendor} size="sm" />
-      <div className="flex flex-col gap-rui-1">
+      <div className="gap-rui-1 flex flex-col">
         <span className="font-heading text-ink">{row.vendor}</span>
         <span className="text-xs text-hushed">
           {row.submitter} · {row.submittedDate}
@@ -104,11 +103,7 @@ const suggestedActionColumn: TableColumn<Bill, string> = {
   id: 'suggestedAction',
   header: 'Suggested action',
   cell: (row) => (
-    <StatusPill
-      status={
-        row.suggestedAction === 'ready_to_approve' ? 'approved' : 'missing_info'
-      }
-    />
+    <StatusPill status={row.suggestedAction === 'ready_to_approve' ? 'approved' : 'missing_info'} />
   ),
   width: '180px',
 };
@@ -118,14 +113,8 @@ const statusProgressColumn: TableColumn<Bill, string> = {
   id: 'status',
   header: 'Status',
   cell: (row) => (
-    <div className="flex items-center gap-rui-1 text-sm text-ink">
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
-        fill="none"
-        className="text-hushed"
-      >
+    <div className="gap-rui-1 text-sm text-ink flex items-center">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-hushed">
         <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
         <circle cx="8" cy="8" r="2" fill="currentColor" />
       </svg>
@@ -164,7 +153,7 @@ const paymentMethodColumn: TableColumn<Bill, string> = {
   id: 'paymentMethod',
   header: 'Payment method',
   cell: (row) => (
-    <div className="flex items-center gap-rui-1 text-sm text-ink">
+    <div className="gap-rui-1 text-sm text-ink flex items-center">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
         <rect x="2" y="4" width="12" height="8" rx="1" />
       </svg>
@@ -371,9 +360,8 @@ export const CrossPageSelection: StoryObj = {
     return (
       <div className="space-y-rui-4">
         <div className="text-sm text-hushed">
-          <strong>Instructions:</strong> Select rows on page 1, jump to another
-          page from the underlined range in the footer, come back → your
-          selections persist.
+          <strong>Instructions:</strong> Select rows on page 1, jump to another page from the
+          underlined range in the footer, come back → your selections persist.
         </div>
         <Table
           data={pageData}
@@ -478,7 +466,7 @@ export const StickyColumns: StoryObj = {
         id: 'vendor',
         header: 'Vendor',
         cell: (row) => (
-          <div className="flex items-center gap-rui-2">
+          <div className="gap-rui-2 flex items-center">
             <Avatar name={row.vendor} size="sm" />
             <span className="font-heading text-ink">{row.vendor}</span>
           </div>
@@ -532,12 +520,7 @@ export const StickyColumns: StoryObj = {
         <p className="text-sm text-hushed">
           Scroll horizontally → Vendor (first) and Actions (last) columns stay pinned
         </p>
-        <Table
-          data={bills}
-          columns={columns}
-          getRowId={(row) => row.id}
-          selectable
-        />
+        <Table data={bills} columns={columns} getRowId={(row) => row.id} selectable />
       </div>
     );
   },
@@ -653,8 +636,8 @@ export const FlaggedBills: StoryObj = {
     return (
       <div className="space-y-rui-2">
         <p className="text-sm text-hushed">
-          Annotation rows show fraud alerts, duplicate warnings, and overbilling
-          notices beneath flagged bills
+          Annotation rows show fraud alerts, duplicate warnings, and overbilling notices beneath
+          flagged bills
         </p>
         <Table
           data={bills}
@@ -675,10 +658,8 @@ export const FlaggedBills: StoryObj = {
               return (
                 <>
                   This draft may be a duplicate of{' '}
-                  <TableAnnotationLink href="#invoice-8960">
-                    INV# 8960
-                  </TableAnnotationLink>
-                  . Make sure you're not paying twice.
+                  <TableAnnotationLink href="#invoice-8960">INV# 8960</TableAnnotationLink>. Make
+                  sure you're not paying twice.
                 </>
               );
             }

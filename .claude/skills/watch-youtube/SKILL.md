@@ -6,10 +6,10 @@ allowed-tools: Bash Read
 
 # Watch YouTube
 
-Gives real *visual* understanding of a video, not a transcript-only summary. The runtime
+Gives real _visual_ understanding of a video, not a transcript-only summary. The runtime
 cannot ingest a raw video stream, so instead: download the video, extract still frames with
 ffmpeg, and **view those frames with the `Read` tool** (frames are images — the model sees
-them). Captions, when present, tell you *where* to look so you can sample the important
+them). Captions, when present, tell you _where_ to look so you can sample the important
 moments densely.
 
 Extracted frames are saved as **documentation artifacts** so they live next to the rest of
@@ -42,17 +42,17 @@ confirm — do not install for them. (`place.sh` also uses `python3`, already av
 1. **Check deps** (above). Stop if missing.
 
 1b. **Check the URL for a timestamp.** A user sharing `…?t=90` / `&t=1m30s` /
-   `#t=45` / `&start=120` is pointing at an exact moment — the strongest possible
-   signal for what to capture. If present, **short-circuit**: fetch, place, grab a
-   *single* frame at that second, view it, done — skip uniform sampling.
+`#t=45` / `&start=120` is pointing at an exact moment — the strongest possible
+signal for what to capture. If present, **short-circuit**: fetch, place, grab a
+_single_ frame at that second, view it, done — skip uniform sampling.
 
-   ```bash
-   TS=$(bash "$CLAUDE_PROJECT_DIR/.claude/skills/watch-youtube/scripts/url-timestamp.sh" "<url>")
-   # If $TS is non-empty: after fetch + place (steps 2–3), run:
-   #   frames.sh "$WORK/video.mp4" "$SNAPS" at "$TS"
-   # then Read the one frame and synthesize. Only fall through to steps 4–6 if the
-   # user also wants broader context.
-   ```
+```bash
+TS=$(bash "$CLAUDE_PROJECT_DIR/.claude/skills/watch-youtube/scripts/url-timestamp.sh" "<url>")
+# If $TS is non-empty: after fetch + place (steps 2–3), run:
+#   frames.sh "$WORK/video.mp4" "$SNAPS" at "$TS"
+# then Read the one frame and synthesize. Only fall through to steps 4–6 if the
+# user also wants broader context.
+```
 
 2. **Fetch** the video + captions into a scratch work dir (`$TMPDIR`, disposable):
 
@@ -87,7 +87,7 @@ confirm — do not install for them. (`place.sh` also uses `python3`, already av
    `every 5`; 20-min video → `every 30`). Then **view them** — batch the `Read` calls:
    `Read "$SNAPS/1.jpeg", "$SNAPS/2.jpeg", …`.
 
-6. **Second pass — targeted frames** at flagged timestamps (frames *accumulate*: these
+6. **Second pass — targeted frames** at flagged timestamps (frames _accumulate_: these
    append as the next-numbered `.jpeg`s, no overwrite):
 
    ```bash
@@ -99,7 +99,7 @@ confirm — do not install for them. (`place.sh` also uses `python3`, already av
 
 7. **Synthesize.** Combine what the frames show with what the captions say; cite
    timestamps for visual claims ("at ~2:05 the approval drawer slides in from the right
-   with a lime primary button"). Distinguish what you *saw* from what was *narrated*.
+   with a lime primary button"). Distinguish what you _saw_ from what was _narrated_.
 
 ## Notes
 
@@ -112,7 +112,7 @@ confirm — do not install for them. (`place.sh` also uses `python3`, already av
 - Videos download capped at 720p — enough to read UI, small enough to be fast.
 - Keep snapshot sets lean (curate — delete redundant frames before committing) so the
   docs folder stays a useful reference, not a frame dump.
-- Respect content ownership: use this to *study/understand* videos, not to redistribute
+- Respect content ownership: use this to _study/understand_ videos, not to redistribute
   them; committed snapshots are excerpts for documentation.
 - Feed findings into `docs/design-system.md` (cite the snapshot path) so the visual
   evidence is linked from the research, not left only in chat.

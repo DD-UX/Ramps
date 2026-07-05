@@ -24,7 +24,7 @@ type Story = StoryObj<typeof meta>;
 export const BillDetail: Story = {
   args: {
     left: (
-      <div className="h-full p-rui-4">
+      <div className="p-rui-4 h-full">
         <Card elevation="flat">
           <Card.Header>Payment details</Card.Header>
           <Card.Body>
@@ -36,8 +36,8 @@ export const BillDetail: Story = {
       </div>
     ),
     right: (
-      <div className="flex h-full items-center justify-center bg-limestone p-rui-4">
-        <div className="rounded-square bg-white p-rui-6 text-center shadow-card">
+      <div className="bg-limestone p-rui-4 flex h-full items-center justify-center">
+        <div className="rounded-square bg-white p-rui-6 shadow-card text-center">
           <p className="text-sm font-heading text-ink">INVOICE</p>
           <p className="mt-1 text-xs text-hushed">Clarity Online · $262.50</p>
         </div>

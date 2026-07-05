@@ -37,13 +37,13 @@ function useResolvedToken(token: string): string {
 function Swatch({ token, note }: { token: string; note: string }) {
   const value = useResolvedToken(token);
   return (
-    <div className="flex items-center gap-rui-3">
+    <div className="gap-rui-3 flex items-center">
       <div
-        className="h-10 w-10 flex-shrink-0 rounded-square border border-bone"
+        className="h-10 w-10 rounded-square border-bone flex-shrink-0 border"
         style={{ background: `var(${token})` }}
       />
       <div className="min-w-0">
-        <div className="flex flex-wrap items-baseline gap-rui-2">
+        <div className="gap-rui-2 flex flex-wrap items-baseline">
           <code className="text-sm font-heading text-ink">{token}</code>
           <code className="text-xs font-body text-hushed">{value}</code>
         </div>
@@ -62,19 +62,31 @@ export const Palette: Story = {
   render: () => (
     <div className="max-w-xl">
       <SectionTitle>Palette</SectionTitle>
-      <div className="flex flex-col gap-rui-3">
+      <div className="gap-rui-3 flex flex-col">
         <Swatch token="--rui-ink" note="Primary text; pairs with accent lime." />
         <Swatch token="--rui-ink-strong" note="The darkest step — display headings." />
         <Swatch token="--rui-hushed" note="Secondary text, inactive nav items, meta." />
         <Swatch token="--rui-bone" note="Hairlines: dividers, control borders at rest." />
-        <Swatch token="--rui-stone" note="Mid gray — active nav item, split grips (vetted frame 7)." />
+        <Swatch
+          token="--rui-stone"
+          note="Mid gray — active nav item, split grips (vetted frame 7)."
+        />
         <Swatch token="--rui-limestone" note="Surface gray — nav background, subtle chips." />
         <Swatch token="--rui-canvas" note="Warm near-white the product paints behind surfaces." />
         <Swatch token="--rui-accent" note="The lime — always paired with ink, never with white." />
-        <Swatch token="--rui-destructive" note="Orange family — the product never uses red for actions." />
+        <Swatch
+          token="--rui-destructive"
+          note="Orange family — the product never uses red for actions."
+        />
         <Swatch token="--rui-positive" note="Ryu's constructive green (checked checkboxes, §15)." />
-        <Swatch token="--rui-alert" note="The ONE true red: flagged-bill annotation text (§01/02)." />
-        <Swatch token="--rui-alert-surface" note="Rose whisper behind flagged-bill annotation bands." />
+        <Swatch
+          token="--rui-alert"
+          note="The ONE true red: flagged-bill annotation text (§01/02)."
+        />
+        <Swatch
+          token="--rui-alert-surface"
+          note="Rose whisper behind flagged-bill annotation bands."
+        />
       </div>
     </div>
   ),
@@ -94,11 +106,11 @@ export const StatusTones: Story = {
   render: () => (
     <div className="max-w-xl">
       <SectionTitle>Status tones (surface + on pairs)</SectionTitle>
-      <div className="flex flex-col gap-rui-3">
+      <div className="gap-rui-3 flex flex-col">
         {TONES.map(({ tone, label }) => (
-          <div key={tone} className="flex items-center gap-rui-3">
+          <div key={tone} className="gap-rui-3 flex items-center">
             <span
-              className="inline-flex items-center rounded-square px-rui-2 py-0.5 text-xs font-heading"
+              className="rounded-square px-rui-2 py-0.5 text-xs font-heading inline-flex items-center"
               style={{
                 background: `var(--rui-tone-${tone}-surface)`,
                 color: `var(--rui-tone-${tone}-on)`,
@@ -125,26 +137,26 @@ export const RadiiAndElevation: Story = {
   render: () => (
     <div className="max-w-xl">
       <SectionTitle>Radii — square (0px) or pill, nothing in between</SectionTitle>
-      <div className="flex items-center gap-rui-4">
-        <div className="flex h-16 w-24 items-center justify-center rounded-square border border-bone bg-limestone text-xs font-body text-hushed">
+      <div className="gap-rui-4 flex items-center">
+        <div className="h-16 w-24 rounded-square border-bone bg-limestone text-xs font-body text-hushed flex items-center justify-center border">
           square
         </div>
-        <div className="flex h-8 items-center rounded-pill bg-accent px-rui-3 text-xs font-heading text-ink">
+        <div className="h-8 rounded-pill bg-accent px-rui-3 text-xs font-heading text-ink flex items-center">
           pill
         </div>
       </div>
       <SectionTitle>Elevation — soft shadows over hard borders</SectionTitle>
-      <div className="flex flex-wrap gap-rui-6 pb-rui-4">
-        <div className="flex h-20 w-32 items-center justify-center rounded-square bg-white text-xs font-body text-hushed shadow-card">
+      <div className="gap-rui-6 pb-rui-4 flex flex-wrap">
+        <div className="h-20 w-32 rounded-square bg-white text-xs font-body text-hushed shadow-card flex items-center justify-center">
           shadow-card
         </div>
-        <div className="flex h-20 w-32 items-center justify-center rounded-square bg-white text-xs font-body text-hushed shadow-popover">
+        <div className="h-20 w-32 rounded-square bg-white text-xs font-body text-hushed shadow-popover flex items-center justify-center">
           shadow-popover
         </div>
-        <div className="flex h-20 w-32 items-center justify-center rounded-square bg-white text-xs font-body text-hushed shadow-glow">
+        <div className="h-20 w-32 rounded-square bg-white text-xs font-body text-hushed shadow-glow flex items-center justify-center">
           shadow-glow
         </div>
-        <div className="flex h-8 w-32 items-center justify-center rounded-square bg-white text-xs font-body text-hushed shadow-key">
+        <div className="h-8 w-32 rounded-square bg-white text-xs font-body text-hushed shadow-key flex items-center justify-center">
           shadow-key
         </div>
       </div>
@@ -159,7 +171,7 @@ export const Spacing: Story = {
   render: () => (
     <div className="max-w-xl">
       <SectionTitle>Spacing (4px scale)</SectionTitle>
-      <div className="flex flex-col gap-rui-2">
+      <div className="gap-rui-2 flex flex-col">
         {SPACES.map((step) => (
           <SpacingRow key={step} step={step} />
         ))}
@@ -171,8 +183,8 @@ export const Spacing: Story = {
 function SpacingRow({ step }: { step: (typeof SPACES)[number] }) {
   const value = useResolvedToken(`--rui-space-${step}`);
   return (
-    <div className="flex items-center gap-rui-3">
-      <code className="w-28 flex-shrink-0 text-xs font-body text-hushed">--rui-space-{step}</code>
+    <div className="gap-rui-3 flex items-center">
+      <code className="w-28 text-xs font-body text-hushed flex-shrink-0">--rui-space-{step}</code>
       <div className="h-4 bg-accent" style={{ width: `var(--rui-space-${step})` }} />
       <code className="text-xs font-body text-hushed">{value}</code>
     </div>

@@ -25,7 +25,9 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /** A line-item description field with a value ("Office Chairs"). */
-export const Filled: Story = { args: { placeholder: 'Description', defaultValue: 'Office Chairs' } };
+export const Filled: Story = {
+  args: { placeholder: 'Description', defaultValue: 'Office Chairs' },
+};
 
 /** Amount field with a `$` prefix adornment ("$12,000.00"). */
 export const AmountPrefixed: Story = {

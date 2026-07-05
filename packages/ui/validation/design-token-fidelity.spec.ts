@@ -58,7 +58,9 @@ test.describe('token fidelity', () => {
     await expect(input).toHaveCSS('border-top-color', hexToRgb(RUI['--rui-destructive']));
   });
 
-  test('Toast is a white, square-cornered card with a bone border (snapshot 3)', async ({ page }) => {
+  test('Toast is a white, square-cornered card with a bone border (snapshot 3)', async ({
+    page,
+  }) => {
     await page.goto(storyUrl('primitives-toast--uploading'));
     const toast = page.getByRole('status');
     // Reworked from the dark-ink slab to the Ramp toast: white fill, thin bone
@@ -103,7 +105,10 @@ test.describe('token fidelity', () => {
   test('Banner/critical uses the critical (orange) tone surface, not red', async ({ page }) => {
     await page.goto(storyUrl('primitives-banner--missing-info'));
     const banner = page.getByRole('status');
-    await expect(banner).toHaveCSS('background-color', hexToRgb(RUI['--rui-tone-critical-surface']));
+    await expect(banner).toHaveCSS(
+      'background-color',
+      hexToRgb(RUI['--rui-tone-critical-surface']),
+    );
     await expect(banner).not.toHaveCSS('background-color', 'rgb(255, 0, 0)');
     await expect(banner).toHaveCSS('border-top-left-radius', RUI['--rui-radius-square']);
   });
