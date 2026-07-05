@@ -43,11 +43,9 @@ export const ApprovalPolicySchema = z
   })
   .refine(
     (p) =>
-      [p.approver_id, p.approver_role, p.approver_dynamic].filter((t) => t !== null)
-        .length === 1,
+      [p.approver_id, p.approver_role, p.approver_dynamic].filter((t) => t !== null).length === 1,
     {
-      message:
-        'A policy step names exactly one of approver_id, approver_role or approver_dynamic',
+      message: 'A policy step names exactly one of approver_id, approver_role or approver_dynamic',
     },
   );
 export type ApprovalPolicyType = z.infer<typeof ApprovalPolicySchema>;
@@ -92,10 +90,9 @@ export const BillReviewSchema = z
     checks: z.array(BillReviewCheckSchema).min(1),
     created_at: IsoDateTimeSchema,
   })
-  .refine(
-    (r) => (r.verdict === 'ready_to_approve') === r.checks.every((c) => c.passed),
-    { message: '"Ready to approve" if and only if every check passed' },
-  );
+  .refine((r) => (r.verdict === 'ready_to_approve') === r.checks.every((c) => c.passed), {
+    message: '"Ready to approve" if and only if every check passed',
+  });
 export type BillReviewType = z.infer<typeof BillReviewSchema>;
 
 /** Approve/reject input — rejection requires the courtesy of a comment. */

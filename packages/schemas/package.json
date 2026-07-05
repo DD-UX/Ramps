@@ -49,6 +49,7 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf dist .turbo *.tsbuildinfo"
   },
   "dependencies": {
@@ -56,6 +57,7 @@
   },
   "devDependencies": {
     "@ramps/config": "workspace:*",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "4.1.9"
   }
 }

@@ -38,10 +38,7 @@ export type PaymentStatusType = z.infer<typeof PaymentStatusSchema>;
  * paid`, with one seeded failure). `failed` is terminal — recovering is a NEW
  * payment against the same bill, never a resurrected row.
  */
-export const PAYMENT_STATUS_TRANSITIONS: Record<
-  PaymentStatusType,
-  readonly PaymentStatusType[]
-> = {
+export const PAYMENT_STATUS_TRANSITIONS: Record<PaymentStatusType, readonly PaymentStatusType[]> = {
   scheduled: ['initiated'],
   initiated: ['paid', 'failed'],
   paid: [],

@@ -1,11 +1,6 @@
 import { z } from 'zod';
 
-import {
-  CurrencyCodeSchema,
-  IdSchema,
-  IsoDateSchema,
-  MoneyCentsSchema,
-} from './primitives.js';
+import { CurrencyCodeSchema, IdSchema, IsoDateSchema, MoneyCentsSchema } from './primitives.js';
 
 /**
  * Bills — the OBLIGATION side of the bill/payment split (ANALYSIS §1
@@ -182,25 +177,53 @@ export const BillWithLineItemsSchema = BillSchema.extend({
 });
 export type BillWithLineItemsType = z.infer<typeof BillWithLineItemsSchema>;
 
+/**
+ * A row of the Bill Pay TABLE — the shape that crosses the `/api/bills`
+ * boundary (findings §1: the table is the product's spine). It's the bill
+ * header the list actually renders, denormalized just enough to draw a row
+ * without a second round-trip:
+ *   - `vendor_name` — the joined vendor label (null on email-ingested drafts
+ *     that arrived before a vendor was matched — the `missing_info` case).
+ *   - `flags` — the UNDISMISSED risk flags only; they render as the red ↳
+ *     annotation rows beneath the row (§2). Dismissed flags never reach here.
+ * Line items are intentionally omitted — those load with the detail drawer
+ * (BillWithLineItemsSchema), not the list.
+ */
+export const BillListItemSchema = BillSchema.extend({
+  vendor_name: z.string().nullable(),
+  flags: z.array(BillFlagSchema).default([]),
+});
+export type BillListItemType = z.infer<typeof BillListItemSchema>;
+
+/** The `/api/bills` response envelope — the list plus its total count. */
+export const BillListResponseSchema = z.object({
+  bills: z.array(BillListItemSchema),
+  /** Total rows matching the query, before any pagination window. */
+  total: z.number().int().nonnegative(),
+});
+export type BillListResponseType = z.infer<typeof BillListResponseSchema>;
+
 /** Line-item input while drafting (ids/line numbers are the server's job). */
 export const BillLineItemCreateSchema = BillLineItemSchema.omit({
   id: true,
   bill_id: true,
   line_no: true,
-}).partial({
-  qty: true,
-  unit_price_cents: true,
-  gl_account_id: true,
-  department_id: true,
-  class_id: true,
-  location_id: true,
-  tax_code_id: true,
-  custom_dimension_id: true,
-  coding_source: true,
-  split_group_id: true,
-}).extend({
-  billable: z.boolean().default(false),
-});
+})
+  .partial({
+    qty: true,
+    unit_price_cents: true,
+    gl_account_id: true,
+    department_id: true,
+    class_id: true,
+    location_id: true,
+    tax_code_id: true,
+    custom_dimension_id: true,
+    coding_source: true,
+    split_group_id: true,
+  })
+  .extend({
+    billable: z.boolean().default(false),
+  });
 export type BillLineItemCreateType = z.infer<typeof BillLineItemCreateSchema>;
 
 /** Input for creating a bill (upload/OCR prefill → confirm form). */
