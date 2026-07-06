@@ -5,8 +5,6 @@ import { Tabs } from '@ramps/ui/Tabs';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
-import { DEFAULT_TAB_CODE } from '../constants/status-tabs.constants';
-
 /**
  * BillsTabs — the category tabs over the Bill Pay table, driven by the
  * `bill_tabs` lookup (Overview | Drafts | For approval | For payment | History,
@@ -34,14 +32,16 @@ export function BillsTabs({ tabs, activeCode, counts }: BillsTabsProps) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // The default tab is the first row (the catalog's own order) — no hardcoded
+  // slug. Switching to it drops the param rather than writing ?tab=<default>.
+  const defaultCode = tabs[0]?.code;
+
   const onValueChange = useCallback(
     (next: string) => {
-      // Overview is the unfiltered view — drop the param rather than ?tab=overview.
-      const href =
-        next === DEFAULT_TAB_CODE ? pathname : `${pathname}?tab=${encodeURIComponent(next)}`;
+      const href = next === defaultCode ? pathname : `${pathname}?tab=${encodeURIComponent(next)}`;
       router.push(href);
     },
-    [router, pathname],
+    [router, pathname, defaultCode],
   );
 
   const tabItems = tabs.map((tab) => ({

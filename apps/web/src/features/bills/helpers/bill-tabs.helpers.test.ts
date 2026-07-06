@@ -2,12 +2,13 @@ import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillStatusType } from '@ramps/schemas/bills';
 import { describe, expect, it } from 'vitest';
 
-import { countForTab, resolveTab, statusesForTab } from './status-tabs.constants';
+import { countForTab, resolveTab, statusesForTab } from './bill-tabs.helpers';
 
 /**
- * The tab bar is data now: these helpers operate on the `bill_tabs` rows the
- * page fetched, not a hardcoded list. The fixture mirrors the seeded catalog
- * (Overview unfiltered; the rest rolling up their status groups).
+ * The tab bar is data: these helpers operate on the `bill_tabs` rows the page
+ * fetched, not a hardcoded list. The fixture mirrors the seeded catalog
+ * (Overview first/unfiltered; the rest rolling up their status groups). The
+ * default is the FIRST row by order — no hardcoded 'overview' code.
  */
 const TABS: BillTabType[] = [
   { id: '1', name: 'Overview', code: 'overview', statuses: [], sort_order: 0, created_by: null },
@@ -47,8 +48,9 @@ const TABS: BillTabType[] = [
 
 /**
  * resolveTab hardens the `?tab=` code before it selects a category. Anything
- * that isn't a real tab code must fall back to Overview so a hand-typed URL (or
- * a stale `?status=` link) can never 500.
+ * that isn't a real tab code must fall back to the FIRST tab so a hand-typed
+ * URL (or a stale `?status=` link) can never 500 — and the default follows the
+ * catalog's order, not a hardcoded slug.
  */
 describe('resolveTab', () => {
   it('resolves a real tab code to its row', () => {
@@ -57,7 +59,7 @@ describe('resolveTab', () => {
     expect(resolveTab(TABS, 'history').code).toBe('history');
   });
 
-  it('falls back to overview for missing / unknown / stale codes', () => {
+  it('falls back to the first tab for missing / unknown / stale codes', () => {
     expect(resolveTab(TABS, undefined).code).toBe('overview');
     expect(resolveTab(TABS, '').code).toBe('overview');
     expect(resolveTab(TABS, 'garbage').code).toBe('overview');
@@ -65,21 +67,31 @@ describe('resolveTab', () => {
     expect(resolveTab(TABS, 'DRAFTS').code).toBe('overview'); // case-sensitive
   });
 
+  it('honors the catalog order — the first row is the default, whatever it is', () => {
+    const reordered: BillTabType[] = [...TABS].reverse(); // History first, Overview last
+    expect(resolveTab(reordered, undefined).code).toBe('history');
+    expect(resolveTab(reordered, 'nope').code).toBe('history');
+  });
+
   it('resolves every code the catalog advertises', () => {
     for (const tab of TABS) {
       expect(resolveTab(TABS, tab.code).code).toBe(tab.code);
     }
   });
+
+  it('throws on an empty catalog (a broken deploy, not a user path)', () => {
+    expect(() => resolveTab([], undefined)).toThrow();
+  });
 });
 
 /**
- * statusesForTab is the DB filter behind each tab. Overview is unfiltered
- * (empty group); the others roll up the product's buckets exactly.
+ * statusesForTab is the DB filter behind each tab. The default/Overview tab is
+ * unfiltered (empty group); the others roll up the product's buckets exactly.
  */
 describe('statusesForTab', () => {
   const byCode = (code: string) => resolveTab(TABS, code);
 
-  it('returns an empty group for overview (unfiltered)', () => {
+  it('returns an empty group for the default tab (unfiltered)', () => {
     expect(statusesForTab(byCode('overview'))).toEqual([]);
   });
 
@@ -102,9 +114,9 @@ describe('statusesForTab', () => {
 });
 
 /**
- * countForTab rolls the nine per-status counts up into a tab badge. Overview
- * (empty group) is the grand total, including the rejected/archived tail no tab
- * shows; the rest sum only their group.
+ * countForTab rolls the nine per-status counts up into a tab badge. The
+ * default/Overview tab (empty group) is the grand total, including the
+ * rejected/archived tail no tab shows; the rest sum only their group.
  */
 describe('countForTab', () => {
   const byCode = (code: string) => resolveTab(TABS, code);
@@ -127,7 +139,7 @@ describe('countForTab', () => {
     expect(countForTab(byCode('history'), counts)).toBe(4);
   });
 
-  it('overview totals every state, including rejected/archived', () => {
+  it('the default tab totals every state, including rejected/archived', () => {
     expect(countForTab(byCode('overview'), counts)).toBe(16); // sum of all nine
   });
 

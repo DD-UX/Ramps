@@ -2,8 +2,8 @@ import { countBillsByStatus, listBills } from '@ramps/sdk/bills';
 import { createServerSupabase } from '@ramps/sdk/server';
 
 import { BillsPageContent } from '@/features/bills/components/BillsPageContent';
-import { resolveTab, statusesForTab } from '@/features/bills/constants/status-tabs.constants';
 import { getBillTabs } from '@/features/bills/data/bill-tabs.data';
+import { resolveTab, statusesForTab } from '@/features/bills/helpers/bill-tabs.helpers';
 
 /**
  * /bills — Bill Pay, the product's spine.
@@ -19,8 +19,9 @@ import { getBillTabs } from '@/features/bills/data/bill-tabs.data';
  * The tabs are DATA: `getBillTabs` reads the `bill_tabs` catalog (request-deduped
  * via React `cache()`), so the grouping is a DB change, not a code change.
  * `resolveTab` hardens the param — anything that isn't a real tab `code` falls
- * back to Overview, so a hand-typed URL can't 500. The resolved tab maps to a
- * status GROUP (`statusesForTab`) that the facade filters with `status IN (…)`.
+ * back to the first tab (the catalog's own default by `sort_order`), so a
+ * hand-typed URL can't 500. The resolved tab maps to a status GROUP
+ * (`statusesForTab`) that the facade filters with `status IN (…)`.
  */
 export default async function BillsPage({
   searchParams,

@@ -1,7 +1,7 @@
 import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
 
-import { countForTab } from '../constants/status-tabs.constants';
+import { countForTab } from '../helpers/bill-tabs.helpers';
 import { BillsTable } from './BillsTable';
 import { BillsTabs } from './BillsTabs';
 
