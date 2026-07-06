@@ -11,7 +11,9 @@ import { hexToRgb, RUI } from './rui.fixture';
  * against docs/watch-youtube/ramp-bill-pay-series-ap-agent/snapshots/6.jpeg.
  *
  * Hard-gate assertions (blocks the push):
- *  - Sticky positioning: thead, tfoot, first data column (left), last column (right).
+ *  - Sticky positioning: thead, the pagination band (a sticky <div> pinned to
+ *    the scroll floor — NOT a tfoot), the summary/custom tfoot, and the first
+ *    data column (left) + last column (right).
  *  - Virtualization: DOM row count << dataset size for the 5,000-row story.
  *  - Selection Map across pages: select rows on page 1, flip to page 2, come back
  *    → selection count preserved.
@@ -61,19 +63,26 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
   });
 
   /**
-   * The footer (tfoot) is also sticky — pinned at the bottom of the scroll
-   * container. Assert: position sticky + bottom: 0.
+   * The pagination band is sticky — pinned to the bottom of the SCROLL
+   * container (not the table). It's a `<div>` sibling of the table (after a
+   * flex-1 filler), NOT a <tfoot>: a sticky tfoot's containing block is the
+   * <table>, so it can only reach the table's own bottom edge — on a tall
+   * viewport with few rows it'd sit glued under the last row instead of at the
+   * page floor. As a flex sibling of the scroller it pins to the container's
+   * visible bottom with the whitespace above it. Assert: sticky + bottom: 0.
    */
-  test('Table footer is sticky (position: sticky, bottom: 0)', async ({ page }) => {
+  test('Pagination band is sticky to the scroll floor (position: sticky, bottom: 0)', async ({
+    page,
+  }) => {
     await page.goto(storyUrl('primitives-table--pagination-footer'));
-    const footer = page.locator('#storybook-root tfoot').first();
-    await expect(footer).toBeVisible();
-    const styles = await footer.evaluate((el) => {
+    const band = page.locator('#storybook-root [data-table-footer="pagination"]').first();
+    await expect(band).toBeVisible();
+    const styles = await band.evaluate((el) => {
       const s = getComputedStyle(el);
       return { position: s.position, bottom: Number.parseFloat(s.bottom) };
     });
-    expect(styles.position, 'tfoot is sticky').toBe('sticky');
-    expect(styles.bottom, 'tfoot bottom offset is 0').toBe(0);
+    expect(styles.position, 'pagination band is sticky').toBe('sticky');
+    expect(styles.bottom, 'pagination band bottom offset is 0').toBe(0);
   });
 
   /**
@@ -354,22 +363,66 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
   });
 
   /**
-   * The pagination footer (frame 17: "1–3 of 3 bills · $1,194.08 total")
-   * spans all columns in a single cell. Assert: the tfoot tr has ONE td
-   * containing the range, the noun and the money total.
+   * The pagination band (frame 17: "1–3 of 3 bills · $1,194.08 total") is a
+   * single full-width band carrying the range, the noun and the money total.
+   * As a `<div>` (not a table row) it spans the whole scroll width with no
+   * per-column cells — it lives OUTSIDE the <table>, so it holds no <td>.
    */
-  test('Pagination footer spans all columns (frame 17)', async ({ page }) => {
+  test('Pagination band is a single full-width band (frame 17)', async ({ page }) => {
     await page.goto(storyUrl('primitives-table--pagination-footer'));
-    const tfoot = page.locator('#storybook-root tfoot').first();
-    await expect(tfoot).toBeVisible();
-    const footerRow = tfoot.locator('tr').first();
-    const cells = footerRow.locator('td');
-    const cellCount = await cells.count();
-    expect(cellCount, 'pagination footer is a single spanning cell').toBe(1);
-    await expect(cells.first()).toContainText('1–3');
-    await expect(cells.first()).toContainText('of 3 bills');
-    await expect(cells.first()).toContainText('$1,194.08');
-    await expect(cells.first()).toContainText('total');
+    const band = page.locator('#storybook-root [data-table-footer="pagination"]').first();
+    await expect(band).toBeVisible();
+    // The band is a div outside the table — it carries no table cells.
+    expect(await band.locator('td').count(), 'pagination band holds no <td>').toBe(0);
+    await expect(band).toContainText('1–3');
+    await expect(band).toContainText('of 3 bills');
+    await expect(band).toContainText('$1,194.08');
+    await expect(band).toContainText('total');
+  });
+
+  /**
+   * THE core AC (the one a plain pagination story hides): on a viewport TALLER
+   * than the rows need, the band must sit at the SCROLL CONTAINER's floor with
+   * the rows packed at the top and whitespace between — NOT glued under the last
+   * row. A sticky <tfoot> physically can't do this (its containing block is the
+   * <table>, so it stops at the table's bottom edge); the <div> band pins to the
+   * scroll floor below the flex-1 filler. Assert: (1) a real gap between the last
+   * row and the band, and (2) the band's bottom aligns with the scroll floor.
+   */
+  test('Pagination band pins to the container floor with whitespace above (tall box, few rows)', async ({
+    page,
+  }) => {
+    await page.goto(storyUrl('primitives-table--pagination-pinned-to-floor'));
+    const scroll = page.locator('#storybook-root div.overflow-auto').first();
+    const band = page.locator('#storybook-root [data-table-footer="pagination"]').first();
+    const lastRow = page.locator('#storybook-root tbody tr').last();
+    await expect(band).toBeVisible();
+    await expect(lastRow).toBeVisible();
+
+    const geom = await page.evaluate(() => {
+      const s = document.querySelector('#storybook-root div.overflow-auto');
+      const b = document.querySelector('#storybook-root [data-table-footer="pagination"]');
+      const rows = document.querySelectorAll('#storybook-root tbody tr');
+      const last = rows[rows.length - 1];
+      if (!s || !b || !last) return null;
+      const sb = s.getBoundingClientRect();
+      const bb = b.getBoundingClientRect();
+      const lr = last.getBoundingClientRect();
+      return {
+        gapRowsToBand: Math.round(bb.top - lr.bottom),
+        floorDelta: Math.round(bb.bottom - sb.bottom),
+        cropped: bb.bottom > sb.bottom + 1 || bb.top < sb.top - 1,
+      };
+    });
+    expect(geom, 'geometry resolved').not.toBeNull();
+    // Whitespace between the last row and the band — the rows sit at the top.
+    expect(geom!.gapRowsToBand, 'there is whitespace above the pinned band').toBeGreaterThan(100);
+    // The band's bottom sits at the scroll container's visible floor.
+    expect(Math.abs(geom!.floorDelta), 'band bottom is at the container floor').toBeLessThanOrEqual(
+      1,
+    );
+    // And it is not clipped by the container.
+    expect(geom!.cropped, 'band is fully visible, not cropped').toBe(false);
   });
 
   /**
@@ -381,18 +434,19 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     page,
   }) => {
     await page.goto(storyUrl('primitives-table--pagination-footer'));
-    const tfoot = page.locator('#storybook-root tfoot').first();
-    await expect(tfoot).toBeVisible();
-    const bg = await tfoot.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg, 'pagination band bg is canvas').toBe(hexToRgb(RUI['--rui-canvas']));
-
-    const td = tfoot.locator('td').first();
-    const border = await td.evaluate((el) => {
+    const band = page.locator('#storybook-root [data-table-footer="pagination"]').first();
+    await expect(band).toBeVisible();
+    const styles = await band.evaluate((el) => {
       const s = getComputedStyle(el);
-      return { width: Number.parseFloat(s.borderTopWidth), color: s.borderTopColor };
+      return {
+        bg: s.backgroundColor,
+        borderWidth: Number.parseFloat(s.borderTopWidth),
+        borderColor: s.borderTopColor,
+      };
     });
-    expect(border.width, 'band has a 1px top hairline').toBe(1);
-    expect(border.color, 'top hairline is limestone').toBe(hexToRgb(RUI['--rui-limestone']));
+    expect(styles.bg, 'pagination band bg is canvas').toBe(hexToRgb(RUI['--rui-canvas']));
+    expect(styles.borderWidth, 'band has a 1px top hairline').toBe(1);
+    expect(styles.borderColor, 'top hairline is limestone').toBe(hexToRgb(RUI['--rui-limestone']));
   });
 
   /**
@@ -405,7 +459,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     page,
   }) => {
     await page.goto(storyUrl('primitives-table--pagination-footer'));
-    const trigger = page.locator('#storybook-root tfoot [role="button"]').first();
+    const trigger = page
+      .locator('#storybook-root [data-table-footer="pagination"] [role="button"]')
+      .first();
     await expect(trigger).toBeVisible();
     await expect(trigger).toContainText('Select');
 
@@ -454,7 +510,9 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     await expect(checkboxes, 'frame 6 replica shows 7 bills').toHaveCount(7);
     const count = 7;
 
-    const selectTrigger = page.locator('#storybook-root tfoot [role="button"]').first();
+    const selectTrigger = page
+      .locator('#storybook-root [data-table-footer="pagination"] [role="button"]')
+      .first();
     await selectTrigger.click();
     await page.getByRole('menuitem', { name: 'Select all on this page' }).click();
     await page.waitForTimeout(100);

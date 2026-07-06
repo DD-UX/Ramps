@@ -9,11 +9,15 @@ import {
 } from './TableFooter';
 
 /**
- * TableFooter stories — the three <tfoot> kinds Table composes, shown in
- * isolation. Each footer renders a `<tr>`/`<td>` fragment that is only valid
- * inside a `<table><tfoot>`, so every story wraps it in a minimal table with a
- * matching `<thead>` (the thead pins the column widths the footer cells line up
- * under). This mirrors exactly how Table.tsx mounts them.
+ * TableFooter stories — the three footer kinds Table composes, shown in
+ * isolation.
+ *
+ * The SUMMARY and CUSTOM footers render a `<tr>`/`<td>` fragment only valid
+ * inside a `<table><tfoot>`, so those stories wrap them in a minimal table with
+ * a matching `<thead>` (the thead pins the column widths the footer cells line
+ * up under). The PAGINATION band is a standalone `<div>` (Table pins it to the
+ * scroll floor, outside the table), so its stories render it directly on a
+ * canvas band — exactly how Table mounts it.
  *
  * The rendered markup is identical to what Table emits — the structure-fidelity
  * HARD gate exercises the SAME components through the Table stories; these
@@ -59,16 +63,14 @@ const selectableGeometry: TableFooterGeometry<DemoRow, string> = {
 };
 
 /**
- * Mounts a footer <tr> inside a valid table so it renders standalone. The
- * `bg` matches Table's own tfoot band (canvas for pagination, white otherwise).
+ * Mounts a SUMMARY/CUSTOM footer <tr> inside a valid table so it renders
+ * standalone (those stay a real <tfoot> under the body in Table).
  */
 function FooterFrame({
   children,
-  band = 'white',
   selectable = false,
 }: {
   children: React.ReactNode;
-  band?: 'white' | 'canvas';
   selectable?: boolean;
 }) {
   return (
@@ -88,15 +90,34 @@ function FooterFrame({
           ))}
         </tr>
       </thead>
-      <tfoot className={band === 'canvas' ? 'bg-canvas' : 'bg-white'}>{children}</tfoot>
+      <tfoot className="bg-white">{children}</tfoot>
     </table>
   );
+}
+
+/**
+ * Wraps the PAGINATION band on the vetted canvas surface, the width Table gives
+ * it (full scroll-region width). It's a plain <div>, so no table is needed.
+ */
+function BandFrame({ children }: { children: React.ReactNode }) {
+  return <div className="bg-canvas rounded-square overflow-hidden">{children}</div>;
 }
 
 const meta = {
   title: 'Primitives/TableFooter',
   component: TablePaginationFooter,
   parameters: { layout: 'padded' },
+  // Default args so the render-only stories below (each supplies its own props
+  // via `render`) satisfy the pagination component's required props. Every
+  // story overrides them, so these are only the type/controls baseline.
+  args: {
+    page: 1,
+    pageSize: 7,
+    totalCount: 7,
+    onSelectPage: () => {},
+    onClearSelection: () => {},
+    selectionSize: 0,
+  },
 } satisfies Meta<typeof TablePaginationFooter>;
 
 export default meta;
@@ -108,9 +129,8 @@ type Story = StoryObj<typeof meta>;
  */
 export const Pagination: Story = {
   render: () => (
-    <FooterFrame band="canvas">
+    <BandFrame>
       <TablePaginationFooter
-        geometry={geometry}
         page={1}
         pageSize={7}
         totalCount={7}
@@ -120,7 +140,7 @@ export const Pagination: Story = {
         onClearSelection={() => {}}
         selectionSize={0}
       />
-    </FooterFrame>
+    </BandFrame>
   ),
 };
 
@@ -130,9 +150,8 @@ export const Pagination: Story = {
  */
 export const PaginationMultiPage: Story = {
   render: () => (
-    <FooterFrame band="canvas">
+    <BandFrame>
       <TablePaginationFooter
-        geometry={geometry}
         page={1}
         pageSize={5}
         totalCount={21}
@@ -143,16 +162,15 @@ export const PaginationMultiPage: Story = {
         onClearSelection={() => {}}
         selectionSize={2}
       />
-    </FooterFrame>
+    </BandFrame>
   ),
 };
 
 /** Empty dataset — the range collapses to "0–0 of 0 bills". */
 export const PaginationEmpty: Story = {
   render: () => (
-    <FooterFrame band="canvas">
+    <BandFrame>
       <TablePaginationFooter
-        geometry={geometry}
         page={1}
         pageSize={10}
         totalCount={0}
@@ -161,7 +179,7 @@ export const PaginationEmpty: Story = {
         onClearSelection={() => {}}
         selectionSize={0}
       />
-    </FooterFrame>
+    </BandFrame>
   ),
 };
 

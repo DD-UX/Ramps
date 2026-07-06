@@ -43,8 +43,11 @@ import {
  *    columns and opened a hairline gap next to the checkbox column.
  *  - Selection: positive-green checkbox fill (#01a741), row selection survives
  *    pagination — returns a `Map<K, T>` that persists the chosen records ACROSS pages.
- *  - Sticky: thead + tfoot both sticky, PLUS the first data column (after checkbox)
- *    + last column can be sticky for horizontal scroll.
+ *  - Sticky: thead + the summary/custom tfoot both sticky, PLUS the first data
+ *    column (after checkbox) + last column can be sticky for horizontal scroll.
+ *    The PAGINATION band is a sticky <div> pinned to the SCROLL container's floor
+ *    (below a flex-1 filler), NOT a <tfoot> — a sticky tfoot can only reach the
+ *    table's own bottom edge, so it can't float to the page bottom past the rows.
  *  - Virtualization: hand-rolled windowing (fixed row height, render only visible
  *    rows + overscan, spacer rows top/bottom); coexists with sticky elements.
  *  - Footer: per-column summary (totals, counts), custom slot content, OR the
@@ -451,8 +454,8 @@ export function Table<T, K extends string | number = string>({
         // No outer border — the frames show the table sitting borderless on
         // the page canvas; every hairline lives INSIDE (header/dividers).
         // Flex COLUMN so the scroll region (flex-1) fills the height the caller
-        // hands us (className="h-full") — that's the box the sticky tfoot pins
-        // its bottom to, so it stays visible on a short viewport.
+        // hands us (className="h-full") — that's the box the sticky pagination
+        // band pins its bottom to, so it stays visible on a short viewport.
         'rounded-square bg-white flex flex-col overflow-hidden',
         className,
       )}
@@ -467,10 +470,14 @@ export function Table<T, K extends string | number = string>({
         // flex COLUMN so the natural-height table can sit at the top and a
         // flex-1 filler div (below the table) soaks up the leftover height —
         // that's what puts the whitespace UNDER the rows and lets the sticky
-        // tfoot ride to the scroll region's FLOOR. Crucially the tfoot pins to
-        // the *scroll container's* visible bottom, not the table's own height,
-        // so a SHORT viewport can't crop it (verified: pins cleanly even at a
-        // 90px box — the old table-h-full + spacer-row recipe DID crop there).
+        // pagination band (a <div> sibling AFTER the filler, NOT a <tfoot>) ride
+        // to the scroll region's FLOOR. A sticky <tfoot> can't: its containing
+        // block is the <table>, so it only reaches the table's own bottom edge —
+        // on a tall box + few rows it'd sit glued under the last row, not at the
+        // page floor. As a flex sibling of the scroller the band pins to the
+        // *scroll container's* visible bottom, so a SHORT viewport can't crop it
+        // (verified: pins cleanly even at a 90px box, whitespace above it on a
+        // tall box, scrolls under the rows once the data overflows).
         className="relative min-h-0 flex flex-1 flex-col overflow-auto"
         style={{ maxHeight: isVirtualized ? '600px' : undefined }}
       >
@@ -636,32 +643,14 @@ export function Table<T, K extends string | number = string>({
               );
             })}
           </tbody>
-          {footer.type !== 'none' && (
-            <tfoot
-              className={cn(
-                'bottom-0 h-12 sticky z-20',
-                // The pagination band sits on CANVAS (#fbfaf6 sampled at 1px
-                // on frame 6 y634/640) — the other footer kinds stay on the
-                // white table surface.
-                footer.type === 'pagination' ? 'bg-canvas' : 'bg-white',
-              )}
-            >
-              {footer.type === 'pagination' ? (
-                <TablePaginationFooter
-                  geometry={footerGeometry}
-                  page={footer.page}
-                  pageSize={footer.pageSize}
-                  totalCount={footer.totalCount}
-                  noun={footer.noun}
-                  totalCents={footer.totalCents}
-                  currency={footer.currency}
-                  extra={footer.extra}
-                  onPageChange={footer.onPageChange}
-                  onSelectPage={selectPage}
-                  onClearSelection={clearSelection}
-                  selectionSize={selection.size}
-                />
-              ) : footer.type === 'summary' ? (
+          {/* SUMMARY / CUSTOM stay INSIDE the table as a real <tfoot>: they
+              belong directly under the body (per-column totals line up under
+              their columns), so they ride with the table and share the sticky
+              column pins. The PAGINATION band is NOT here — see the <div> band
+              after the filler below. */}
+          {(footer.type === 'summary' || footer.type === 'custom') && (
+            <tfoot className="bg-white bottom-0 sticky z-20">
+              {footer.type === 'summary' ? (
                 <TableSummaryFooter geometry={footerGeometry} />
               ) : (
                 <TableCustomFooter geometry={footerGeometry} content={footer.content} />
@@ -671,12 +660,35 @@ export function Table<T, K extends string | number = string>({
         </table>
         {/* Flex-1 filler: soaks up the leftover height BELOW a short table so
             the rows pack at the top with whitespace beneath, and the sticky
-            tfoot rides to the scroll region's floor. It collapses to 0 once the
-            rows overflow (tall data), so the table just scrolls. Skipped when
-            virtualized (those always overflow and use the height spacer below)
-            and when there's no footer to pin the whitespace under. */}
-        {!isVirtualized && footer.type !== 'none' && (
+            PAGINATION band (the <div> below) rides to the scroll region's floor
+            — a sticky <tfoot> couldn't, since its containing block is the table,
+            so it only reaches the table's own bottom edge. The filler collapses
+            to 0 once the rows overflow (tall data), so the band just tracks the
+            scroll floor. Only present for the pagination footer, which is the
+            one that pins to the page bottom. */}
+        {!isVirtualized && footer.type === 'pagination' && (
           <div className="flex-1" aria-hidden data-testid="table-filler" />
+        )}
+        {/* The pagination band — pinned to the SCROLL container's floor (below
+            the filler whitespace) via sticky bottom:0, on the vetted canvas band
+            (#fbfaf6 sampled at 1px on frame 6 y634/640). Sits AFTER the filler so
+            on a tall box it's already at the floor; sticky keeps it visible while
+            the rows scroll under it on a tall dataset. */}
+        {footer.type === 'pagination' && (
+          <TablePaginationFooter
+            className="bottom-0 bg-canvas sticky z-20"
+            page={footer.page}
+            pageSize={footer.pageSize}
+            totalCount={footer.totalCount}
+            noun={footer.noun}
+            totalCents={footer.totalCents}
+            currency={footer.currency}
+            extra={footer.extra}
+            onPageChange={footer.onPageChange}
+            onSelectPage={selectPage}
+            onClearSelection={clearSelection}
+            selectionSize={selection.size}
+          />
         )}
         {/* Spacer to push content down when virtualized (bottom spacer) */}
         {isVirtualized && spacerHeight > 0 && <div style={{ height: spacerHeight }} aria-hidden />}

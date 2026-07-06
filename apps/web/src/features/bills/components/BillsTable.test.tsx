@@ -118,9 +118,11 @@ describe('BillsTable', () => {
       makeBill({ id: 'b', amount_cents: 50_000, vendor_name: 'B' }),
     ];
     render(<BillsTable bills={bills} total={2} />);
-    // $1,500.00 aggregate across the two rows lives in the footer.
-    const footer = document.querySelector('tfoot');
-    expect(footer).not.toBeNull();
-    expect(within(footer as HTMLElement).getByText('$1,500.00')).toBeInTheDocument();
+    // $1,500.00 aggregate across the two rows lives in the pagination band —
+    // a <div> pinned to the scroll floor (NOT a <tfoot>: a sticky tfoot can't
+    // travel past the table's bottom to the page floor).
+    const band = document.querySelector('[data-table-footer="pagination"]');
+    expect(band).not.toBeNull();
+    expect(within(band as HTMLElement).getByText(/\$1,500\.00/)).toBeInTheDocument();
   });
 });

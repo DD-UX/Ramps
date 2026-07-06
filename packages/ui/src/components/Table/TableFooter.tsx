@@ -6,15 +6,24 @@ import { Menu } from '../Menu/Menu';
 import type { CellAlign, TableColumn } from './Table';
 
 /**
- * Table footers — the three <tfoot> kinds pulled out of Table.tsx so the giant
+ * Table footers — the three footer kinds pulled out of Table.tsx so the giant
  * component reads as "head / body / footer" instead of a 180-line inline switch.
  *
- * They all render a REAL sticky <tfoot> (the structure-fidelity HARD gate pins
- * the pagination band to `tfoot[bottom-0]`, a single spanning <td> on the canvas
- * band, and `tfoot [role="button"]` triggers), so the extraction is purely a
- * readability move — the emitted markup is byte-for-byte what Table used to
- * inline. The sticky-column geometry (checkbox gutter offset, first-left /
- * last-right pins) is shared via `stickyStyle`.
+ * Two shapes:
+ *  - The PAGINATION band is a real `<div>` (NOT a <tfoot>). A sticky <tfoot>'s
+ *    containing block is the <table>, so it can only travel to the table's own
+ *    bottom edge — on a tall viewport with few rows it sits glued under the last
+ *    row, NOT at the page floor. The band is therefore a flex sibling of the
+ *    scroll region (after a flex-1 filler), so `sticky bottom:0` pins it to the
+ *    SCROLL CONTAINER's floor with the whitespace above it. It's full-width, so
+ *    it needs no per-column geometry.
+ *  - SUMMARY and CUSTOM stay as real <tfoot> rows: they belong directly under
+ *    the body (per-column totals line up under their columns), so they ride with
+ *    the table and share the sticky-column geometry via `stickyStyle`.
+ *
+ * The structure-fidelity HARD gate pins the pagination band to the `<div>`
+ * (`[data-table-footer="pagination"]`, sticky bottom:0, canvas band, the
+ * `role="button"` Select/range triggers) and the summary totals to `tfoot`.
  */
 
 const ALIGN_CLASS: Record<CellAlign, string> = {
@@ -63,8 +72,7 @@ function fullColSpan<T, K extends string | number>({
 // Pagination band — the product's real table footer.
 // ---------------------------------------------------------------------------
 
-export interface TablePaginationFooterProps<T, K extends string | number> {
-  geometry: TableFooterGeometry<T, K>;
+export interface TablePaginationFooterProps {
   /** Current page, 1-based. */
   page: number;
   pageSize: number;
@@ -78,16 +86,21 @@ export interface TablePaginationFooterProps<T, K extends string | number> {
   onSelectPage: () => void;
   onClearSelection: () => void;
   selectionSize: number;
+  /** Extra classes for the band (Table passes the sticky-bottom + bg). */
+  className?: string;
 }
 
 /**
  * The vetted pagination band: "Select ⌄" on the left (hushed underline + a
  * chevron that is NOT underlined), the clickable range + "of N {noun} · $TOTAL
- * total" on the right, all on a single canvas-band <td> under a limestone
- * hairline. Menus open UPWARD (side="top") because the band is sticky-bottom.
+ * total" on the right, on a single canvas band under a limestone hairline.
+ *
+ * Rendered as a `<div>` (NOT a <tfoot>) so Table can pin it to the SCROLL
+ * container's floor — below the flex-1 filler whitespace — rather than the
+ * table's own bottom edge, which is all a sticky <tfoot> can reach. Menus open
+ * UPWARD (side="top") because the band is sticky-bottom.
  */
-export function TablePaginationFooter<T, K extends string | number>({
-  geometry,
+export function TablePaginationFooter({
   page,
   pageSize,
   totalCount,
@@ -99,7 +112,8 @@ export function TablePaginationFooter<T, K extends string | number>({
   onSelectPage,
   onClearSelection,
   selectionSize,
-}: TablePaginationFooterProps<T, K>) {
+  className,
+}: TablePaginationFooterProps) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const rangeStart = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = Math.min(page * pageSize, totalCount);
@@ -109,73 +123,71 @@ export function TablePaginationFooter<T, K extends string | number>({
       : undefined;
 
   return (
-    <tr>
-      <td
-        colSpan={fullColSpan(geometry)}
-        className="border-limestone px-rui-3 py-rui-2 border-t"
-      >
-        <div className="gap-rui-4 text-sm text-hushed flex items-center justify-between">
-          {/* Left — "Select ⌄": hushed underlined text + a chevron that is NOT
-              underlined (8x zoom, frame 6). The menu contents are INFERRED
-              (never shown open in a frame): selection scopes on the Map. */}
+    <div
+      data-table-footer="pagination"
+      className={cn('border-limestone px-rui-3 py-rui-2 border-t', className)}
+    >
+      <div className="gap-rui-4 text-sm text-hushed flex items-center justify-between">
+        {/* Left — "Select ⌄": hushed underlined text + a chevron that is NOT
+            underlined (8x zoom, frame 6). The menu contents are INFERRED
+            (never shown open in a frame): selection scopes on the Map. */}
+        <Menu
+          side="top"
+          align="start"
+          label="Selection options"
+          trigger={
+            <span className="gap-rui-1 text-sm text-hushed inline-flex items-center">
+              <span className="decoration-hushed underline underline-offset-2">Select</span>
+              <ChevronDown size={14} strokeWidth={1.5} aria-hidden />
+            </span>
+          }
+          items={[
+            { label: 'Select all on this page', onSelect: onSelectPage },
+            {
+              label: 'Clear selection',
+              onSelect: onClearSelection,
+              disabled: selectionSize === 0,
+            },
+          ]}
+        />
+        {/* Right — the range numbers are the ONLY underlined part ("1–7"
+            underlined, " of 7 bills · $… total" plain, all one hushed gray —
+            8x zoom, frame 6). Clicking opens the (inferred) page picker. */}
+        <div className="gap-rui-1 flex items-center whitespace-nowrap">
           <Menu
             side="top"
-            align="start"
-            label="Selection options"
+            align="end"
+            label="Go to page"
             trigger={
-              <span className="gap-rui-1 text-sm text-hushed inline-flex items-center">
-                <span className="decoration-hushed underline underline-offset-2">Select</span>
-                <ChevronDown size={14} strokeWidth={1.5} aria-hidden />
+              <span className="text-sm text-hushed decoration-hushed tabular-nums underline underline-offset-2">
+                {rangeStart}–{rangeEnd}
               </span>
             }
-            items={[
-              { label: 'Select all on this page', onSelect: onSelectPage },
-              {
-                label: 'Clear selection',
-                onSelect: onClearSelection,
-                disabled: selectionSize === 0,
-              },
-            ]}
+            items={Array.from({ length: totalPages }, (_, i) => {
+              const p = i + 1;
+              const s = totalCount === 0 ? 0 : i * pageSize + 1;
+              const e = Math.min(p * pageSize, totalCount);
+              return {
+                label: `${s}–${e}`,
+                disabled: p === page,
+                onSelect: () => onPageChange?.(p),
+              };
+            })}
           />
-          {/* Right — the range numbers are the ONLY underlined part ("1–7"
-              underlined, " of 7 bills · $… total" plain, all one hushed gray —
-              8x zoom, frame 6). Clicking opens the (inferred) page picker. */}
-          <div className="gap-rui-1 flex items-center whitespace-nowrap">
-            <Menu
-              side="top"
-              align="end"
-              label="Go to page"
-              trigger={
-                <span className="text-sm text-hushed decoration-hushed tabular-nums underline underline-offset-2">
-                  {rangeStart}–{rangeEnd}
-                </span>
-              }
-              items={Array.from({ length: totalPages }, (_, i) => {
-                const p = i + 1;
-                const s = totalCount === 0 ? 0 : i * pageSize + 1;
-                const e = Math.min(p * pageSize, totalCount);
-                return {
-                  label: `${s}–${e}`,
-                  disabled: p === page,
-                  onSelect: () => onPageChange?.(p),
-                };
-              })}
-            />
-            <span>
-              {' '}
-              of {totalCount} {noun}
-              {formattedTotal !== undefined && (
-                <>
-                  {' '}
-                  · <span className="tabular-nums">{formattedTotal}</span> total
-                </>
-              )}
-              {extra}
-            </span>
-          </div>
+          <span>
+            {' '}
+            of {totalCount} {noun}
+            {formattedTotal !== undefined && (
+              <>
+                {' '}
+                · <span className="tabular-nums">{formattedTotal}</span> total
+              </>
+            )}
+            {extra}
+          </span>
         </div>
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 }
 

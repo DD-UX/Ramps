@@ -582,6 +582,68 @@ export const PaginationFooter: StoryObj = {
 };
 
 /**
+ * **Pagination band pinned to the page floor** — the AC that a plain pagination
+ * story can't show: give the table MORE height than its rows need (a 500px box,
+ * 3 rows), and the band must sit at the CONTAINER floor with the rows packed at
+ * the top and whitespace between. A sticky <tfoot> can't do this (its containing
+ * block is the table, so it stops at the last row); the band is a <div> pinned
+ * to the scroll region's floor below a flex-1 filler. The structure-fidelity
+ * gate measures the gap + floor position here.
+ */
+export const PaginationPinnedToFloor: StoryObj = {
+  render: () => {
+    const bills: Bill[] = (
+      [
+        ['b1', 'Berroco, Inc.', 825_00],
+        ['b2', 'Ziply Fiber', 106_58],
+        ['b3', 'Clarity Online', 262_50],
+      ] as const
+    ).map(([id, vendor, amountCents]) =>
+      makeBill({
+        id,
+        vendor,
+        amountCents,
+        submitter: 'Hannah Smolinski',
+        submittedDate: 'Feb 22, 2026',
+        status: 'scheduled',
+        approvalProgress: 'Payment details needed',
+        nextApprover: 'N/A',
+      }),
+    );
+
+    const totalCents = sumCents(bills);
+
+    const columns: TableColumn<Bill, string>[] = [
+      vendorSubmitterColumn({ width: '300px' }),
+      statusPillColumn,
+      amountColumn,
+      actionsColumn('Review'),
+    ];
+
+    return (
+      // A fixed-height shell TALLER than the 3 rows — the Table fills it
+      // (h-full), so the flex-1 filler opens up and the band drops to the floor.
+      <div style={{ height: 500 }} className="bg-canvas">
+        <Table
+          className="h-full"
+          data={bills}
+          columns={columns}
+          getRowId={(row) => row.id}
+          footer={{
+            type: 'pagination',
+            page: 1,
+            pageSize: 3,
+            totalCount: 3,
+            noun: 'bills',
+            totalCents,
+          }}
+        />
+      </div>
+    );
+  },
+};
+
+/**
  * **Flagged bills with annotations** — per-row callout lines for fraud alerts,
  * duplicate warnings, and overbilling notices. Vetted from video frames:
  * - "Ramp identified $5,660.00 of overbilling for this invoice" (full-line link)
