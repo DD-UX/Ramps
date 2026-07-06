@@ -1,6 +1,6 @@
 'use client';
 
-import { Rocket } from '@ramps/ui/icons';
+import { ArrowRight, Rocket, LightBulb } from '@ramps/ui/icons';
 import { Logo } from '@ramps/ui/Logo';
 import {
   SideMenu,
@@ -76,8 +76,11 @@ export function CommonSideMenu() {
         </>
       }
       footer={
-        <SideMenuAction icon={null} href="/design-system" className="h-8 px-0">
-          Go to Design System
+        <SideMenuAction icon={null} href="/design-system" className="h-8" icon={<LightBulb />}>
+          <span className="gap-0.5 group grid grid-flow-col items-center">
+            Design System{' '}
+            <ArrowRight className="group-hover:translate-x-1 transition-transform" width={16} />
+          </span>
         </SideMenuAction>
       }
       aria-label="Main navigation"

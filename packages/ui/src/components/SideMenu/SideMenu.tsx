@@ -409,7 +409,7 @@ export function SideMenuAction({ children, icon, onClick, href, className }: Sid
       onClick={onClick}
       className={cn(
         'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
-        'text-sm font-body text-ink transition-colors outline-none',
+        'text-sm font-body text-hushed transition-colors outline-none',
         'hover:bg-limestone',
         'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
         'cursor-pointer',
@@ -417,7 +417,7 @@ export function SideMenuAction({ children, icon, onClick, href, className }: Sid
       )}
     >
       {icon && (
-        <span className="text-hushed flex-shrink-0" aria-hidden>
+        <span className="text-hushed shrink-0" aria-hidden>
           {icon}
         </span>
       )}
