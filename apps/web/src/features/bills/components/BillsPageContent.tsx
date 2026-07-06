@@ -42,8 +42,8 @@ export function BillsPageContent({
 
   return (
     <div className="bg-white flex flex-1 flex-col">
-      <div className="px-rui-6 pt-rui-6">
-        <h2 className="font-heading text-2xl text-ink">Bill Pay</h2>
+      <div className="pt-rui-6">
+        <h2 className="font-heading text-2xl text-ink px-rui-6">Bill Pay</h2>
         <BillsTabs tabs={tabs} activeCode={activeCode} counts={tabCounts} />
       </div>
       <BillsToolbar initialSearch={search} />

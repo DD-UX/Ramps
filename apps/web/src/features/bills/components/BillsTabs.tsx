@@ -51,5 +51,7 @@ export function BillsTabs({ tabs, activeCode, counts }: BillsTabsProps) {
     count: counts?.[tab.code],
   }));
 
-  return <Tabs tabs={tabItems} value={activeCode} onValueChange={onValueChange} />;
+  return (
+    <Tabs tabs={tabItems} value={activeCode} onValueChange={onValueChange} className="px-rui-6" />
+  );
 }
