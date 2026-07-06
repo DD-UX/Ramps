@@ -156,7 +156,7 @@ export function SideMenu({
         // header/footer slots the <ul> below is the PRIMARY scroll region
         // (flex-1 min-h-0), so the logo and Ask Ramp stay pinned while the
         // items scroll — this nav-level overflow remains the backstop.
-        'w-48 bg-limestone flex flex-col overflow-auto',
+        'bg-limestone w-64 flex flex-col overflow-auto',
         // Sharp 0px corners (vetted across all frames).
         'rounded-square',
         className,
@@ -409,7 +409,9 @@ export function SideMenuAction({ children, icon, onClick, href, className }: Sid
       onClick={onClick}
       className={cn(
         'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
-        'text-sm font-body text-hushed transition-colors outline-none',
+        // Label is INK (vetted #4f4e4a junctions on product-overview/01, darker
+        // than the hushed nav items) — the spark glyph below stays HUSHED.
+        'text-sm font-body text-ink transition-colors outline-none',
         'hover:bg-limestone',
         'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
         'cursor-pointer',

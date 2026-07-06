@@ -1,12 +1,17 @@
 'use client';
 
-import { ChevronDown, CornerDownRight } from 'lucide-react';
+import { CornerDownRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { cn } from '../../lib/cn';
 import { Checkbox } from '../Checkbox/Checkbox';
-import { Menu } from '../Menu/Menu';
+import {
+  TableCustomFooter,
+  type TableFooterGeometry,
+  TablePaginationFooter,
+  TableSummaryFooter,
+} from './TableFooter';
 
 /**
  * Table — the production-grade data table for Bill Pay lists: "For approval",
@@ -429,23 +434,53 @@ export function Table<T, K extends string | number = string>({
     maxWidth: checkboxWidth,
   } as const;
 
+  // Sticky-column geometry the footers need to line their cells up under the
+  // pinned columns (extracted into TableFooter, so the switch lives there).
+  const footerGeometry: TableFooterGeometry<T, K> = {
+    columns,
+    selectable,
+    stickyLeft,
+    stickyRight,
+    checkboxWidth,
+    checkboxCellStyle,
+  };
+
   return (
     <div
       className={cn(
         // No outer border — the frames show the table sitting borderless on
         // the page canvas; every hairline lives INSIDE (header/dividers).
-        'rounded-square bg-white overflow-hidden',
+        // Flex COLUMN so the scroll region (flex-1) fills the height the caller
+        // hands us (className="h-full") — that's the box the sticky tfoot pins
+        // its bottom to, so it stays visible on a short viewport.
+        'rounded-square bg-white flex flex-col overflow-hidden',
         className,
       )}
     >
       <div
         ref={scrollRef}
-        className="relative h-full overflow-auto"
+        // The scroll region owns BOTH axes: it scrolls Y (rows) and X (wide
+        // tables) as one, so the sticky thead pans horizontally WITH the body
+        // and the sticky first/last columns pin on X. flex-1 + min-h-0 lets it
+        // fill the height the caller hands us and actually shrink/scroll.
+        //
+        // flex COLUMN so the natural-height table can sit at the top and a
+        // flex-1 filler div (below the table) soaks up the leftover height —
+        // that's what puts the whitespace UNDER the rows and lets the sticky
+        // tfoot ride to the scroll region's FLOOR. Crucially the tfoot pins to
+        // the *scroll container's* visible bottom, not the table's own height,
+        // so a SHORT viewport can't crop it (verified: pins cleanly even at a
+        // 90px box — the old table-h-full + spacer-row recipe DID crop there).
+        className="relative min-h-0 flex flex-1 flex-col overflow-auto"
         style={{ maxHeight: isVirtualized ? '600px' : undefined }}
       >
         {/* border-separate + per-cell borders: sticky cells carry their own
-            hairlines (border-collapse borders stay behind and paint seams). */}
-        <table className="border-spacing-0 text-sm h-full w-full border-separate">
+            hairlines (border-collapse borders stay behind and paint seams).
+
+            flex-none: the table takes its NATURAL height (rows at content
+            height, no stretch). The leftover space goes to the filler div
+            after </table>, so the rows pack at the top with whitespace below. */}
+        <table className="border-spacing-0 text-sm w-full flex-none border-separate">
           <thead className="top-0 bg-white sticky z-20">
             <tr>
               {selectable && (
@@ -612,173 +647,37 @@ export function Table<T, K extends string | number = string>({
               )}
             >
               {footer.type === 'pagination' ? (
-                <tr>
-                  <td
-                    colSpan={columns.length + (selectable ? 1 : 0)}
-                    className="border-limestone px-rui-3 py-rui-2 border-t"
-                  >
-                    <div className="gap-rui-4 text-sm text-hushed flex items-center justify-between">
-                      {/* Left — "Select ⌄": hushed underlined text + a chevron
-                          that is NOT underlined (8x zoom, frame 6). The menu
-                          contents are INFERRED (never shown open in a frame):
-                          selection scopes on the Map. */}
-                      <Menu
-                        side="top"
-                        align="start"
-                        label="Selection options"
-                        trigger={
-                          <span className="gap-rui-1 text-sm text-hushed inline-flex items-center">
-                            <span className="decoration-hushed underline underline-offset-2">
-                              Select
-                            </span>
-                            <ChevronDown size={14} strokeWidth={1.5} aria-hidden />
-                          </span>
-                        }
-                        items={[
-                          {
-                            label: 'Select all on this page',
-                            onSelect: selectPage,
-                          },
-                          {
-                            label: 'Clear selection',
-                            onSelect: clearSelection,
-                            disabled: selection.size === 0,
-                          },
-                        ]}
-                      />
-                      {/* Right — the range numbers are the ONLY underlined
-                          part ("1–7" underlined, " of 7 bills · $… total"
-                          plain, all one hushed gray — 8x zoom, frame 6).
-                          Clicking opens the (inferred) page picker. */}
-                      {(() => {
-                        const {
-                          page,
-                          pageSize,
-                          totalCount,
-                          noun = 'bills',
-                          totalCents,
-                          currency = 'USD',
-                          extra,
-                          onPageChange,
-                        } = footer;
-                        const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-                        const rangeStart = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
-                        const rangeEnd = Math.min(page * pageSize, totalCount);
-                        const formattedTotal =
-                          totalCents !== undefined
-                            ? new Intl.NumberFormat('en-US', {
-                                style: 'currency',
-                                currency,
-                              }).format(totalCents / 100)
-                            : undefined;
-                        return (
-                          <div className="gap-rui-1 flex items-center whitespace-nowrap">
-                            <Menu
-                              side="top"
-                              align="end"
-                              label="Go to page"
-                              trigger={
-                                <span className="text-sm text-hushed decoration-hushed tabular-nums underline underline-offset-2">
-                                  {rangeStart}–{rangeEnd}
-                                </span>
-                              }
-                              items={Array.from({ length: totalPages }, (_, i) => {
-                                const p = i + 1;
-                                const s = totalCount === 0 ? 0 : i * pageSize + 1;
-                                const e = Math.min(p * pageSize, totalCount);
-                                return {
-                                  label: `${s}–${e}`,
-                                  disabled: p === page,
-                                  onSelect: () => onPageChange?.(p),
-                                };
-                              })}
-                            />
-                            <span>
-                              {' '}
-                              of {totalCount} {noun}
-                              {formattedTotal !== undefined && (
-                                <>
-                                  {' '}
-                                  · <span className="tabular-nums">{formattedTotal}</span> total
-                                </>
-                              )}
-                              {extra}
-                            </span>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </td>
-                </tr>
+                <TablePaginationFooter
+                  geometry={footerGeometry}
+                  page={footer.page}
+                  pageSize={footer.pageSize}
+                  totalCount={footer.totalCount}
+                  noun={footer.noun}
+                  totalCents={footer.totalCents}
+                  currency={footer.currency}
+                  extra={footer.extra}
+                  onPageChange={footer.onPageChange}
+                  onSelectPage={selectPage}
+                  onClearSelection={clearSelection}
+                  selectionSize={selection.size}
+                />
               ) : footer.type === 'summary' ? (
-                <tr>
-                  {selectable && (
-                    <td
-                      className="left-0 border-limestone bg-white px-rui-3 py-rui-2 sticky z-10 border-t"
-                      style={checkboxCellStyle}
-                    />
-                  )}
-                  {columns.map((col) => {
-                    const isSticky = col === stickyLeft || col === stickyRight;
-                    const stickyLeftOffset = col === stickyLeft ? checkboxWidth : undefined;
-                    const stickyRightOffset = col === stickyRight ? 0 : undefined;
-
-                    let content: ReactNode = null;
-                    if (col.footer?.type === 'money') {
-                      const { cents, currency = 'USD' } = col.footer;
-                      const formatted = new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency,
-                      }).format(cents / 100);
-                      content = (
-                        <span className="font-heading text-ink tabular-nums">{formatted}</span>
-                      );
-                    } else if (col.footer?.type === 'count') {
-                      const { count, label = 'items' } = col.footer;
-                      content = (
-                        <span className="font-heading text-ink">
-                          {count} {label}
-                        </span>
-                      );
-                    } else if (col.footer?.type === 'custom') {
-                      content = col.footer.node;
-                    }
-
-                    return (
-                      <td
-                        key={col.id}
-                        className={cn(
-                          'border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed border-t',
-                          'border-l first:border-l-0',
-                          ALIGN_CLASS[col.align ?? 'left'],
-                          isSticky && 'bg-white sticky z-10',
-                        )}
-                        style={{
-                          width: col.width,
-                          left:
-                            stickyLeftOffset !== undefined ? `${stickyLeftOffset}px` : undefined,
-                          right:
-                            stickyRightOffset !== undefined ? `${stickyRightOffset}px` : undefined,
-                        }}
-                      >
-                        {content}
-                      </td>
-                    );
-                  })}
-                </tr>
+                <TableSummaryFooter geometry={footerGeometry} />
               ) : (
-                <tr>
-                  <td
-                    colSpan={columns.length + (selectable ? 1 : 0)}
-                    className="border-limestone px-rui-3 py-rui-2 text-sm text-ink border-t"
-                  >
-                    {footer.content}
-                  </td>
-                </tr>
+                <TableCustomFooter geometry={footerGeometry} content={footer.content} />
               )}
             </tfoot>
           )}
         </table>
+        {/* Flex-1 filler: soaks up the leftover height BELOW a short table so
+            the rows pack at the top with whitespace beneath, and the sticky
+            tfoot rides to the scroll region's floor. It collapses to 0 once the
+            rows overflow (tall data), so the table just scrolls. Skipped when
+            virtualized (those always overflow and use the height spacer below)
+            and when there's no footer to pin the whitespace under. */}
+        {!isVirtualized && footer.type !== 'none' && (
+          <div className="flex-1" aria-hidden data-testid="table-filler" />
+        )}
         {/* Spacer to push content down when virtualized (bottom spacer) */}
         {isVirtualized && spacerHeight > 0 && <div style={{ height: spacerHeight }} aria-hidden />}
       </div>
