@@ -41,6 +41,11 @@ export const Ghost: Story = { args: { label: 'More actions', icon: DotsIcon } };
 export const Subtle: Story = {
   args: { label: 'Download invoice', icon: DownloadIcon, variant: 'subtle' },
 };
+
+/** Outline — white + bone border (the Bill Pay toolbar circles, …/snapshots/04). */
+export const Outline: Story = {
+  args: { label: 'Filter by date', icon: DownloadIcon, variant: 'outline', rounded: true },
+};
 export const Small: Story = { args: { label: 'More actions', icon: DotsIcon, size: 'sm' } };
 
 /** Pill shape — same `rounded` contract as Button (the frame-1 toolbar treatment). */

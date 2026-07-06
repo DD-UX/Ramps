@@ -1,7 +1,6 @@
 'use client';
 
 import { PreviewCard } from '@base-ui-components/react/preview-card';
-import { clsx } from 'clsx';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   createContext,
@@ -14,6 +13,7 @@ import {
 } from 'react';
 
 import { useClickAway } from '../../hooks/useClickAway';
+import { cn } from '../../lib/cn';
 
 /**
  * Popover — the floating detail card behind Bill Pay's **vendor card**
@@ -100,7 +100,7 @@ export function Popover({
     <PopoverContext.Provider value={{ mode: 'click', open, setOpen }}>
       {/* The relative root anchors the click-mode card AND is the click-away
           boundary — clicks on the trigger or inside the card never dismiss. */}
-      <div ref={rootRef} className={clsx('relative inline-block', className)}>
+      <div ref={rootRef} className={cn('relative inline-block', className)}>
         {children}
       </div>
     </PopoverContext.Provider>
@@ -135,7 +135,7 @@ function PopoverTrigger({
       <PreviewCard.Trigger
         delay={delay}
         closeDelay={closeDelay}
-        className={clsx(
+        className={cn(
           'rounded-square cursor-default underline-offset-2 outline-none',
           'focus-visible:ring-control-ring focus-visible:ring-2',
           className,
@@ -151,7 +151,7 @@ function PopoverTrigger({
       type="button"
       aria-expanded={open}
       onClick={() => setOpen(!open)}
-      className={clsx(
+      className={cn(
         'rounded-square cursor-pointer underline-offset-2 outline-none',
         'focus-visible:ring-control-ring focus-visible:ring-2',
         className,
@@ -225,7 +225,7 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
   }, [mode, open, sideOffset]);
 
   // The one skin, shared by both modes.
-  const surface = clsx(
+  const surface = cn(
     'w-72 max-w-[calc(100vw-2rem)] rounded-square border border-bone bg-white p-rui-4',
     'shadow-popover',
     className,
@@ -237,7 +237,7 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
         <PreviewCard.Positioner sideOffset={sideOffset} className="z-50 outline-none">
           <PreviewCard.Popup
             data-testid="popover"
-            className={clsx(
+            className={cn(
               surface,
               // Base UI enter/exit state hooks — a quick, GPU-friendly fade+lift.
               'origin-top transition-[opacity,transform] duration-150',
@@ -271,7 +271,7 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
           ref={cardRef}
           data-testid="popover"
           role="dialog"
-          className={clsx(
+          className={cn(
             'absolute z-50',
             flipped ? 'bottom-full origin-bottom' : 'top-full origin-top',
             surface,

@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { cn } from '../../lib/cn';
 
 /**
  * StatusPill — the bill lifecycle rendered as a token-tinted badge.
@@ -59,7 +59,7 @@ export function StatusPill({ status, className }: StatusPillProps) {
   return (
     <span
       // A pill: fully-rounded, small, tinted. Weight/spacing come from tokens.
-      className={clsx(
+      className={cn(
         'gap-rui-1 rounded-pill px-rui-3 py-rui-1 text-xs font-heading inline-flex items-center whitespace-nowrap',
         TONE_STYLE[tone],
         className,

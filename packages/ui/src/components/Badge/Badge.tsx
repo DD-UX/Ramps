@@ -1,5 +1,6 @@
-import { clsx } from 'clsx';
 import type { PropsWithChildren, ReactNode } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Badge — the compact metadata/count label for everything that ISN'T a bill
@@ -70,7 +71,7 @@ export function Badge({
   return (
     <span
       aria-label={ariaLabel}
-      className={clsx(
+      className={cn(
         'gap-rui-1 px-rui-2 py-0.5 text-xs font-heading inline-flex items-center whitespace-nowrap',
         shape === 'pill' ? 'rounded-pill' : 'rounded-square',
         style,

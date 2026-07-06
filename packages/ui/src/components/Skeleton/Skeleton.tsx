@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { cn } from '../../lib/cn';
 
 /**
  * Skeleton — the shimmering placeholder that carries Ramp's optimistic async UX.
@@ -21,7 +21,7 @@ export function Skeleton({ className, circle = false }: SkeletonProps) {
   return (
     <span
       aria-hidden
-      className={clsx(
+      className={cn(
         'animate-pulse bg-bone block',
         circle ? 'rounded-pill' : 'rounded-square',
         className,
@@ -36,7 +36,7 @@ export function SkeletonRow({ className }: { className?: string }) {
     <div
       role="status"
       aria-label="Loading"
-      className={clsx('gap-rui-3 px-rui-4 py-rui-3 flex items-center', className)}
+      className={cn('gap-rui-3 px-rui-4 py-rui-3 flex items-center', className)}
     >
       <Skeleton circle className="size-8" />
       <div className="space-y-1.5 flex-1">

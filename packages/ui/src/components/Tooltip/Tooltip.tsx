@@ -1,5 +1,6 @@
-import { clsx } from 'clsx';
 import type { PropsWithChildren, ReactNode } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Tooltip — a lightweight hover/focus label. Used for truncated table cells and
@@ -20,11 +21,11 @@ export type TooltipProps = PropsWithChildren<{
 
 export function Tooltip({ label, children, className }: TooltipProps) {
   return (
-    <span className={clsx('group relative inline-flex', className)}>
+    <span className={cn('group relative inline-flex', className)}>
       {children}
       <span
         role="tooltip"
-        className={clsx(
+        className={cn(
           'mb-rui-2 pointer-events-none absolute bottom-full left-1/2 z-10 -translate-x-1/2',
           'max-w-64 rounded-square bg-ink px-rui-3 py-rui-1 text-xs font-body text-limestone w-max text-center whitespace-normal',
           'opacity-0 transition-opacity duration-100',

@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { cn } from '../../lib/cn';
 
 /**
  * Divider — a hairline separator on the bone token.
@@ -17,7 +17,7 @@ export function Divider({ orientation = 'horizontal', className }: DividerProps)
     <div
       role="separator"
       aria-orientation={orientation}
-      className={clsx(
+      className={cn(
         'bg-bone',
         orientation === 'horizontal' ? 'h-px w-full' : 'h-full w-px',
         className,

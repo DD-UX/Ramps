@@ -1,7 +1,7 @@
-import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import type { PropsWithChildren, ReactNode } from 'react';
 
+import { cn } from '../../lib/cn';
 import { Badge } from '../Badge/Badge';
 
 const ACTIVE_ITEM_CLASS = 'bg-stone text-ink hover:bg-stone';
@@ -148,7 +148,7 @@ export function SideMenu({
   return (
     <nav
       aria-label={ariaLabel ?? 'Main navigation'}
-      className={clsx(
+      className={cn(
         // overflow-auto: the nav is its own scroll container — when the item
         // list outgrows the parent, the items scroll WITHIN the limestone
         // background instead of spilling onto the white page canvas (which is
@@ -231,7 +231,7 @@ export function SideMenuItem({
         onClick={onClick}
         href={href}
         aria-current={active ? 'page' : undefined}
-        className={clsx(
+        className={cn(
           'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
           'transition-colors outline-none',
           // Active: stone background (vetted #e5e0dc) + ink text (vetted #0b0704–#2c2825).
@@ -258,7 +258,7 @@ export function SideMenuItem({
  */
 export function SideMenuDivider({ className }: SideMenuDividerProps) {
   return (
-    <li role="separator" aria-hidden className={clsx('my-rui-2', className)}>
+    <li role="separator" aria-hidden className={cn('my-rui-2', className)}>
       <hr className="border-bone border-t" />
     </li>
   );
@@ -284,7 +284,7 @@ export function SideMenuHeader({
     <button
       type="button"
       onClick={onClick}
-      className={clsx(
+      className={cn(
         'gap-rui-2 rounded-square px-rui-2 py-rui-1 flex w-full items-center',
         'text-sm font-body text-hushed transition-colors outline-none',
         'hover:bg-limestone cursor-pointer',
@@ -332,7 +332,7 @@ export function SideMenuProgress({
     <button
       type="button"
       onClick={onClick}
-      className={clsx(
+      className={cn(
         'gap-rui-1 rounded-square px-rui-2 py-rui-1 flex w-full flex-col',
         'text-left transition-colors outline-none',
         'hover:bg-limestone cursor-pointer',
@@ -407,7 +407,7 @@ export function SideMenuAction({ children, icon, onClick, href, className }: Sid
       target={external ? '_blank' : undefined}
       rel={external ? 'noreferrer' : undefined}
       onClick={onClick}
-      className={clsx(
+      className={cn(
         'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
         'text-sm font-body text-ink transition-colors outline-none',
         'hover:bg-limestone',

@@ -1,11 +1,11 @@
 'use client';
 
-import { clsx } from 'clsx';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { createContext, type PropsWithChildren, useContext, useEffect, useId, useRef } from 'react';
 
 import { useClickAway } from '../../hooks/useClickAway';
+import { cn } from '../../lib/cn';
 import { IconButton } from '../IconButton/IconButton';
 
 /**
@@ -101,7 +101,7 @@ export function Modal({ open, onClose, className, children }: ModalProps) {
                 transition: { duration: 0.15, ease: 'easeIn' },
               }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className={clsx(
+              className={cn(
                 // One padded surface — no divider rows; the gap carries the rhythm.
                 'max-w-md gap-rui-4 rounded-square border-bone bg-white p-rui-6 flex w-full flex-col border',
                 'shadow-popover',
@@ -123,7 +123,7 @@ export type ModalHeaderProps = PropsWithChildren<{ className?: string }>;
 function ModalHeader({ children, className }: ModalHeaderProps) {
   const { onClose, titleId } = useModalContext('Header');
   return (
-    <div className={clsx('gap-rui-3 flex items-start justify-between', className)}>
+    <div className={cn('gap-rui-3 flex items-start justify-between', className)}>
       <h2 id={titleId} className="text-lg font-heading text-ink">
         {children}
       </h2>
@@ -137,7 +137,7 @@ export type ModalBodyProps = PropsWithChildren<{ className?: string }>;
 /** Body slot — callers own the copy/fields; hushed sm reads as the default. */
 function ModalBody({ children, className }: ModalBodyProps) {
   return (
-    <div className={clsx('gap-rui-4 text-sm text-ink flex flex-col', className)}>{children}</div>
+    <div className={cn('gap-rui-4 text-sm text-ink flex flex-col', className)}>{children}</div>
   );
 }
 
@@ -146,7 +146,7 @@ export type ModalFooterProps = PropsWithChildren<{ className?: string }>;
 /** Footer — "Cancel" hugs the left, the primary CTA the right (frame 13). */
 function ModalFooter({ children, className }: ModalFooterProps) {
   return (
-    <div className={clsx('mt-rui-2 gap-rui-3 flex items-center justify-between', className)}>
+    <div className={cn('mt-rui-2 gap-rui-3 flex items-center justify-between', className)}>
       {children}
     </div>
   );

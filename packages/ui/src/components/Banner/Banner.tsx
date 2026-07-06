@@ -1,5 +1,6 @@
-import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Banner — the persistent, section- or page-level message surface.
@@ -50,7 +51,7 @@ export function Banner({
   return (
     <div
       role="status"
-      className={clsx(
+      className={cn(
         'gap-rui-3 rounded-square px-rui-4 py-rui-3 flex items-start',
         TONE_STYLE[tone],
         className,

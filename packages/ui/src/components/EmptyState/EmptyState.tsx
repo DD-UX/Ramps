@@ -1,5 +1,6 @@
-import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * EmptyState — the centred "nothing here yet" panel for empty tables, filtered
@@ -23,7 +24,7 @@ export interface EmptyStateProps {
 export function EmptyState({ title, description, icon, action, className }: EmptyStateProps) {
   return (
     <div
-      className={clsx(
+      className={cn(
         // Two-level rhythm, gaps only: the outer gap-rui-4 airs out the three
         // zones (icon / text / action) while the inner gap-rui-1 keeps title
         // and description reading as one block — the flat single-gap stack

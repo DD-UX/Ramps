@@ -1,7 +1,8 @@
 'use client';
 
-import { clsx } from 'clsx';
 import { motion } from 'motion/react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Tabs — the lifecycle shell navigation: Overview · Drafts · For approval ·
@@ -34,7 +35,7 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
   return (
     <div
       role="tablist"
-      className={clsx('gap-rui-4 border-bone flex items-center border-b', className)}
+      className={cn('gap-rui-4 border-bone flex items-center border-b', className)}
     >
       {tabs.map((tab) => {
         const active = tab.value === value;
@@ -45,7 +46,7 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
             role="tab"
             aria-selected={active}
             onClick={() => onValueChange?.(tab.value)}
-            className={clsx(
+            className={cn(
               'gap-rui-2 px-rui-1 py-rui-3 text-sm font-heading relative -mb-px inline-flex cursor-pointer items-center',
               active ? 'text-ink' : 'text-hushed hover:text-ink',
             )}
@@ -53,7 +54,7 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
             {tab.label}
             {tab.count !== undefined && (
               <span
-                className={clsx(
+                className={cn(
                   'rounded-pill px-rui-2 text-xs font-body',
                   active ? 'bg-ink text-limestone' : 'bg-limestone text-hushed',
                 )}

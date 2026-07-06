@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { cn } from '../../lib/cn';
 
 /**
  * Logo — the "ramps" brand mark: TWO Ramp marks concatenated side by side.
@@ -39,7 +39,7 @@ export function Logo({ size = 16, className, 'aria-label': ariaLabel = 'ramps' }
       fill="none"
       role="img"
       aria-label={ariaLabel}
-      className={clsx('text-ink', className)}
+      className={cn('text-ink', className)}
     >
       {/* First ramp. */}
       <path fill="currentColor" d={RAMP_BAR} />

@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { cn } from '../../lib/cn';
 
 /**
  * Spinner — the indeterminate loading indicator for in-flight actions (file
@@ -29,7 +29,7 @@ export function Spinner({ size = 'md', className, label }: SpinnerProps) {
       role={label ? 'status' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      className={clsx(
+      className={cn(
         'animate-spin rounded-pill inline-block border-current/25 border-t-current',
         SIZE_STYLE[size],
         className,

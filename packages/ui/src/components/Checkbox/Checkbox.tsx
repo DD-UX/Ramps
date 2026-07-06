@@ -1,5 +1,6 @@
-import { clsx } from 'clsx';
 import type { InputHTMLAttributes } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Checkbox — the multi-select primitive: bulk row-select in the AP table,
@@ -19,7 +20,7 @@ export function Checkbox({ label, className, id, ...props }: CheckboxProps) {
       <input
         id={id}
         type="checkbox"
-        className={clsx(
+        className={cn(
           'peer size-4 rounded-square border-control-border bg-white cursor-pointer appearance-none border',
           'checked:border-positive checked:bg-positive',
           'focus:ring-control-ring focus:ring-2 focus:outline-none',

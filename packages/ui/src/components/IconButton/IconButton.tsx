@@ -1,5 +1,6 @@
-import { clsx } from 'clsx';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * IconButton — the square, label-free action used across Bill Pay's toolbars and
@@ -8,15 +9,18 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
  *
  * Because it has no text, an accessible `label` is REQUIRED and wired to
  * aria-label. Variants stay quiet (ghost) by default so a toolbar of these reads
- * as controls, not buttons; `subtle` gives a limestone chip for emphasis.
- * Tokens only.
+ * as controls, not buttons; `subtle` gives a limestone chip for emphasis, and
+ * `outline` is the white + bone-border treatment (the calendar/export circles in
+ * the Bill Pay toolbar, …/snapshots/04) — the icon-only twin of Button's
+ * `secondary`. Tokens only.
  */
-export type IconButtonVariant = 'ghost' | 'subtle';
+export type IconButtonVariant = 'ghost' | 'subtle' | 'outline';
 export type IconButtonSize = 'sm' | 'md';
 
 const VARIANT_STYLE: Record<IconButtonVariant, string> = {
   ghost: 'text-hushed hover:bg-limestone hover:text-ink',
   subtle: 'bg-limestone text-ink hover:bg-bone',
+  outline: 'bg-white text-ink border border-bone hover:bg-limestone',
 };
 
 const SIZE_STYLE: Record<IconButtonSize, string> = {
@@ -52,8 +56,8 @@ export function IconButton({
       type={type ?? 'button'}
       aria-label={label}
       title={label}
-      className={clsx(
-        'focus:ring-control-ring inline-flex items-center justify-center transition-colors focus:ring-2 focus:outline-none',
+      className={cn(
+        'focus:ring-control-ring inline-flex shrink-0 items-center justify-center transition-colors focus:ring-2 focus:outline-none',
         rounded ? 'rounded-pill' : 'rounded-square',
         // Interactive affordance: pointer when enabled, dimmed + not-allowed when disabled.
         'cursor-pointer disabled:cursor-not-allowed disabled:opacity-40',

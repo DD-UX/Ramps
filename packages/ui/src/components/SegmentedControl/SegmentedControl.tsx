@@ -1,8 +1,9 @@
 'use client';
 
-import { clsx } from 'clsx';
 import { motion } from 'motion/react';
 import { type ReactNode, useId } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * SegmentedControl — the `[ New card | Existing card ]` switch on the
@@ -48,7 +49,7 @@ export function SegmentedControl({
   return (
     <div
       role="tablist"
-      className={clsx(
+      className={cn(
         'rounded-square border-bone bg-stone grid auto-cols-fr grid-flow-col border',
         className,
       )}

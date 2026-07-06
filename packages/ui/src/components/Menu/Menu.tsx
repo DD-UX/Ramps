@@ -1,7 +1,7 @@
-import { clsx } from 'clsx';
 import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 
+import { cn } from '../../lib/cn';
 import { IconButton } from '../IconButton/IconButton';
 
 /**
@@ -93,7 +93,7 @@ export function Menu({
   }, [open]);
 
   return (
-    <div ref={rootRef} className={clsx('relative inline-flex', className)}>
+    <div ref={rootRef} className={cn('relative inline-flex', className)}>
       {trigger ? (
         <span
           role="button"
@@ -128,7 +128,7 @@ export function Menu({
         <div
           id={menuId}
           role="menu"
-          className={clsx(
+          className={cn(
             'min-w-44 rounded-square border-bone bg-white py-rui-1 shadow-lg absolute z-20 overflow-hidden border',
             side === 'bottom' ? 'mt-rui-1 top-full' : 'mb-rui-1 bottom-full',
             align === 'end' ? 'right-0' : 'left-0',
@@ -145,7 +145,7 @@ export function Menu({
                 setOpen(false);
                 item.onSelect?.();
               }}
-              className={clsx(
+              className={cn(
                 'gap-rui-2 px-rui-3 py-rui-2 text-sm font-body flex w-full cursor-pointer items-center text-left transition-colors',
                 'focus:bg-limestone focus:outline-none disabled:pointer-events-none disabled:opacity-40',
                 ITEM_TONE[item.tone ?? 'default'],

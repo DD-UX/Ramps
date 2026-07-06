@@ -1,6 +1,6 @@
-import { clsx } from 'clsx';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
+import { cn } from '../../lib/cn';
 import { Kbd } from '../Kbd/Kbd';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -124,7 +124,7 @@ export function Button({
       type={type ?? 'button'}
       disabled={isDisabled}
       aria-busy={loading || undefined}
-      className={clsx(
+      className={cn(
         // Layout + shape: square corners (0px, per the frames) — except the
         // toolbar pills (snapshot 1) — heading weight, inline icon rows.
         'font-heading inline-flex items-center justify-center whitespace-nowrap',

@@ -1,9 +1,9 @@
 'use client';
 
-import { clsx } from 'clsx';
 import { AnimatePresence, motion } from 'motion/react';
 import { type ReactNode, useId, useState } from 'react';
 
+import { cn } from '../../lib/cn';
 import { SegmentedControl } from '../SegmentedControl/SegmentedControl';
 
 /**
@@ -59,7 +59,7 @@ export function SegmentedArea({
   };
 
   return (
-    <div className={clsx('rounded-square flex flex-col', className)}>
+    <div className={cn('rounded-square flex flex-col', className)}>
       <SegmentedControl
         options={tabs.map(({ value: tabValue, label }) => ({ value: tabValue, label }))}
         value={active}

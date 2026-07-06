@@ -1,9 +1,10 @@
 'use client';
 
 import { Combobox } from '@base-ui-components/react/combobox';
-import { clsx } from 'clsx';
 import { Check, ChevronDown, Search, X } from 'lucide-react';
 import type { ReactNode } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Dropdown — the TAILORED option picker behind the line-item coding grid and
@@ -85,7 +86,7 @@ function OptionRow({
       value={option}
       disabled={option.disabled}
       data-testid="dropdown-option"
-      className={clsx(
+      className={cn(
         'gap-2 rounded-square px-2 py-1.5 flex cursor-pointer items-center outline-none select-none',
         'data-[highlighted]:bg-limestone data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
       )}
@@ -155,10 +156,10 @@ export function Dropdown({
         onValueChange?.(next?.value ?? null);
       }}
     >
-      <div className={clsx('relative inline-flex w-full items-center', className)}>
+      <div className={cn('relative inline-flex w-full items-center', className)}>
         <Combobox.Trigger
           aria-invalid={invalid || undefined}
-          className={clsx(
+          className={cn(
             // The sharp square coding cell from the line-item grid.
             'h-12 gap-2 rounded-square bg-white px-3 flex w-full cursor-pointer items-center border text-left',
             'text-sm font-body text-ink outline-none',
@@ -215,7 +216,7 @@ export function Dropdown({
         <Combobox.Positioner sideOffset={6} className="z-50 outline-none">
           <Combobox.Popup
             data-testid="dropdown"
-            className={clsx(
+            className={cn(
               'max-h-80 min-w-56 rounded-square border-bone bg-white flex w-[var(--anchor-width)] flex-col border',
               'shadow-popover',
               'origin-top transition-[opacity,transform] duration-150',

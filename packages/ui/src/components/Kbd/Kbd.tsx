@@ -1,5 +1,6 @@
-import { clsx } from 'clsx';
 import type { HTMLAttributes } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Kbd — the keyboard-key chip.
@@ -19,7 +20,7 @@ export type KbdProps = HTMLAttributes<HTMLElement>;
 export function Kbd({ className, children, ...props }: KbdProps) {
   return (
     <kbd
-      className={clsx(
+      className={cn(
         // A raised white square keycap: hairline + 1px drop via shadow-key.
         'h-5 min-w-5 rounded-square bg-white px-1 inline-flex items-center justify-center',
         'font-sans text-xs font-body text-ink shadow-key leading-none select-none',

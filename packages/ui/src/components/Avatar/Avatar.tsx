@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { cn } from '../../lib/cn';
 
 /**
  * Avatar — the vendor/user identity chip that anchors every table row, approval
@@ -68,7 +68,7 @@ export function Avatar({ name, src, size = 'md', className }: AvatarProps) {
       // aria-label carries the full name; the visible glyph is decorative.
       role="img"
       aria-label={name}
-      className={clsx(
+      className={cn(
         'rounded-pill font-heading inline-flex shrink-0 items-center justify-center overflow-hidden select-none',
         SIZE_STYLE[size],
         !src && tone,

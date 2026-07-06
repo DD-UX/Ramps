@@ -1,5 +1,6 @@
-import { clsx } from 'clsx';
 import type { PropsWithChildren, ReactNode } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Card — the sectioned content container that structures Bill Pay's forms and
@@ -48,7 +49,7 @@ export function Card({ children, tone = 'default', elevation = 'card', className
   return (
     <div
       data-testid="card"
-      className={clsx(
+      className={cn(
         // One white, square, uniformly padded surface on a thin tinted border
         // (snapshot 8). The column gap — not margins — spaces header and body.
         'gap-rui-3 rounded-square bg-white p-rui-4 flex flex-col border',
@@ -74,7 +75,7 @@ export type CardHeaderProps = PropsWithChildren<{
  */
 function CardHeader({ children, action, className }: CardHeaderProps) {
   return (
-    <div className={clsx('gap-rui-3 flex items-center justify-between', className)}>
+    <div className={cn('gap-rui-3 flex items-center justify-between', className)}>
       <div className="min-w-0 text-sm font-heading text-ink">{children}</div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
@@ -86,7 +87,7 @@ export type CardBodyProps = PropsWithChildren<{
 }>;
 
 function CardBody({ children, className }: CardBodyProps) {
-  return <div className={clsx('font-body text-ink', className)}>{children}</div>;
+  return <div className={cn('font-body text-ink', className)}>{children}</div>;
 }
 
 Card.Header = CardHeader;

@@ -1,5 +1,6 @@
-import { clsx } from 'clsx';
 import type { InputHTMLAttributes, ReactNode } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Input — the text-field primitive for the line-item / draft-review forms.
@@ -41,7 +42,7 @@ export function Input({
     <input
       type={type ?? 'text'}
       aria-invalid={invalid || undefined}
-      className={clsx(
+      className={cn(
         // White fill, near-square corners, thin border — the snapshot-9 field.
         // The toolbar search (snapshot 1) is the pill exception.
         'bg-white text-sm font-body text-ink w-full border',

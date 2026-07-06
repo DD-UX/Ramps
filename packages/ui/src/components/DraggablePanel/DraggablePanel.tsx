@@ -1,8 +1,9 @@
 'use client';
 
-import { clsx } from 'clsx';
 import { GripVertical } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * DraggablePanel — the **resizable two-pane split** behind the bill-detail
@@ -77,7 +78,7 @@ export function DraggablePanel({
   return (
     <div
       ref={containerRef}
-      className={clsx(
+      className={cn(
         'rounded-square border-bone bg-white flex w-full items-stretch overflow-hidden border',
         dragging && 'select-none',
         className,
@@ -103,14 +104,14 @@ export function DraggablePanel({
           setDragging(true);
         }}
         onKeyDown={onKeyDown}
-        className={clsx(
+        className={cn(
           'group bg-bone p-0 relative flex w-px shrink-0 cursor-col-resize items-center justify-center',
           'focus-visible:ring-control-ring outline-none focus-visible:ring-2',
         )}
       >
         <span
           data-testid="drag-grip"
-          className={clsx(
+          className={cn(
             // Frame 7 at 10x + 1px sampling: a circular STONE chip, soft
             // shadow, ink dots — no border; a full step darker than the
             // panes so it keeps contrast on the limestone canvas too.

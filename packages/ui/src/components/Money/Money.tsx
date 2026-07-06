@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { cn } from '../../lib/cn';
 
 /**
  * Money — the canonical way to render an amount in the AP table and drawers.
@@ -42,7 +42,7 @@ export function Money({
 
   return (
     <span
-      className={clsx(
+      className={cn(
         'font-body whitespace-nowrap tabular-nums',
         align === 'right' ? 'text-right' : 'text-left',
         muted ? 'text-hushed' : 'text-ink',

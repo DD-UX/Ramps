@@ -1,10 +1,10 @@
 'use client';
 
-import { clsx } from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
 
+import { cn } from '../../lib/cn';
 import { IconButton } from '../IconButton/IconButton';
 import { Spinner } from '../Spinner/Spinner';
 import type { ToastMotionPreset } from './toastVariants';
@@ -74,7 +74,7 @@ export function Toast({
       role="status"
       data-testid="toast"
       {...transition}
-      className={clsx(
+      className={cn(
         // White, near-square card on a thin border with a soft popover shadow —
         // the snapshot-3 surface.
         'gap-rui-3 rounded-square border-bone bg-white px-rui-4 py-rui-3 shadow-popover flex items-start border',

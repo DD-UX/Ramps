@@ -1,9 +1,10 @@
 'use client';
 
-import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { type PropsWithChildren, type ReactNode, useId, useState } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Accordion — the expand/collapse rows from the virtual-card panel
@@ -29,7 +30,7 @@ export interface AccordionProps extends PropsWithChildren {
 }
 
 export function Accordion({ children, className }: AccordionProps) {
-  return <div className={clsx('bg-white flex flex-col', className)}>{children}</div>;
+  return <div className={cn('bg-white flex flex-col', className)}>{children}</div>;
 }
 
 export interface AccordionItemProps extends PropsWithChildren {
@@ -50,7 +51,7 @@ export function AccordionItem({
 }: AccordionItemProps) {
   const [open, setOpen] = useState(defaultOpen);
   const regionId = useId();
-  const wrapperClassName = clsx('border border-stone [&+&]:border-t-0', className);
+  const wrapperClassName = cn('border border-stone [&+&]:border-t-0', className);
 
   return (
     <div className={wrapperClassName}>

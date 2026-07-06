@@ -1,5 +1,4 @@
-import { clsx } from 'clsx';
-
+import { cn } from '../../lib/cn';
 import { Avatar, type AvatarSize } from '../Avatar/Avatar';
 
 /**
@@ -45,7 +44,7 @@ export function UserAvatars({ people, max = 4, size = 'md', className }: UserAva
 
   return (
     <div
-      className={clsx('flex items-center', className)}
+      className={cn('flex items-center', className)}
       role="group"
       aria-label={`${people.length} people`}
     >
@@ -56,7 +55,7 @@ export function UserAvatars({ people, max = 4, size = 'md', className }: UserAva
           // Later avatars overlap on top (deepest → closest, per snapshot 13) —
           // that's the natural flex paint order, so NO z-index: forcing an
           // inverted stack here is exactly the bug this replaced.
-          className={clsx('rounded-pill ring-white ring-2', i > 0 && OVERLAP[size])}
+          className={cn('rounded-pill ring-white ring-2', i > 0 && OVERLAP[size])}
         >
           <Avatar name={person.name} src={person.src} size={size} />
         </span>
@@ -65,7 +64,7 @@ export function UserAvatars({ people, max = 4, size = 'md', className }: UserAva
       {overflow > 0 && (
         <span
           data-testid="stacked-avatar"
-          className={clsx(
+          className={cn(
             'rounded-pill ring-white inline-flex items-center justify-center ring-2',
             'bg-tone-neutral-surface font-heading text-tone-neutral-on',
             OVERLAP[size],

@@ -1,10 +1,10 @@
 'use client';
 
-import { clsx } from 'clsx';
 import { ChevronDown, CornerDownRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { cn } from '../../lib/cn';
 import { Checkbox } from '../Checkbox/Checkbox';
 import { Menu } from '../Menu/Menu';
 
@@ -121,7 +121,7 @@ import { Menu } from '../Menu/Menu';
  *  ];
  *  ```
  *
- * **No external dependencies** beyond React + clsx. Virtualization is a minimal
+ * **No external dependencies** beyond React + cn. Virtualization is a minimal
  * hand-rolled window (measure fixed row height, slice data to visible range,
  * offset via spacer rows). Sticky positioning is pure CSS (position: sticky with
  * left/right offsets).
@@ -431,7 +431,7 @@ export function Table<T, K extends string | number = string>({
 
   return (
     <div
-      className={clsx(
+      className={cn(
         // No outer border — the frames show the table sitting borderless on
         // the page canvas; every hairline lives INSIDE (header/dividers).
         'rounded-square bg-white overflow-hidden',
@@ -475,7 +475,7 @@ export function Table<T, K extends string | number = string>({
                   <th
                     key={col.id}
                     scope="col"
-                    className={clsx(
+                    className={cn(
                       // Sentence case — the product never uppercases labels.
                       // Vertical limestone dividers between every column
                       // (persistence-scanned on product-overview/02).
@@ -509,7 +509,7 @@ export function Table<T, K extends string | number = string>({
                     key={id}
                     aria-selected={isSelected || undefined}
                     onClick={isClickable ? () => onRowClick(row) : undefined}
-                    className={clsx(
+                    className={cn(
                       // group/row lets STICKY cells (which need their own
                       // opaque bg) follow the row's hover/selected state —
                       // without it they stayed white and read as vertical
@@ -522,7 +522,7 @@ export function Table<T, K extends string | number = string>({
                   >
                     {selectable && (
                       <td
-                        className={clsx(
+                        className={cn(
                           'left-0 border-limestone px-rui-3 py-rui-3 sticky z-10 border-b align-middle',
                           isSelected ? 'bg-tone-selected-surface' : 'bg-white',
                           isClickable && !isSelected && 'group-hover/row:bg-limestone',
@@ -547,7 +547,7 @@ export function Table<T, K extends string | number = string>({
                       return (
                         <td
                           key={col.id}
-                          className={clsx(
+                          className={cn(
                             'border-limestone px-rui-3 py-rui-3 text-ink border-b align-middle',
                             'border-l first:border-l-0',
                             ALIGN_CLASS[col.align ?? 'left'],
@@ -603,7 +603,7 @@ export function Table<T, K extends string | number = string>({
           </tbody>
           {footer.type !== 'none' && (
             <tfoot
-              className={clsx(
+              className={cn(
                 'bottom-0 sticky z-20',
                 // The pagination band sits on CANVAS (#fbfaf6 sampled at 1px
                 // on frame 6 y634/640) — the other footer kinds stay on the
@@ -747,7 +747,7 @@ export function Table<T, K extends string | number = string>({
                     return (
                       <td
                         key={col.id}
-                        className={clsx(
+                        className={cn(
                           'border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed border-t',
                           'border-l first:border-l-0',
                           ALIGN_CLASS[col.align ?? 'left'],

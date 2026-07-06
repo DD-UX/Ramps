@@ -1,7 +1,8 @@
-import { clsx } from 'clsx';
 import { ChevronDown } from 'lucide-react';
 import type { ChangeEvent, SelectHTMLAttributes } from 'react';
 import { useState } from 'react';
+
+import { cn } from '../../lib/cn';
 
 /**
  * Select — the STANDARD form select for bill-detail fields ("Payment method",
@@ -64,13 +65,13 @@ export function Select({
   }
 
   return (
-    <label className={clsx('relative inline-flex w-full', className)}>
+    <label className={cn('relative inline-flex w-full', className)}>
       {/* Floating label — centred as a placeholder when empty, top edge when filled. */}
       {labelText ? (
         <span
           data-testid="select-label"
           data-floated={hasValue || undefined}
-          className={clsx(
+          className={cn(
             'left-3 font-body pointer-events-none absolute z-10 origin-left transition-all duration-150',
             hasValue
               ? 'top-1 text-xs text-hushed'
@@ -87,7 +88,7 @@ export function Select({
         onChange={handleChange}
         disabled={disabled}
         aria-invalid={invalid || undefined}
-        className={clsx(
+        className={cn(
           // Sharp square white field with room for the floated label on top.
           'h-12 rounded-square bg-white pl-3 pr-8 text-sm font-body text-ink w-full cursor-pointer appearance-none border',
           labelText ? 'pt-4 pb-1' : undefined,

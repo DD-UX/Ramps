@@ -605,6 +605,29 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
   });
 
   /**
+   * IconButton `outline` is the icon-only twin of Button's `secondary`: a white
+   * surface with a real bone hairline border (the calendar/export circles in the
+   * Bill Pay toolbar, …/snapshots/04). The border is what makes it read as a
+   * control, so it must be present and resolve to the bone token.
+   */
+  test('IconButton/outline is a bone-bordered white circle', async ({ page }) => {
+    await page.goto(storyUrl('primitives-iconbutton--outline'));
+    const btn = page.getByRole('button').first();
+    await expect(btn).toBeVisible();
+    const s = await btn.evaluate((el) => {
+      const c = getComputedStyle(el);
+      return {
+        bg: c.backgroundColor,
+        borderColor: c.borderTopColor,
+        borderW: Number.parseFloat(c.borderTopWidth),
+      };
+    });
+    expect(s.bg, 'outline icon button is white').toBe('rgb(255, 255, 255)');
+    expect(s.borderColor, 'border is the bone token').toBe(hexToRgb(RUI['--rui-bone']));
+    expect(s.borderW, 'a real 1px border').toBeGreaterThanOrEqual(1);
+  });
+
+  /**
    * Button `outline` is a boolean like `rounded` (they coexist): transparent
    * fill with the variant's colour moved into the border — and hovering still
    * swaps in an alternative background so the affordance never disappears.
