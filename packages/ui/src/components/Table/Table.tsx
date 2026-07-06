@@ -7,6 +7,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { cn } from '../../lib/cn';
 import { Checkbox } from '../Checkbox/Checkbox';
 import {
+  TABLE_FOOTER_HEIGHT,
   TableCustomFooter,
   type TableFooterGeometry,
   TablePaginationFooter,
@@ -649,7 +650,9 @@ export function Table<T, K extends string | number = string>({
               column pins. The PAGINATION band is NOT here — see the <div> band
               after the filler below. */}
           {(footer.type === 'summary' || footer.type === 'custom') && (
-            <tfoot className="bg-white bottom-0 sticky z-20">
+            // TABLE_FOOTER_HEIGHT (h-12): the same 48px band height as the
+            // pagination <div>, so every table footer is one consistent size.
+            <tfoot className={cn(TABLE_FOOTER_HEIGHT, 'bg-white bottom-0 sticky z-20')}>
               {footer.type === 'summary' ? (
                 <TableSummaryFooter geometry={footerGeometry} />
               ) : (

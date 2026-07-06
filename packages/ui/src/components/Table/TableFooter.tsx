@@ -33,6 +33,14 @@ const ALIGN_CLASS: Record<CellAlign, string> = {
 };
 
 /**
+ * The fixed height of EVERY table footer band — 48px (h-12), vetted on the
+ * pagination band (ap-agent/6). Shared by the pagination <div> band AND the
+ * summary/custom <tfoot> (Table applies it there) so any table footer, now or
+ * in the future, is the same height. Change it here and both move together.
+ */
+export const TABLE_FOOTER_HEIGHT = 'h-12';
+
+/**
  * Geometry the footers share with the head/body: which column is the sticky
  * left / right one and how wide the checkbox gutter is. Computed once in Table
  * and threaded down so the footer cells line up under the pinned columns.
@@ -125,9 +133,17 @@ export function TablePaginationFooter({
   return (
     <div
       data-table-footer="pagination"
-      className={cn('border-limestone px-rui-3 py-rui-2 border-t', className)}
+      // Fixed 48px band (TABLE_FOOTER_HEIGHT) — the vetted footer band height
+      // shared with the summary/custom <tfoot>, so every table footer is the
+      // same size. flex + items-center vertically centers the row inside it
+      // (h-12 owns the height; horizontal px-rui-3 only, no vertical padding).
+      className={cn(
+        TABLE_FOOTER_HEIGHT,
+        'border-limestone px-rui-3 flex items-center border-t',
+        className,
+      )}
     >
-      <div className="gap-rui-4 text-sm text-hushed flex items-center justify-between">
+      <div className="gap-rui-4 text-sm text-hushed flex w-full items-center justify-between">
         {/* Left — "Select ⌄": hushed underlined text + a chevron that is NOT
             underlined (8x zoom, frame 6). The menu contents are INFERRED
             (never shown open in a frame): selection scopes on the Map. */}
@@ -213,7 +229,7 @@ export function TableSummaryFooter<T, K extends string | number>({
     <tr>
       {selectable && (
         <td
-          className="left-0 border-limestone bg-white px-rui-3 py-rui-2 sticky z-10 border-t"
+          className="left-0 border-limestone bg-white px-rui-3 py-rui-2 sticky z-10 border-t align-middle"
           style={checkboxCellStyle}
         />
       )}
@@ -243,7 +259,7 @@ export function TableSummaryFooter<T, K extends string | number>({
           <td
             key={col.id}
             className={cn(
-              'border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed border-t',
+              'border-limestone px-rui-3 py-rui-2 text-xs font-heading text-hushed border-t align-middle',
               'border-l first:border-l-0',
               ALIGN_CLASS[col.align ?? 'left'],
               isSticky && 'bg-white sticky z-10',
@@ -276,7 +292,7 @@ export function TableCustomFooter<T, K extends string | number>({
     <tr>
       <td
         colSpan={fullColSpan(geometry)}
-        className="border-limestone px-rui-3 py-rui-2 text-sm text-ink border-t"
+        className="border-limestone px-rui-3 py-rui-2 text-sm text-ink border-t align-middle"
       >
         {content}
       </td>

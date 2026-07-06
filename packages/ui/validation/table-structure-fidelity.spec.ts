@@ -426,6 +426,25 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
   });
 
   /**
+   * Every table footer is a fixed 48px band (TABLE_FOOTER_HEIGHT / h-12) — the
+   * pagination <div> band and the summary/custom <tfoot> share the one height,
+   * so any table footer is consistently sized. Assert both resolve to 48px.
+   */
+  test('Table footers are a fixed 48px band (pagination div + summary tfoot)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-table--pagination-footer'));
+    const band = page.locator('#storybook-root [data-table-footer="pagination"]').first();
+    await expect(band).toBeVisible();
+    const bandHeight = await band.evaluate((el) => el.getBoundingClientRect().height);
+    expect(Math.round(bandHeight), 'pagination band is 48px tall').toBe(48);
+
+    await page.goto(storyUrl('primitives-table--summary-footer'));
+    const tfoot = page.locator('#storybook-root tfoot').first();
+    await expect(tfoot).toBeVisible();
+    const tfootHeight = await tfoot.evaluate((el) => el.getBoundingClientRect().height);
+    expect(Math.round(tfootHeight), 'summary tfoot is 48px tall').toBe(48);
+  });
+
+  /**
    * The pagination band sits on CANVAS under a limestone hairline — vetted
    * at 1px on ap-agent/6 (y634/640 sample #fbfaf6, the canvas token; the
    * table surface above is pure white).
