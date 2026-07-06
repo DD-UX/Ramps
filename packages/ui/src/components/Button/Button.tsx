@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 import { cn } from '../../lib/cn';
+import { DISABLED_CONTROL } from '../../lib/disabled';
 import { Kbd } from '../Kbd/Kbd';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -130,11 +131,14 @@ export function Button({
         'font-heading inline-flex items-center justify-center whitespace-nowrap',
         rounded ? 'rounded-pill' : 'rounded-square',
         'transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-        // Real interactive affordances: pointer when enabled, dimmed +
-        // not-allowed when disabled — never pixel-identical to the base.
-        'cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
+        // Enabled: pointer cursor. Disabled: the shared inert treatment — one
+        // consistent gray, hover reaction killed, dimmed + not-allowed — so a
+        // disabled button is never pixel-identical to its base and never lights
+        // up on hover. Sits AFTER the variant so it wins the conflict groups.
+        'cursor-pointer',
         SIZE_STYLE[size],
         outline ? OUTLINE_STYLE[variant] : VARIANT_STYLE[variant],
+        DISABLED_CONTROL,
         className,
       )}
       {...props}

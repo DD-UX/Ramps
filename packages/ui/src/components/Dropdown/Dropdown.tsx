@@ -5,6 +5,7 @@ import { Check, ChevronDown, Search, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { cn } from '../../lib/cn';
+import { DISABLED_CONTROL, DISABLED_CONTROL_DATA } from '../../lib/disabled';
 
 /**
  * Dropdown — the TAILORED option picker behind the line-item coding grid and
@@ -88,7 +89,10 @@ function OptionRow({
       data-testid="dropdown-option"
       className={cn(
         'gap-2 rounded-square px-2 py-1.5 flex cursor-pointer items-center outline-none select-none',
-        'data-[highlighted]:bg-limestone data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
+        'data-[highlighted]:bg-limestone',
+        // Consistent inert gray when disabled (Base UI marks items with
+        // data-disabled). After the highlight so it wins the fill conflict.
+        DISABLED_CONTROL_DATA,
       )}
     >
       {renderOption ? (
@@ -167,7 +171,8 @@ export function Dropdown({
             invalid
               ? 'border-destructive'
               : 'border-control-border data-[popup-open]:border-control-border-focus',
-            'disabled:cursor-not-allowed disabled:opacity-60',
+            // Consistent inert gray when disabled (shared across all controls).
+            DISABLED_CONTROL,
             clearable ? 'pr-14' : 'pr-8',
           )}
         >

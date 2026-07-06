@@ -3,6 +3,7 @@ import type { ChangeEvent, SelectHTMLAttributes } from 'react';
 import { useState } from 'react';
 
 import { cn } from '../../lib/cn';
+import { DISABLED_CONTROL } from '../../lib/disabled';
 
 /**
  * Select — the STANDARD form select for bill-detail fields ("Payment method",
@@ -96,7 +97,8 @@ export function Select({
           invalid
             ? 'border-destructive'
             : 'border-control-border focus:border-control-border-focus',
-          'disabled:cursor-not-allowed disabled:opacity-60',
+          // Consistent inert gray when disabled (shared across all controls).
+          DISABLED_CONTROL,
         )}
         {...props}
       >

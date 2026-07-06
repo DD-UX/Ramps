@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 
 import { cn } from '../../lib/cn';
+import { DISABLED_CONTROL } from '../../lib/disabled';
 import { IconButton } from '../IconButton/IconButton';
 
 /**
@@ -147,8 +148,12 @@ export function Menu({
               }}
               className={cn(
                 'gap-rui-2 px-rui-3 py-rui-2 text-sm font-body flex w-full cursor-pointer items-center text-left transition-colors',
-                'focus:bg-limestone focus:outline-none disabled:pointer-events-none disabled:opacity-40',
+                'focus:bg-limestone focus:outline-none',
                 ITEM_TONE[item.tone ?? 'default'],
+                // Consistent inert gray when disabled (after the tone so it
+                // wins the fill/hover conflict). The item is natively disabled
+                // and the onSelect is guarded, so no pointer-events hack needed.
+                DISABLED_CONTROL,
               )}
             >
               {item.icon && <span aria-hidden>{item.icon}</span>}

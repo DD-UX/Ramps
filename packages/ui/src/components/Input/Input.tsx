@@ -1,6 +1,7 @@
 import type { InputHTMLAttributes, ReactNode } from 'react';
 
 import { cn } from '../../lib/cn';
+import { DISABLED_CONTROL } from '../../lib/disabled';
 
 /**
  * Input — the text-field primitive for the line-item / draft-review forms.
@@ -53,7 +54,8 @@ export function Input({
         invalid
           ? 'border-destructive focus:border-destructive'
           : 'border-control-border focus:border-control-border-focus',
-        'disabled:cursor-not-allowed disabled:opacity-60',
+        // Consistent inert gray when disabled (shared across all controls).
+        DISABLED_CONTROL,
         // Make room for adornments when present.
         leadingIcon ? 'pl-8' : undefined,
         trailingIcon ? 'pr-8' : undefined,

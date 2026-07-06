@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 import { cn } from '../../lib/cn';
+import { DISABLED_CONTROL } from '../../lib/disabled';
 
 /**
  * IconButton — the square, label-free action used across Bill Pay's toolbars and
@@ -59,10 +60,13 @@ export function IconButton({
       className={cn(
         'focus:ring-control-ring inline-flex shrink-0 items-center justify-center transition-colors focus:ring-2 focus:outline-none',
         rounded ? 'rounded-pill' : 'rounded-square',
-        // Interactive affordance: pointer when enabled, dimmed + not-allowed when disabled.
-        'cursor-pointer disabled:cursor-not-allowed disabled:opacity-40',
+        // Enabled: pointer cursor. Disabled: the shared inert treatment (one
+        // consistent gray, hover killed, dimmed + not-allowed). Placed after the
+        // variant so it wins the fill/hover conflict groups.
+        'cursor-pointer',
         VARIANT_STYLE[variant],
         SIZE_STYLE[size],
+        DISABLED_CONTROL,
         className,
       )}
       {...props}
