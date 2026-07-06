@@ -259,11 +259,13 @@ insert into activity_events (id, bill_id, actor_id, type, payload, created_at) v
 -- Deliberate gap: rejected/archived belong to no named tab — they surface only
 -- under Overview's unfiltered whole.
 -- ---------------------------------------------------------------------------
-insert into bill_tabs (id, name, code, statuses, sort_order) values
-  ('99999999-9999-9999-9999-999999999901'::uuid, 'Overview',     'overview',     '{}'::bill_status[],                                  0),
-  ('99999999-9999-9999-9999-999999999902'::uuid, 'Drafts',       'drafts',       '{draft,missing_info}'::bill_status[],                1),
-  ('99999999-9999-9999-9999-999999999903'::uuid, 'For approval', 'for_approval', '{awaiting_approval}'::bill_status[],                 2),
-  ('99999999-9999-9999-9999-999999999904'::uuid, 'For payment',  'for_payment',  '{approved,scheduled,partially_paid}'::bill_status[], 3),
-  ('99999999-9999-9999-9999-999999999905'::uuid, 'History',      'history',      '{paid}'::bill_status[],                              4);
+-- The five seeded categories are SYSTEM tabs: created_by is NULL (no owner),
+-- which is what marks them undeletable ahead of the custom-views feature.
+insert into bill_tabs (id, name, code, statuses, sort_order, created_by) values
+  ('99999999-9999-9999-9999-999999999901'::uuid, 'Overview',     'overview',     '{}'::bill_status[],                                  0, null),
+  ('99999999-9999-9999-9999-999999999902'::uuid, 'Drafts',       'drafts',       '{draft,missing_info}'::bill_status[],                1, null),
+  ('99999999-9999-9999-9999-999999999903'::uuid, 'For approval', 'for_approval', '{awaiting_approval}'::bill_status[],                 2, null),
+  ('99999999-9999-9999-9999-999999999904'::uuid, 'For payment',  'for_payment',  '{approved,scheduled,partially_paid}'::bill_status[], 3, null),
+  ('99999999-9999-9999-9999-999999999905'::uuid, 'History',      'history',      '{paid}'::bill_status[],                              4, null);
 
 commit;
