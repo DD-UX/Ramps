@@ -70,6 +70,25 @@ export interface ListBillsOptions {
    * or omitted means the unfiltered Overview view.
    */
   statuses?: readonly BillStatusType[];
+  /**
+   * Free-text match for the toolbar's "Search or filter…" field. Case-insensitive
+   * substring across the bill's own identifying columns — invoice number, PO
+   * number, and memo (`col ILIKE %q%`, OR-combined). Trimmed empty / omitted
+   * means no text filter. Typed off the entity so it can't drift from the row.
+   */
+  search?: BillListItemType['invoice_number'];
+}
+
+/**
+ * Escape a raw search term for a PostgREST `or(...)` clause. Commas and
+ * parentheses are the clause's own delimiters, so a term containing them would
+ * break the filter grammar; we strip them rather than let a stray `)` 400 the
+ * query. (`*` maps to the ILIKE wildcard, so we leave it alone — a user typing
+ * `*` is a legitimate wildcard, not an injection vector against a parameterized
+ * PostgREST filter.)
+ */
+function sanitizeSearchTerm(raw: string): string {
+  return raw.replace(/[(),]/g, ' ').trim();
 }
 
 /**
@@ -91,6 +110,16 @@ export async function listBills(
   // A tab's status group → `status IN (…)`. Empty group = Overview = no filter.
   if (options.statuses && options.statuses.length > 0) {
     query = query.in('status', options.statuses as BillStatusType[]);
+  }
+
+  // Toolbar free-text → `col ILIKE %term%` OR-combined across the bill's own
+  // identifying columns. Sanitized (a blank term after stripping `(),` is a
+  // no-op, so an all-punctuation search doesn't collapse to "match all").
+  const term = options.search ? sanitizeSearchTerm(options.search) : '';
+  if (term) {
+    query = query.or(
+      `invoice_number.ilike.%${term}%,po_number.ilike.%${term}%,memo.ilike.%${term}%`,
+    );
   }
 
   const { data, error, count } = await query;

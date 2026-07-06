@@ -10,6 +10,7 @@ import type { ServerSupabase } from './server.js';
  * we assert that contract without a live DB:
  *  - the vendor embed is flattened (and null-safe for vendor-less drafts),
  *  - the status-group filter (`status IN (…)`) is only applied when asked,
+ *  - the free-text search (`col ILIKE …`) is only applied for a real term,
  *  - a DB error is normalized and thrown,
  *  - a row the schema rejects fails loudly (the boundary guard bites).
  */
@@ -48,6 +49,7 @@ function makeSupabase(result: { data?: unknown; error?: unknown; count?: number 
   const calls = {
     eq: [] as [string, unknown][],
     in: [] as [string, unknown[]][],
+    or: [] as string[],
     select: [] as string[],
   };
   const builder: Record<string, unknown> = {
@@ -61,6 +63,10 @@ function makeSupabase(result: { data?: unknown; error?: unknown; count?: number 
     },
     in(col: string, vals: unknown[]) {
       calls.in.push([col, vals]);
+      return builder;
+    },
+    or(clause: string) {
+      calls.or.push(clause);
       return builder;
     },
     order() {
@@ -115,6 +121,27 @@ describe('listBills', () => {
     const omitted = makeSupabase({ data: [], count: 0 });
     await listBills(omitted.supabase);
     expect(omitted.calls.in.some(([col]) => col === 'status')).toBe(false);
+  });
+
+  it('applies the free-text search (col ILIKE …) only for a non-empty term', async () => {
+    // A real term OR-combines across the bill's own identifying columns.
+    const searched = makeSupabase({ data: [], count: 0 });
+    await listBills(searched.supabase, { search: 'INV-42' });
+    expect(searched.calls.or).toEqual([
+      'invoice_number.ilike.%INV-42%,po_number.ilike.%INV-42%,memo.ilike.%INV-42%',
+    ]);
+
+    // The clause delimiters `(),` are stripped so a stray paren can't 400 the
+    // query — here they collapse to a blank term, which is a no-op (not "match
+    // all"), so no `.or()` is issued.
+    const punctuation = makeSupabase({ data: [], count: 0 });
+    await listBills(punctuation.supabase, { search: '(),' });
+    expect(punctuation.calls.or).toHaveLength(0);
+
+    // Omitting search entirely issues no text filter.
+    const omitted = makeSupabase({ data: [], count: 0 });
+    await listBills(omitted.supabase);
+    expect(omitted.calls.or).toHaveLength(0);
   });
 
   it('throws a normalized error when the query fails', async () => {
