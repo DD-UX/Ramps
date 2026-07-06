@@ -252,4 +252,18 @@ insert into activity_events (id, bill_id, actor_id, type, payload, created_at) v
   ('a4000000-0000-0000-0000-0000000000e7'::uuid, 'b0000000-0000-0000-0000-00000000d007'::uuid, null,                                     'payment_batch_released', '{"batch":"a1000000-0000-0000-0000-0000000000b1"}'::jsonb, '2026-06-13T17:00:00Z'),
   ('a4000000-0000-0000-0000-0000000000e8'::uuid, 'b0000000-0000-0000-0000-00000000d008'::uuid, '11111111-1111-1111-1111-111111111101',   'approval_rejected',      '{"comment":"Amount exceeds the quote"}'::jsonb, '2026-05-22T09:30:00Z');
 
+-- ---------------------------------------------------------------------------
+-- Bill Pay tabs (bill-tabs.ts → BillTabSchema) — the five product categories
+-- as data. `code` is the `?tab=` slug; `statuses` is the group it rolls up
+-- ({} = unfiltered Overview). Ids are pinned so the seed stays deterministic.
+-- Deliberate gap: rejected/archived belong to no named tab — they surface only
+-- under Overview's unfiltered whole.
+-- ---------------------------------------------------------------------------
+insert into bill_tabs (id, name, code, statuses, sort_order) values
+  ('99999999-9999-9999-9999-999999999901'::uuid, 'Overview',     'overview',     '{}'::bill_status[],                                  0),
+  ('99999999-9999-9999-9999-999999999902'::uuid, 'Drafts',       'drafts',       '{draft,missing_info}'::bill_status[],                1),
+  ('99999999-9999-9999-9999-999999999903'::uuid, 'For approval', 'for_approval', '{awaiting_approval}'::bill_status[],                 2),
+  ('99999999-9999-9999-9999-999999999904'::uuid, 'For payment',  'for_payment',  '{approved,scheduled,partially_paid}'::bill_status[], 3),
+  ('99999999-9999-9999-9999-999999999905'::uuid, 'History',      'history',      '{paid}'::bill_status[],                              4);
+
 commit;
