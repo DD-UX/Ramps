@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fxs';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 /**

@@ -1,4 +1,5 @@
 import { clsx } from 'clsx';
+import { ChevronDown } from 'lucide-react';
 import type { PropsWithChildren, ReactNode } from 'react';
 
 import { Badge } from '../Badge/Badge';
@@ -90,6 +91,12 @@ export interface SideMenuItemProps extends PropsWithChildren {
   badge?: number;
   /** Active state — highlights the item with stone background and ink text. */
   active?: boolean;
+  /**
+   * Nested sub-item — the indented child under a parent section (the updated
+   * nav shows "Bills" tucked under the active "Bill Pay"). Drops the icon slot
+   * and indents the label so it aligns under the parent's label, not its icon.
+   */
+  nested?: boolean;
   /** Click handler for navigation (wire your router here). */
   onClick?: () => void;
   /** Href for native anchor behavior (alternative to onClick for link-based routing). */
@@ -98,6 +105,45 @@ export interface SideMenuItemProps extends PropsWithChildren {
 }
 
 export interface SideMenuDividerProps {
+  className?: string;
+}
+
+export interface SideMenuHeaderProps extends PropsWithChildren {
+  /**
+   * The workspace glyph before the name (the updated nav shows a small mark
+   * beside "Clara Media LLC"). Rendered hushed, like the item icons.
+   */
+  icon?: ReactNode;
+  /** Fires the workspace switcher (the chevron is a switch affordance). */
+  onClick?: () => void;
+  /** Bone hairline beneath the band (the frame's border under the header). */
+  divider?: boolean;
+  className?: string;
+}
+
+export interface SideMenuProgressProps {
+  /** Block title — the updated nav's onboarding row reads "Setup guide". */
+  title: ReactNode;
+  /** Sub-line under the title, e.g. "Next: Move your spend onto Ramp". */
+  subtitle?: ReactNode;
+  /** Leading glyph for the title row (rendered hushed, like the item icons). */
+  icon?: ReactNode;
+  /** Completion 0–100; clamped, drives the green fill's width. */
+  value: number;
+  /** Fires when the row is activated (the block is a link into onboarding). */
+  onClick?: () => void;
+  /** Bone hairline beneath the block (the frame's border under the setup row). */
+  divider?: boolean;
+  className?: string;
+}
+
+export interface SideMenuGroupProps extends PropsWithChildren {
+  /**
+   * Draw the hairline beneath the group. The updated nav borders BETWEEN every
+   * group (not one divider), so groups are self-delimiting; the last group
+   * passes `divider={false}` so the list doesn't end on a rule.
+   */
+  divider?: boolean;
   className?: string;
 }
 
@@ -131,8 +177,12 @@ export function SideMenu({
       )}
     >
       {header !== undefined && (
-        // The brand band (product-overview/01: the mark at x14-28 y12-26).
-        <div className="px-rui-4 pb-rui-2 pt-rui-4 flex flex-shrink-0 items-center">{header}</div>
+        // The header band. In the frames this holds either the bare brand mark
+        // (product-overview/01: the swoosh at x14-28 y12-26) or the richer
+        // workspace stack — SideMenuHeader + SideMenuProgress, each owning its
+        // own bone hairline. The slot keeps the item gutter (px-rui-2) so those
+        // controls line up with the list below; a bare Logo just sits in it.
+        <div className="gap-rui-1 px-rui-2 pt-rui-3 flex flex-shrink-0 flex-col">{header}</div>
       )}
       <ul className="min-h-0 gap-0.5 p-rui-2 flex flex-1 flex-col overflow-auto">{children}</ul>
       {footer !== undefined && (
@@ -155,6 +205,7 @@ export function SideMenuItem({
   icon,
   badge,
   active = false,
+  nested = false,
   onClick,
   href,
   className,
@@ -163,7 +214,7 @@ export function SideMenuItem({
 
   const content = (
     <>
-      {icon && (
+      {icon && !nested && (
         <span className="flex-shrink-0 text-current" aria-hidden>
           {icon}
         </span>
@@ -196,6 +247,10 @@ export function SideMenuItem({
         className={clsx(
           'gap-rui-2 rounded-square px-rui-3 py-rui-2 flex w-full items-center',
           'transition-colors outline-none',
+          // Nested sub-item: indent the label so it lines up under the PARENT's
+          // label (past the icon + gap), matching the frame's "Bills" under
+          // "Bill Pay". The icon slot is dropped above; this reclaims its space.
+          nested && 'pl-9',
           // Active: stone background (vetted #e5e0dc) + ink text (vetted #0b0704–#2c2825).
           // Inactive: transparent + hushed text (vetted #6f6e6a).
           active
@@ -226,21 +281,150 @@ export function SideMenuDivider({ className }: SideMenuDividerProps) {
   );
 }
 
+/**
+ * SideMenuHeader — the workspace band at the top of the updated nav: a small
+ * mark, the company name, and a chevron-down switch affordance, over a bone
+ * hairline (the "border beneath data" the frame shows under the header).
+ *
+ * Goes in the SideMenu `header` slot. Renders a <button> (the chevron is a
+ * workspace switcher) so it's a real control, not decoration; the label is ink,
+ * the mark + chevron are hushed — the item palette.
+ */
+export function SideMenuHeader({
+  children,
+  icon,
+  onClick,
+  divider = true,
+  className,
+}: SideMenuHeaderProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        'gap-rui-2 rounded-square px-rui-2 py-rui-1 flex w-full items-center',
+        'text-sm font-body text-ink transition-colors outline-none',
+        'hover:bg-limestone cursor-pointer',
+        'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
+        divider && 'border-bone pb-rui-2 mb-rui-1 border-b',
+        className,
+      )}
+    >
+      {icon && (
+        <span className="text-hushed flex-shrink-0" aria-hidden>
+          {icon}
+        </span>
+      )}
+      <span className="flex-1 truncate text-left">{children}</span>
+      <span className="text-hushed flex-shrink-0" aria-hidden>
+        <ChevronDown size={16} />
+      </span>
+    </button>
+  );
+}
+
+/**
+ * SideMenuProgress — the onboarding block under the header (the frame's "Setup
+ * guide" row + "Next: Move your spend onto Ramp" sub-line + a green progress
+ * bar on a gray track).
+ *
+ * The bar is a real ARIA progressbar. Fill is `--rui-positive` (the verified
+ * constructive green) on a `--rui-bone` track — both tokens, no raw hex. The
+ * block is a link into onboarding (a <button>); the whole thing sits over a
+ * bone hairline like the header, so it reads as its own delimited section.
+ */
+export function SideMenuProgress({
+  title,
+  subtitle,
+  icon,
+  value,
+  onClick,
+  divider = true,
+  className,
+}: SideMenuProgressProps) {
+  // Clamp to a valid percentage — a caller passing 140 or -5 can't overrun the
+  // track or invert the fill.
+  const pct = Math.max(0, Math.min(100, value));
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        'gap-rui-1 rounded-square px-rui-2 py-rui-1 flex w-full flex-col',
+        'text-left transition-colors outline-none',
+        'hover:bg-limestone cursor-pointer',
+        'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
+        divider && 'border-bone pb-rui-2 mb-rui-1 border-b',
+        className,
+      )}
+    >
+      <span className="gap-rui-2 text-sm font-body text-ink flex items-center">
+        {icon && (
+          <span className="text-hushed flex-shrink-0" aria-hidden>
+            {icon}
+          </span>
+        )}
+        <span className="truncate">{title}</span>
+      </span>
+      {subtitle && <span className="text-xs font-body text-hushed truncate">{subtitle}</span>}
+      <span
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        // Track: bone, the neutral rail. Full-width, thin, pill-capped ends.
+        className="bg-bone rounded-pill mt-rui-1 h-1 w-full overflow-hidden"
+      >
+        {/* Fill: positive green (verified constructive token), width = completion. */}
+        <span className="bg-positive rounded-pill block h-full" style={{ width: `${pct}%` }} />
+      </span>
+    </button>
+  );
+}
+
+/**
+ * SideMenuGroup — a cluster of items delimited by a bone hairline beneath it.
+ * The updated nav borders BETWEEN every group (Home/Insights · Manage
+ * spend…Financial accounts · Accounting…Company), so groups are
+ * self-delimiting rather than sharing one divider. The last group passes
+ * `divider={false}` so the list doesn't end on a rule.
+ *
+ * Renders a plain <li> that itself contains a nested <ul> of items — the group
+ * is a list of lists, which keeps the outer list semantics intact while giving
+ * each section its own border box.
+ */
+export function SideMenuGroup({ children, divider = true, className }: SideMenuGroupProps) {
+  return (
+    <li className={clsx(divider && 'border-bone pb-rui-2 mb-rui-2 border-b', className)}>
+      <ul className="gap-0.5 flex flex-col">{children}</ul>
+    </li>
+  );
+}
+
 export interface SideMenuActionProps extends PropsWithChildren {
   /** Leading glyph — the product shows a spark; rendered in hushed (vetted). */
   icon?: ReactNode;
   onClick?: () => void;
   /**
-   * External destination — renders an <a> (new tab, rel noreferrer) instead
-   * of a <button>. Ours points at https://www.diegodiaz.dev/.
+   * Destination — renders an <a> instead of a <button>. An EXTERNAL href
+   * (http[s]:// or protocol-relative) opens in a new tab with no referrer
+   * (the "About DD" → diegodiaz.dev showcase); an INTERNAL href (e.g.
+   * "/design-system", the app-shell's Storybook embed) navigates in place so
+   * the surrounding layout persists.
    */
   href?: string;
   className?: string;
 }
 
+/** An href that leaves the app (absolute http[s] or protocol-relative). */
+function isExternalHref(href: string): boolean {
+  return /^(https?:)?\/\//.test(href);
+}
+
 /**
  * SideMenuAction — the footer-slot action (the slot the product fills with
- * "Ask Ramp"; this system fills it with "About DD" → diegodiaz.dev).
+ * "Ask Ramp"; this system fills it with "About DD" → diegodiaz.dev, or, in the
+ * app shell, "Go to Design System" → /design-system).
  *
  * NOT a nav item: it lives outside the <ul> (no li), acts (or links out)
  * rather than navigating the app, and its colors differ from items — VETTED
@@ -250,13 +434,14 @@ export interface SideMenuActionProps extends PropsWithChildren {
  */
 export function SideMenuAction({ children, icon, onClick, href, className }: SideMenuActionProps) {
   const Component = href ? 'a' : 'button';
+  // Only external links open a new tab; an internal route navigates in place.
+  const external = href ? isExternalHref(href) : false;
   return (
     <Component
       type={href ? undefined : 'button'}
       href={href}
-      // External by nature (the footer links out of the app): new tab, no referrer.
-      target={href ? '_blank' : undefined}
-      rel={href ? 'noreferrer' : undefined}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noreferrer' : undefined}
       onClick={onClick}
       className={clsx(
         'gap-rui-2 rounded-square px-rui-3 py-rui-2 flex w-full items-center',

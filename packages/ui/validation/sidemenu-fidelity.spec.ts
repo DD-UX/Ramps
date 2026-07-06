@@ -369,6 +369,107 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
   });
 
   /**
+   * UPDATED NAV — the richer chrome from
+   * does-ramp-live-up-to-the-hype…/04-processing-invoice-skeleton-row.jpeg:
+   * a workspace header, a setup-guide progress block, bordered groups, and a
+   * nested "Bills" under the active "Bill Pay". These vet the new
+   * SideMenuHeader / SideMenuProgress / SideMenuGroup sub-components and the
+   * nested SideMenuItem against that crop.
+   */
+  test('Updated nav: header shows the workspace name + chevron over a bone hairline', async ({
+    page,
+  }) => {
+    await page.goto(storyUrl('primitives-sidemenu--updated-nav'));
+    const header = page.getByRole('button', { name: /Clara Media LLC/ });
+    await expect(header).toBeVisible();
+    // The switcher chevron is present (an aria-hidden glyph after the label).
+    const chevron = header.locator('span[aria-hidden] svg').last();
+    await expect(chevron).toBeVisible();
+    // Bone hairline beneath the band (the frame's border under the header).
+    const border = await header.evaluate((el) => ({
+      color: getComputedStyle(el).borderBottomColor,
+      width: Number.parseFloat(getComputedStyle(el).borderBottomWidth),
+    }));
+    expect(border.color, 'header underline is bone').toBe(hexToRgb(RUI['--rui-bone']));
+    expect(border.width, 'header underline is a hairline').toBeGreaterThan(0);
+  });
+
+  /**
+   * Setup-guide progress block: the fill is the POSITIVE green (verified
+   * constructive token) on a BONE track, and the ARIA progressbar carries the
+   * completion value (30% in the story).
+   */
+  test('Updated nav: setup-guide bar fills positive green on a bone track', async ({ page }) => {
+    await page.goto(storyUrl('primitives-sidemenu--updated-nav'));
+    const bar = page.locator('[role="progressbar"]').first();
+    await expect(bar).toBeVisible();
+    await expect(bar, 'progressbar reports the completion value').toHaveAttribute(
+      'aria-valuenow',
+      '30',
+    );
+    const track = await bar.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(track, 'progress track is bone').toBe(hexToRgb(RUI['--rui-bone']));
+    const fill = bar.locator('span').first();
+    const fillColor = await fill.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(fillColor, 'progress fill is positive green').toBe(hexToRgb(RUI['--rui-positive']));
+  });
+
+  /**
+   * Bordered groups: the item clusters are delimited by bone hairlines BETWEEN
+   * groups (not one shared divider), so at least one group <li> carries a
+   * bottom border in the bone family.
+   */
+  test('Updated nav: groups are delimited by bone hairlines', async ({ page }) => {
+    await page.goto(storyUrl('primitives-sidemenu--updated-nav'));
+    const bordered = page
+      .locator('nav > ul > li')
+      .filter({ has: page.locator('ul') })
+      .first();
+    await expect(bordered).toBeVisible();
+    const border = await bordered.evaluate((el) => ({
+      color: getComputedStyle(el).borderBottomColor,
+      width: Number.parseFloat(getComputedStyle(el).borderBottomWidth),
+    }));
+    expect(border.color, 'group border is bone').toBe(hexToRgb(RUI['--rui-bone']));
+    expect(border.width, 'group border is a hairline').toBeGreaterThan(0);
+  });
+
+  /**
+   * Nested sub-item: "Bills" sits under the active "Bill Pay", indented past
+   * the parent's icon so its label aligns under the parent LABEL (its left edge
+   * is to the right of a top-level item's label).
+   */
+  test('Updated nav: nested "Bills" is indented under "Bill Pay"', async ({ page }) => {
+    await page.goto(storyUrl('primitives-sidemenu--updated-nav'));
+    const nested = page.locator('nav li a, nav li button').filter({ hasText: 'Bills' }).first();
+    const parent = page.locator('nav li a, nav li button').filter({ hasText: 'Bill Pay' }).first();
+    await expect(nested).toBeVisible();
+    await expect(parent).toBeVisible();
+    const [nestedPad, parentPad] = await Promise.all([
+      nested.evaluate((el) => Number.parseFloat(getComputedStyle(el).paddingLeft)),
+      parent.evaluate((el) => Number.parseFloat(getComputedStyle(el).paddingLeft)),
+    ]);
+    expect(nestedPad, 'nested item is indented past the parent').toBeGreaterThan(parentPad);
+  });
+
+  /**
+   * Design-system footer variant: the app-shell band links INTERNALLY to
+   * /design-system (in-place, no new tab) — distinct from the external
+   * "About DD" showcase — so the surrounding layout persists.
+   */
+  test('Design-system footer links internally to /design-system (in-place)', async ({ page }) => {
+    await page.goto(storyUrl('primitives-sidemenu--design-system-footer'));
+    const action = page.getByRole('link', { name: 'Go to Design System' });
+    await expect(action).toBeVisible();
+    await expect(action, 'points at the in-app design system').toHaveAttribute(
+      'href',
+      '/design-system',
+    );
+    // Internal → NOT a new tab (that's the external "About DD" behavior).
+    expect(await action.getAttribute('target'), 'internal link stays in place').toBeNull();
+  });
+
+  /**
    * Interactive onClick story logs to console — verify the click handler is wired.
    */
   test('Interactive story fires onClick handlers', async ({ page }) => {

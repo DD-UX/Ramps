@@ -1,21 +1,35 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
+  ArrowRight,
   BookOpen,
   Building,
+  CircleDot,
   CreditCard,
   FileStack,
   FileText,
   Home,
+  Landmark,
   Plane,
   Receipt,
+  Rocket,
+  SlidersHorizontal,
   Sparkles,
+  Store,
   TrendingUp,
   Users,
   Wallet,
 } from 'lucide-react';
 
 import { Logo } from '../Logo/Logo';
-import { SideMenu, SideMenuAction, SideMenuDivider, SideMenuItem } from './SideMenu';
+import {
+  SideMenu,
+  SideMenuAction,
+  SideMenuDivider,
+  SideMenuGroup,
+  SideMenuHeader,
+  SideMenuItem,
+  SideMenuProgress,
+} from './SideMenu';
 
 const meta = {
   title: 'Primitives/SideMenu',
@@ -90,6 +104,93 @@ export const RampBillPayReplica: Story = {
       <SideMenuItem icon={<FileStack size={16} />}>Policy</SideMenuItem>
       <SideMenuItem icon={<Building size={16} />} badge={1}>
         Company
+      </SideMenuItem>
+    </SideMenu>
+  ),
+};
+
+/**
+ * Updated nav — the newer product shell from
+ * does-ramp-live-up-to-the-hype…/04-processing-invoice-skeleton-row.jpeg.
+ *
+ * Everything the replica has, plus the frame's richer chrome vetted from that
+ * crop: a workspace HEADER (a mark + "Clara Media LLC" + a chevron switcher,
+ * over a bone hairline), a SETUP-GUIDE progress block ("Next: Move your spend
+ * onto Ramp" with a ~30% green bar), the items split into bordered GROUPS
+ * (Home/Insights · Manage spend…Financial accounts · Accounting…Company), and
+ * a NESTED "Bills" (badge 1) tucked under the active "Bill Pay". The footer is
+ * still the primitive's "About DD" showcase — the APP shell (CommonSideMenu)
+ * is where that band becomes "Go to Design System".
+ */
+export const UpdatedNav: Story = {
+  render: () => (
+    <SideMenu
+      aria-label="Bill Pay navigation"
+      header={
+        <>
+          <SideMenuHeader icon={<CircleDot size={16} />}>Clara Media LLC</SideMenuHeader>
+          <SideMenuProgress
+            icon={<Rocket size={16} />}
+            title="Setup guide"
+            subtitle="Next: Move your spend onto Ramp"
+            value={30}
+          />
+        </>
+      }
+      footer={
+        <SideMenuAction icon={<Sparkles size={16} />} href="https://www.diegodiaz.dev/">
+          About DD
+        </SideMenuAction>
+      }
+    >
+      <SideMenuGroup>
+        <SideMenuItem icon={<Home size={16} />} badge={2}>
+          Home
+        </SideMenuItem>
+        <SideMenuItem icon={<TrendingUp size={16} />}>Insights</SideMenuItem>
+      </SideMenuGroup>
+      <SideMenuGroup>
+        <SideMenuItem icon={<Wallet size={16} />}>Manage spend</SideMenuItem>
+        <SideMenuItem icon={<Receipt size={16} />}>Expenses</SideMenuItem>
+        <SideMenuItem icon={<Plane size={16} />}>Travel</SideMenuItem>
+        <SideMenuItem icon={<FileText size={16} />} active>
+          Bill Pay
+        </SideMenuItem>
+        <SideMenuItem nested badge={1}>
+          Bills
+        </SideMenuItem>
+        <SideMenuItem icon={<Landmark size={16} />}>Financial accounts</SideMenuItem>
+      </SideMenuGroup>
+      <SideMenuGroup divider={false}>
+        <SideMenuItem icon={<BookOpen size={16} />}>Accounting</SideMenuItem>
+        <SideMenuItem icon={<Store size={16} />}>Vendors</SideMenuItem>
+        <SideMenuItem icon={<SlidersHorizontal size={16} />}>Policy</SideMenuItem>
+        <SideMenuItem icon={<Building size={16} />}>Company</SideMenuItem>
+      </SideMenuGroup>
+    </SideMenu>
+  ),
+};
+
+/**
+ * Design-system footer — the APP-shell variant where the pinned band links
+ * INTERNALLY to `/design-system` (the in-app Storybook embed) with a trailing
+ * arrow, instead of the primitive showcase's external "About DD". Same slot,
+ * same treatment; the destination and glyph are the difference.
+ */
+export const DesignSystemFooter: Story = {
+  render: () => (
+    <SideMenu
+      aria-label="Bill Pay navigation"
+      header={<SideMenuHeader icon={<CircleDot size={16} />}>Clara Media LLC</SideMenuHeader>}
+      footer={
+        <SideMenuAction icon={<ArrowRight size={16} />} href="/design-system">
+          Go to Design System
+        </SideMenuAction>
+      }
+    >
+      <SideMenuItem icon={<Home size={16} />}>Home</SideMenuItem>
+      <SideMenuItem icon={<FileText size={16} />} active>
+        Bill Pay
       </SideMenuItem>
     </SideMenu>
   ),
