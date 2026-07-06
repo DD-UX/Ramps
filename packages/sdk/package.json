@@ -16,6 +16,10 @@
     "./bills": {
       "types": "./dist/bills.d.ts",
       "import": "./dist/bills.js"
+    },
+    "./bill-tabs": {
+      "types": "./dist/bill-tabs.d.ts",
+      "import": "./dist/bill-tabs.js"
     }
   },
   "files": [
