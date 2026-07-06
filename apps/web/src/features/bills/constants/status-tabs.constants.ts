@@ -1,88 +1,70 @@
+import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillStatusType } from '@ramps/schemas/bills';
 
 /**
- * The Bill Pay tab bar — the five product categories, not one-tab-per-status.
+ * Bill Pay tab helpers — the tab bar is DATA now, not a hardcoded list.
  *
- * Ramp's IA groups the nine lifecycle states into five buckets (see the
- * product-overview frames): Overview | Drafts | For approval | For payment |
- * History. Each tab therefore owns an ARRAY of statuses, and the table filters
- * with `status IN (…)`. Overview is the unfiltered view — its `statuses` is
- * empty, meaning "no filter, show everything".
+ * The five product categories (Overview | Drafts | For approval | For payment |
+ * History) live in the `bill_tabs` lookup table and arrive as `BillTabType[]`
+ * rows (via `listBillTabs`). This module is the thin logic over those rows: how
+ * a `?tab=` code resolves to a row, which status group a tab filters by, and
+ * how the per-status counts roll up into a tab's badge. No tab list lives here
+ * — change the tabs in the DB, not the code.
  *
- * `value` doubles as the `?tab=` query param, so switching tabs is a
- * navigation the Server Component re-queries against (ANALYSIS §1 — the IA
- * mirrors the state machine, here rolled up to the buckets the product shows).
- *
- * Deliberate gap: `rejected` and `archived` belong to no named tab and only
- * surface under Overview. History is `paid` only — the terminal-but-not-paid
- * states are not "history" in the product's sense.
+ * `code` is the row's URL-safe slug; it doubles as the `?tab=` query param, so
+ * switching tabs is a navigation the Server Component re-queries against.
  */
 
-/** A tab's query value — the category key, `'overview'` being the unfiltered view. */
-export type BillTabValueType = 'overview' | 'drafts' | 'for_approval' | 'for_payment' | 'history';
+/** The default tab's code — the unfiltered Overview view (a bad/absent `?tab=` lands here). */
+export const DEFAULT_TAB_CODE = 'overview';
 
-export interface BillTabType {
-  value: BillTabValueType;
-  label: string;
-  /** The lifecycle states this tab rolls up. Empty = unfiltered (Overview). */
-  statuses: readonly BillStatusType[];
+/**
+ * Index the tab rows by `code` for O(1) lookup (AGENTS.md: key-based lookups
+ * use a Map, never a per-lookup array scan). Build this once per request from
+ * the rows the page fetched, then pass it to the helpers below.
+ */
+export function tabsByCode(tabs: readonly BillTabType[]): ReadonlyMap<string, BillTabType> {
+  return new Map(tabs.map((tab) => [tab.code, tab]));
 }
 
-export const BILL_TABS: readonly BillTabType[] = [
-  { value: 'overview', label: 'Overview', statuses: [] },
-  { value: 'drafts', label: 'Drafts', statuses: ['draft', 'missing_info'] },
-  { value: 'for_approval', label: 'For approval', statuses: ['awaiting_approval'] },
-  {
-    value: 'for_payment',
-    label: 'For payment',
-    statuses: ['approved', 'scheduled', 'partially_paid'],
-  },
-  { value: 'history', label: 'History', statuses: ['paid'] },
-] as const;
-
 /**
- * Tab-by-value lookup — the single dictionary other code reads. Keyed by the
- * `?tab=` value so lookups resolve in O(1) instead of scanning the array on
- * every request (AGENTS.md: key-based lookups use a Map).
+ * Resolve a raw `?tab=` code to a real tab row. Anything unknown (missing,
+ * garbage, an old `?status=` value) falls back to the default tab — Overview,
+ * the unfiltered view — so a hand-typed URL can never 500. Falls back to the
+ * first row if no `overview` code exists (defensive; the seed always has one).
  */
-export const BILL_TAB_BY_VALUE: ReadonlyMap<BillTabValueType, BillTabType> = new Map(
-  BILL_TABS.map((tab) => [tab.value, tab]),
-);
-
-/**
- * Narrow an arbitrary `?tab=` string to a real tab value. Anything unknown
- * (missing, garbage, an old `?status=` value) falls back to `'overview'` — the
- * unfiltered view — so a hand-typed URL can never 500.
- */
-export function parseTabParam(raw: string | undefined): BillTabValueType {
-  if (raw && BILL_TAB_BY_VALUE.has(raw as BillTabValueType)) {
-    return raw as BillTabValueType;
+export function resolveTab(tabs: readonly BillTabType[], rawCode: string | undefined): BillTabType {
+  const byCode = tabsByCode(tabs);
+  if (rawCode) {
+    const match = byCode.get(rawCode);
+    if (match) return match;
   }
-  return 'overview';
+  const fallback = byCode.get(DEFAULT_TAB_CODE) ?? tabs[0];
+  // The seed always ships an Overview row; an empty catalog is a broken deploy,
+  // not a user path — fail loudly rather than hand back `undefined`.
+  if (!fallback) throw new Error('bill_tabs catalog is empty — no tab to resolve');
+  return fallback;
 }
 
 /**
  * The status filter for a tab — the array the facade passes to `status IN (…)`.
- * Overview returns `[]`, which the facade reads as "no filter".
+ * An empty group (Overview) reads as "no filter".
  */
-export function statusesForTab(value: BillTabValueType): readonly BillStatusType[] {
-  return BILL_TAB_BY_VALUE.get(value)?.statuses ?? [];
+export function statusesForTab(tab: BillTabType): readonly BillStatusType[] {
+  return tab.statuses;
 }
 
 /**
- * The count badge for a tab — the sum of its grouped states. Overview is the
- * grand total across every state (including the rejected/archived tail that no
- * other tab shows), so it counts the whole map rather than a group.
+ * The count badge for a tab — the sum of its grouped states. A tab with an
+ * empty group (Overview) is the grand total across every state, including the
+ * rejected/archived tail no other tab shows, so it counts the whole map.
  */
 export function countForTab(
-  value: BillTabValueType,
+  tab: BillTabType,
   countsByStatus: Partial<Record<BillStatusType, number>>,
 ): number {
-  if (value === 'overview') {
+  if (tab.statuses.length === 0) {
     return Object.values(countsByStatus).reduce<number>((sum, n) => sum + (n ?? 0), 0);
   }
-  return statusesForTab(value).reduce<number>(
-    (sum, status) => sum + (countsByStatus[status] ?? 0),
-    0,
-  );
+  return tab.statuses.reduce<number>((sum, status) => sum + (countsByStatus[status] ?? 0), 0);
 }

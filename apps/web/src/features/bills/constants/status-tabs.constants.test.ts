@@ -1,31 +1,73 @@
+import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillStatusType } from '@ramps/schemas/bills';
 import { describe, expect, it } from 'vitest';
 
-import { BILL_TABS, countForTab, parseTabParam, statusesForTab } from './status-tabs.constants';
+import { countForTab, resolveTab, statusesForTab } from './status-tabs.constants';
 
 /**
- * parseTabParam hardens the `?tab=` query param before it selects a category.
- * Anything that isn't one of the five tabs must fall back to Overview so a
- * hand-typed URL (or a stale `?status=` link) can never 500.
+ * The tab bar is data now: these helpers operate on the `bill_tabs` rows the
+ * page fetched, not a hardcoded list. The fixture mirrors the seeded catalog
+ * (Overview unfiltered; the rest rolling up their status groups).
  */
-describe('parseTabParam', () => {
-  it('passes a real tab value through', () => {
-    expect(parseTabParam('drafts')).toBe('drafts');
-    expect(parseTabParam('for_payment')).toBe('for_payment');
-    expect(parseTabParam('history')).toBe('history');
+const TABS: BillTabType[] = [
+  { id: '1', name: 'Overview', code: 'overview', statuses: [], sort_order: 0, created_by: null },
+  {
+    id: '2',
+    name: 'Drafts',
+    code: 'drafts',
+    statuses: ['draft', 'missing_info'],
+    sort_order: 1,
+    created_by: null,
+  },
+  {
+    id: '3',
+    name: 'For approval',
+    code: 'for_approval',
+    statuses: ['awaiting_approval'],
+    sort_order: 2,
+    created_by: null,
+  },
+  {
+    id: '4',
+    name: 'For payment',
+    code: 'for_payment',
+    statuses: ['approved', 'scheduled', 'partially_paid'],
+    sort_order: 3,
+    created_by: null,
+  },
+  {
+    id: '5',
+    name: 'History',
+    code: 'history',
+    statuses: ['paid'],
+    sort_order: 4,
+    created_by: null,
+  },
+];
+
+/**
+ * resolveTab hardens the `?tab=` code before it selects a category. Anything
+ * that isn't a real tab code must fall back to Overview so a hand-typed URL (or
+ * a stale `?status=` link) can never 500.
+ */
+describe('resolveTab', () => {
+  it('resolves a real tab code to its row', () => {
+    expect(resolveTab(TABS, 'drafts').code).toBe('drafts');
+    expect(resolveTab(TABS, 'for_payment').code).toBe('for_payment');
+    expect(resolveTab(TABS, 'history').code).toBe('history');
   });
 
-  it('falls back to overview for missing / unknown / stale values', () => {
-    expect(parseTabParam(undefined)).toBe('overview');
-    expect(parseTabParam('')).toBe('overview');
-    expect(parseTabParam('garbage')).toBe('overview');
-    expect(parseTabParam('paid')).toBe('overview'); // an old ?status= value is not a tab
-    expect(parseTabParam('DRAFTS')).toBe('overview'); // case-sensitive
+  it('falls back to overview for missing / unknown / stale codes', () => {
+    expect(resolveTab(TABS, undefined).code).toBe('overview');
+    expect(resolveTab(TABS, '').code).toBe('overview');
+    expect(resolveTab(TABS, 'garbage').code).toBe('overview');
+    expect(resolveTab(TABS, 'paid').code).toBe('overview'); // an old ?status= value is not a tab
+    expect(resolveTab(TABS, 'DRAFTS').code).toBe('overview'); // case-sensitive
   });
 
-  it('accepts every tab value it advertises', () => {
-    for (const tab of BILL_TABS) {
-      expect(parseTabParam(tab.value)).toBe(tab.value);
+  it('resolves every code the catalog advertises', () => {
+    for (const tab of TABS) {
+      expect(resolveTab(TABS, tab.code).code).toBe(tab.code);
     }
   });
 });
@@ -35,30 +77,37 @@ describe('parseTabParam', () => {
  * (empty group); the others roll up the product's buckets exactly.
  */
 describe('statusesForTab', () => {
+  const byCode = (code: string) => resolveTab(TABS, code);
+
   it('returns an empty group for overview (unfiltered)', () => {
-    expect(statusesForTab('overview')).toEqual([]);
+    expect(statusesForTab(byCode('overview'))).toEqual([]);
   });
 
   it('groups drafts as draft + missing_info', () => {
-    expect(statusesForTab('drafts')).toEqual(['draft', 'missing_info']);
+    expect(statusesForTab(byCode('drafts'))).toEqual(['draft', 'missing_info']);
   });
 
   it('groups for_payment as approved + scheduled + partially_paid', () => {
-    expect(statusesForTab('for_payment')).toEqual(['approved', 'scheduled', 'partially_paid']);
+    expect(statusesForTab(byCode('for_payment'))).toEqual([
+      'approved',
+      'scheduled',
+      'partially_paid',
+    ]);
   });
 
   it('maps for_approval and history to their single states', () => {
-    expect(statusesForTab('for_approval')).toEqual(['awaiting_approval']);
-    expect(statusesForTab('history')).toEqual(['paid']);
+    expect(statusesForTab(byCode('for_approval'))).toEqual(['awaiting_approval']);
+    expect(statusesForTab(byCode('history'))).toEqual(['paid']);
   });
 });
 
 /**
  * countForTab rolls the nine per-status counts up into a tab badge. Overview
- * is the grand total (including the rejected/archived tail no tab shows); the
- * rest sum only their group.
+ * (empty group) is the grand total, including the rejected/archived tail no tab
+ * shows; the rest sum only their group.
  */
 describe('countForTab', () => {
+  const byCode = (code: string) => resolveTab(TABS, code);
   const counts: Partial<Record<BillStatusType, number>> = {
     draft: 2,
     missing_info: 1,
@@ -72,18 +121,18 @@ describe('countForTab', () => {
   };
 
   it('sums a group', () => {
-    expect(countForTab('drafts', counts)).toBe(3); // 2 + 1
-    expect(countForTab('for_payment', counts)).toBe(4); // 1 + 2 + 1
-    expect(countForTab('for_approval', counts)).toBe(3);
-    expect(countForTab('history', counts)).toBe(4);
+    expect(countForTab(byCode('drafts'), counts)).toBe(3); // 2 + 1
+    expect(countForTab(byCode('for_payment'), counts)).toBe(4); // 1 + 2 + 1
+    expect(countForTab(byCode('for_approval'), counts)).toBe(3);
+    expect(countForTab(byCode('history'), counts)).toBe(4);
   });
 
   it('overview totals every state, including rejected/archived', () => {
-    expect(countForTab('overview', counts)).toBe(16); // sum of all nine
+    expect(countForTab(byCode('overview'), counts)).toBe(16); // sum of all nine
   });
 
   it('treats a missing state as zero', () => {
-    expect(countForTab('drafts', {})).toBe(0);
-    expect(countForTab('overview', {})).toBe(0);
+    expect(countForTab(byCode('drafts'), {})).toBe(0);
+    expect(countForTab(byCode('overview'), {})).toBe(0);
   });
 });
