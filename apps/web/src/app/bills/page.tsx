@@ -4,6 +4,7 @@ import { createServerSupabase } from '@ramps/sdk/server';
 import { BillsPageContent } from '@/features/bills/components/BillsPageContent';
 import { getBillTabs } from '@/features/bills/data/bill-tabs.data';
 import { resolveTab, statusesForTab } from '@/features/bills/helpers/bill-tabs.helpers';
+import { normalizeSearchParam } from '@/features/bills/helpers/search-query.helpers';
 
 /**
  * /bills — Bill Pay, the product's spine.
@@ -22,13 +23,17 @@ import { resolveTab, statusesForTab } from '@/features/bills/helpers/bill-tabs.h
  * back to the first tab (the catalog's own default by `sort_order`), so a
  * hand-typed URL can't 500. The resolved tab maps to a status GROUP
  * (`statusesForTab`) that the facade filters with `status IN (…)`.
+ *
+ * The toolbar's search is the other URL-state control: `?q=` flows into
+ * `listBills({ search })` (a `col ILIKE …` across the bill's own columns), so a
+ * search is re-run server-side and stays shareable — same shape as the tabs.
  */
 export default async function BillsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string }>;
 }) {
-  const { tab: rawTab } = await searchParams;
+  const { tab: rawTab, q: rawSearch } = await searchParams;
 
   const supabase = createServerSupabase();
 
@@ -37,7 +42,11 @@ export default async function BillsPage({
   const [tabs, countsByStatus] = await Promise.all([getBillTabs(), countBillsByStatus(supabase)]);
 
   const activeTab = resolveTab(tabs, rawTab);
-  const { bills, total } = await listBills(supabase, { statuses: statusesForTab(activeTab) });
+  const search = normalizeSearchParam(rawSearch);
+  const { bills, total } = await listBills(supabase, {
+    statuses: statusesForTab(activeTab),
+    search,
+  });
 
   return (
     <BillsPageContent
@@ -46,6 +55,7 @@ export default async function BillsPage({
       tabs={tabs}
       activeCode={activeTab.code}
       countsByStatus={countsByStatus}
+      search={search ?? null}
     />
   );
 }

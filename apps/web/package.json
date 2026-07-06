@@ -5,7 +5,7 @@
   "description": "Next.js (App Router) app — the payables product surface.",
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "pnpm --filter @ramps/ui build && next dev --port 3000",
     "build:storybook": "pnpm --filter @ramps/ui exec storybook build --output-dir ../../apps/web/public/storybook",
     "prebuild": "pnpm build:storybook",
     "build": "next build",

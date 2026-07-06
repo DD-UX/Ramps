@@ -440,12 +440,12 @@ export function Table<T, K extends string | number = string>({
     >
       <div
         ref={scrollRef}
-        className="relative overflow-auto"
+        className="relative h-full overflow-auto"
         style={{ maxHeight: isVirtualized ? '600px' : undefined }}
       >
         {/* border-separate + per-cell borders: sticky cells carry their own
             hairlines (border-collapse borders stay behind and paint seams). */}
-        <table className="border-spacing-0 text-sm w-full border-separate">
+        <table className="border-spacing-0 text-sm h-full w-full border-separate">
           <thead className="top-0 bg-white sticky z-20">
             <tr>
               {selectable && (
@@ -604,7 +604,7 @@ export function Table<T, K extends string | number = string>({
           {footer.type !== 'none' && (
             <tfoot
               className={cn(
-                'bottom-0 sticky z-20',
+                'bottom-0 h-12 sticky z-20',
                 // The pagination band sits on CANVAS (#fbfaf6 sampled at 1px
                 // on frame 6 y634/640) — the other footer kinds stay on the
                 // white table surface.

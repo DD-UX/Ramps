@@ -105,6 +105,7 @@ export function BillsTable({ bills, total }: BillsTableProps) {
         noun: 'bills',
         totalCents,
       }}
+      className="h-full"
     />
   );
 }

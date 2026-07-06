@@ -1,9 +1,10 @@
 import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
 
-import { countForTab } from '../helpers/bill-tabs.helpers';
+import { buildTabCounts } from '../helpers/bill-tabs.helpers';
 import { BillsTable } from './BillsTable';
 import { BillsTabs } from './BillsTabs';
+import { BillsToolbar } from './BillsToolbar';
 
 /**
  * BillsPageContent — the Bill Pay surface: the category tabs over the table.
@@ -21,9 +22,11 @@ export interface BillsPageContentProps {
   /** The tab catalog from the `bill_tabs` lookup, in display order. */
   tabs: BillTabType[];
   /** The active tab's `code` ('overview' when unfiltered). */
-  activeCode: string;
+  activeCode: BillTabType['code'];
   /** Per-state counts from the server, rolled up here into per-tab badges. */
   countsByStatus: Partial<Record<BillStatusType, number>>;
+  /** The `?q=` term the page loaded with — seeds the toolbar's search field. */
+  search: BillListItemType['invoice_number'];
 }
 
 export function BillsPageContent({
@@ -32,16 +35,18 @@ export function BillsPageContent({
   tabs,
   activeCode,
   countsByStatus,
+  search,
 }: BillsPageContentProps) {
   // Roll the per-status counts up into each tab's badge, keyed by tab code.
-  const tabCounts: Record<string, number> = Object.fromEntries(
-    tabs.map((tab) => [tab.code, countForTab(tab, countsByStatus)]),
-  );
+  const tabCounts = buildTabCounts(tabs, countsByStatus);
 
   return (
-    <div className="gap-rui-4 bg-white p-rui-6 flex flex-1 flex-col">
-      <h2 className="font-heading text-2xl text-ink">Bill Pay</h2>
-      <BillsTabs tabs={tabs} activeCode={activeCode} counts={tabCounts} />
+    <div className="bg-white flex flex-1 flex-col">
+      <div className="px-rui-6 pt-rui-6">
+        <h2 className="font-heading text-2xl text-ink">Bill Pay</h2>
+        <BillsTabs tabs={tabs} activeCode={activeCode} counts={tabCounts} />
+      </div>
+      <BillsToolbar initialSearch={search} />
       <BillsTable bills={bills} total={total} />
     </div>
   );

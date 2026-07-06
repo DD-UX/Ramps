@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Rocket } from '@ramps/ui/icons';
+import { Rocket } from '@ramps/ui/icons';
 import { Logo } from '@ramps/ui/Logo';
 import {
   SideMenu,
@@ -76,7 +76,7 @@ export function CommonSideMenu() {
         </>
       }
       footer={
-        <SideMenuAction icon={<ArrowRight width={16} height={16} />} href="/design-system">
+        <SideMenuAction icon={null} href="/design-system" className="h-8 px-0">
           Go to Design System
         </SideMenuAction>
       }

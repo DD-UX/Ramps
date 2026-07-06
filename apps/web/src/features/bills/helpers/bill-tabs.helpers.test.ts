@@ -2,7 +2,13 @@ import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillStatusType } from '@ramps/schemas/bills';
 import { describe, expect, it } from 'vitest';
 
-import { countForTab, resolveTab, statusesForTab } from './bill-tabs.helpers';
+import {
+  buildTabCounts,
+  countForTab,
+  resolveTab,
+  statusesForTab,
+  tabHref,
+} from './bill-tabs.helpers';
 
 /**
  * The tab bar is data: these helpers operate on the `bill_tabs` rows the page
@@ -146,5 +152,85 @@ describe('countForTab', () => {
   it('treats a missing state as zero', () => {
     expect(countForTab(byCode('drafts'), {})).toBe(0);
     expect(countForTab(byCode('overview'), {})).toBe(0);
+  });
+});
+
+/**
+ * buildTabCounts is the roll-up BillsPageContent used to do inline: one badge
+ * per tab, keyed by `code`. It's just countForTab across the catalog, so it
+ * inherits the same group/total rules — these lock the keying and the shape.
+ */
+describe('buildTabCounts', () => {
+  const counts: Partial<Record<BillStatusType, number>> = {
+    draft: 2,
+    missing_info: 1,
+    awaiting_approval: 3,
+    approved: 1,
+    scheduled: 2,
+    partially_paid: 1,
+    paid: 4,
+    rejected: 1,
+    archived: 1,
+  };
+
+  it('produces one entry per tab, keyed by code', () => {
+    const result = buildTabCounts(TABS, counts);
+    expect(Object.keys(result)).toEqual([
+      'overview',
+      'drafts',
+      'for_approval',
+      'for_payment',
+      'history',
+    ]);
+  });
+
+  it('matches countForTab for every tab (overview = grand total)', () => {
+    const result = buildTabCounts(TABS, counts);
+    expect(result.overview).toBe(16); // every state, incl. rejected/archived
+    expect(result.drafts).toBe(3); // 2 + 1
+    expect(result.for_approval).toBe(3);
+    expect(result.for_payment).toBe(4); // 1 + 2 + 1
+    expect(result.history).toBe(4);
+  });
+
+  it('is all zeros when no counts are supplied', () => {
+    const result = buildTabCounts(TABS, {});
+    expect(Object.values(result)).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  it('is an empty object for an empty catalog', () => {
+    expect(buildTabCounts([], counts)).toEqual({});
+  });
+});
+
+/**
+ * tabHref is the tab-switch navigation rule pulled out of BillsTabs. The whole
+ * point is that selecting the DEFAULT tab (the catalog's first row) drops the
+ * `?tab=` param instead of writing `?tab=<default>`, and every other tab gets
+ * an encoded `?tab=<code>`.
+ */
+describe('tabHref', () => {
+  it('drops the param when selecting the default (first) tab', () => {
+    expect(tabHref('/bills', 'overview', 'overview')).toBe('/bills');
+  });
+
+  it('writes ?tab=<code> for a non-default tab', () => {
+    expect(tabHref('/bills', 'drafts', 'overview')).toBe('/bills?tab=drafts');
+    expect(tabHref('/bills', 'for_payment', 'overview')).toBe('/bills?tab=for_payment');
+  });
+
+  it('encodes codes that need escaping', () => {
+    expect(tabHref('/bills', 'a b', 'overview')).toBe('/bills?tab=a%20b');
+    expect(tabHref('/bills', 'a&b', 'overview')).toBe('/bills?tab=a%26b');
+  });
+
+  it('respects whatever the default is — a reordered catalog moves the drop', () => {
+    // If 'history' is the first row, selecting it drops the param instead.
+    expect(tabHref('/bills', 'history', 'history')).toBe('/bills');
+    expect(tabHref('/bills', 'overview', 'history')).toBe('/bills?tab=overview');
+  });
+
+  it('never drops the param when there is no default (empty catalog)', () => {
+    expect(tabHref('/bills', 'drafts', undefined)).toBe('/bills?tab=drafts');
   });
 });

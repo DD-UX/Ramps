@@ -66,3 +66,34 @@ export function countForTab(
   }
   return tab.statuses.reduce<number>((sum, status) => sum + (countsByStatus[status] ?? 0), 0);
 }
+
+/**
+ * Roll the per-status counts up into one badge PER tab, keyed by tab `code` —
+ * the map the tab bar reads. Split out of BillsPageContent so the roll-up is
+ * unit-tested without a render: it's just `countForTab` applied across the
+ * catalog, but doing it inline made the component own logic it shouldn't.
+ */
+export function buildTabCounts(
+  tabs: readonly BillTabType[],
+  countsByStatus: Partial<Record<BillStatusType, number>>,
+): Record<BillTabType['code'], number> {
+  return Object.fromEntries(tabs.map((tab) => [tab.code, countForTab(tab, countsByStatus)]));
+}
+
+/**
+ * The href a tab switch navigates to. Selecting the DEFAULT tab (the catalog's
+ * first row) drops the `?tab=` param — landing on the bare pathname — rather
+ * than writing `?tab=<default>`; every other tab gets `?tab=<code>` (encoded).
+ *
+ * Split out of BillsTabs so the "default drops the param" rule is tested
+ * without a router. Note: this owns only the `?tab=` decision; it does not
+ * preserve other params (tab switches intentionally reset the search — the
+ * page re-queries the new category fresh).
+ */
+export function tabHref(
+  pathname: string,
+  code: BillTabType['code'],
+  defaultCode: BillTabType['code'] | undefined,
+): string {
+  return code === defaultCode ? pathname : `${pathname}?tab=${encodeURIComponent(code)}`;
+}

@@ -5,6 +5,8 @@ import { Tabs } from '@ramps/ui/Tabs';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
+import { tabHref } from '../helpers/bill-tabs.helpers';
+
 /**
  * BillsTabs — the category tabs over the Bill Pay table, driven by the
  * `bill_tabs` lookup (Overview | Drafts | For approval | For payment | History,
@@ -23,9 +25,9 @@ export interface BillsTabsProps {
   /** The tab catalog from the `bill_tabs` lookup, in display order. */
   tabs: BillTabType[];
   /** The active tab's `code` ('overview' when unfiltered). */
-  activeCode: string;
+  activeCode: BillTabType['code'];
   /** Per-tab row counts, keyed by tab `code`, for the count badges. */
-  counts?: Record<string, number>;
+  counts?: Record<BillTabType['code'], number>;
 }
 
 export function BillsTabs({ tabs, activeCode, counts }: BillsTabsProps) {
@@ -38,8 +40,7 @@ export function BillsTabs({ tabs, activeCode, counts }: BillsTabsProps) {
 
   const onValueChange = useCallback(
     (next: string) => {
-      const href = next === defaultCode ? pathname : `${pathname}?tab=${encodeURIComponent(next)}`;
-      router.push(href);
+      router.push(tabHref(pathname, next, defaultCode));
     },
     [router, pathname, defaultCode],
   );
