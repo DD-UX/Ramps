@@ -4,6 +4,8 @@ import type { PropsWithChildren, ReactNode } from 'react';
 
 import { Badge } from '../Badge/Badge';
 
+const ACTIVE_ITEM_CLASS = 'bg-stone text-ink hover:bg-stone';
+
 /**
  * SideMenu — the product's left navigation (the persistent vertical sidebar).
  *
@@ -91,12 +93,6 @@ export interface SideMenuItemProps extends PropsWithChildren {
   badge?: number;
   /** Active state — highlights the item with stone background and ink text. */
   active?: boolean;
-  /**
-   * Nested sub-item — the indented child under a parent section (the updated
-   * nav shows "Bills" tucked under the active "Bill Pay"). Drops the icon slot
-   * and indents the label so it aligns under the parent's label, not its icon.
-   */
-  nested?: boolean;
   /** Click handler for navigation (wire your router here). */
   onClick?: () => void;
   /** Href for native anchor behavior (alternative to onClick for link-based routing). */
@@ -133,16 +129,6 @@ export interface SideMenuProgressProps {
   /** Fires when the row is activated (the block is a link into onboarding). */
   onClick?: () => void;
   /** Bone hairline beneath the block (the frame's border under the setup row). */
-  divider?: boolean;
-  className?: string;
-}
-
-export interface SideMenuGroupProps extends PropsWithChildren {
-  /**
-   * Draw the hairline beneath the group. The updated nav borders BETWEEN every
-   * group (not one divider), so groups are self-delimiting; the last group
-   * passes `divider={false}` so the list doesn't end on a rule.
-   */
   divider?: boolean;
   className?: string;
 }
@@ -184,7 +170,9 @@ export function SideMenu({
         // controls line up with the list below; a bare Logo just sits in it.
         <div className="gap-rui-1 px-rui-2 pt-rui-3 flex flex-shrink-0 flex-col">{header}</div>
       )}
-      <ul className="min-h-0 gap-0.5 p-rui-2 flex flex-1 flex-col overflow-auto">{children}</ul>
+      {/* gap-rui-2 between entries keeps the items breathing without butting up
+          against each other or a section divider. */}
+      <ul className="min-h-0 gap-rui-2 p-rui-2 flex flex-1 flex-col overflow-auto">{children}</ul>
       {footer !== undefined && (
         // Pinned bottom band (product-overview/01: Ask Ramp at y604-614, on
         // the same limestone — no divider or tint separates it in the frame).
@@ -205,7 +193,6 @@ export function SideMenuItem({
   icon,
   badge,
   active = false,
-  nested = false,
   onClick,
   href,
   className,
@@ -214,7 +201,7 @@ export function SideMenuItem({
 
   const content = (
     <>
-      {icon && !nested && (
+      {icon && (
         <span className="flex-shrink-0 text-current" aria-hidden>
           {icon}
         </span>
@@ -245,16 +232,12 @@ export function SideMenuItem({
         href={href}
         aria-current={active ? 'page' : undefined}
         className={clsx(
-          'gap-rui-2 rounded-square px-rui-3 py-rui-2 flex w-full items-center',
+          'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
           'transition-colors outline-none',
-          // Nested sub-item: indent the label so it lines up under the PARENT's
-          // label (past the icon + gap), matching the frame's "Bills" under
-          // "Bill Pay". The icon slot is dropped above; this reclaims its space.
-          nested && 'pl-9',
           // Active: stone background (vetted #e5e0dc) + ink text (vetted #0b0704–#2c2825).
           // Inactive: transparent + hushed text (vetted #6f6e6a).
           active
-            ? 'bg-stone text-ink hover:bg-stone'
+            ? ACTIVE_ITEM_CLASS
             : 'text-hushed hover:bg-limestone hover:text-ink bg-transparent',
           // Focus ring: accent lime, 2px offset (control-ring standard).
           'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
@@ -303,7 +286,7 @@ export function SideMenuHeader({
       onClick={onClick}
       className={clsx(
         'gap-rui-2 rounded-square px-rui-2 py-rui-1 flex w-full items-center',
-        'text-sm font-body text-ink transition-colors outline-none',
+        'text-sm font-body text-hushed transition-colors outline-none',
         'hover:bg-limestone cursor-pointer',
         'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
         divider && 'border-bone pb-rui-2 mb-rui-1 border-b',
@@ -382,25 +365,6 @@ export function SideMenuProgress({
   );
 }
 
-/**
- * SideMenuGroup — a cluster of items delimited by a bone hairline beneath it.
- * The updated nav borders BETWEEN every group (Home/Insights · Manage
- * spend…Financial accounts · Accounting…Company), so groups are
- * self-delimiting rather than sharing one divider. The last group passes
- * `divider={false}` so the list doesn't end on a rule.
- *
- * Renders a plain <li> that itself contains a nested <ul> of items — the group
- * is a list of lists, which keeps the outer list semantics intact while giving
- * each section its own border box.
- */
-export function SideMenuGroup({ children, divider = true, className }: SideMenuGroupProps) {
-  return (
-    <li className={clsx(divider && 'border-bone pb-rui-2 mb-rui-2 border-b', className)}>
-      <ul className="gap-0.5 flex flex-col">{children}</ul>
-    </li>
-  );
-}
-
 export interface SideMenuActionProps extends PropsWithChildren {
   /** Leading glyph — the product shows a spark; rendered in hushed (vetted). */
   icon?: ReactNode;
@@ -444,7 +408,7 @@ export function SideMenuAction({ children, icon, onClick, href, className }: Sid
       rel={external ? 'noreferrer' : undefined}
       onClick={onClick}
       className={clsx(
-        'gap-rui-2 rounded-square px-rui-3 py-rui-2 flex w-full items-center',
+        'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
         'text-sm font-body text-ink transition-colors outline-none',
         'hover:bg-limestone',
         'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',

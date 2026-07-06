@@ -133,16 +133,18 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
   });
 
   /**
-   * Menu items have 0px corners (rounded-square) — vetted across all frames.
+   * Menu items carry a softly-rounded (6px) corner — the row highlight reads as
+   * a pill-ish chip, not a hard square. The nav CONTAINER stays 0px (above);
+   * only the per-item hit target is rounded.
    */
-  test('Menu items have 0px corners (rounded-square)', async ({ page }) => {
+  test('Menu items have a 6px rounded corner', async ({ page }) => {
     await page.goto(storyUrl('primitives-sidemenu--ramp-bill-pay-replica'));
     const item = page.locator('nav li a, nav li button').first();
     await expect(item).toBeVisible();
     const radius = await item.evaluate((el) =>
       Number.parseFloat(getComputedStyle(el).borderTopLeftRadius),
     );
-    expect(radius, 'menu item corner is 0px').toBeLessThanOrEqual(1);
+    expect(radius, 'menu item corner is 6px').toBeCloseTo(6, 0);
   });
 
   /**
@@ -371,10 +373,9 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
   /**
    * UPDATED NAV — the richer chrome from
    * does-ramp-live-up-to-the-hype…/04-processing-invoice-skeleton-row.jpeg:
-   * a workspace header, a setup-guide progress block, bordered groups, and a
-   * nested "Bills" under the active "Bill Pay". These vet the new
-   * SideMenuHeader / SideMenuProgress / SideMenuGroup sub-components and the
-   * nested SideMenuItem against that crop.
+   * a workspace header and a setup-guide progress block, with the items split
+   * into sections by hairline rules. These vet the SideMenuHeader and
+   * SideMenuProgress sub-components against that crop.
    */
   test('Updated nav: header shows the workspace name + chevron over a bone hairline', async ({
     page,
@@ -412,44 +413,6 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
     const fill = bar.locator('span').first();
     const fillColor = await fill.evaluate((el) => getComputedStyle(el).backgroundColor);
     expect(fillColor, 'progress fill is positive green').toBe(hexToRgb(RUI['--rui-positive']));
-  });
-
-  /**
-   * Bordered groups: the item clusters are delimited by bone hairlines BETWEEN
-   * groups (not one shared divider), so at least one group <li> carries a
-   * bottom border in the bone family.
-   */
-  test('Updated nav: groups are delimited by bone hairlines', async ({ page }) => {
-    await page.goto(storyUrl('primitives-sidemenu--updated-nav'));
-    const bordered = page
-      .locator('nav > ul > li')
-      .filter({ has: page.locator('ul') })
-      .first();
-    await expect(bordered).toBeVisible();
-    const border = await bordered.evaluate((el) => ({
-      color: getComputedStyle(el).borderBottomColor,
-      width: Number.parseFloat(getComputedStyle(el).borderBottomWidth),
-    }));
-    expect(border.color, 'group border is bone').toBe(hexToRgb(RUI['--rui-bone']));
-    expect(border.width, 'group border is a hairline').toBeGreaterThan(0);
-  });
-
-  /**
-   * Nested sub-item: "Bills" sits under the active "Bill Pay", indented past
-   * the parent's icon so its label aligns under the parent LABEL (its left edge
-   * is to the right of a top-level item's label).
-   */
-  test('Updated nav: nested "Bills" is indented under "Bill Pay"', async ({ page }) => {
-    await page.goto(storyUrl('primitives-sidemenu--updated-nav'));
-    const nested = page.locator('nav li a, nav li button').filter({ hasText: 'Bills' }).first();
-    const parent = page.locator('nav li a, nav li button').filter({ hasText: 'Bill Pay' }).first();
-    await expect(nested).toBeVisible();
-    await expect(parent).toBeVisible();
-    const [nestedPad, parentPad] = await Promise.all([
-      nested.evaluate((el) => Number.parseFloat(getComputedStyle(el).paddingLeft)),
-      parent.evaluate((el) => Number.parseFloat(getComputedStyle(el).paddingLeft)),
-    ]);
-    expect(nestedPad, 'nested item is indented past the parent').toBeGreaterThan(parentPad);
   });
 
   /**

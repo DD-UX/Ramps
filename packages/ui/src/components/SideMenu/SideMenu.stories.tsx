@@ -25,7 +25,6 @@ import {
   SideMenu,
   SideMenuAction,
   SideMenuDivider,
-  SideMenuGroup,
   SideMenuHeader,
   SideMenuItem,
   SideMenuProgress,
@@ -116,11 +115,11 @@ export const RampBillPayReplica: Story = {
  * Everything the replica has, plus the frame's richer chrome vetted from that
  * crop: a workspace HEADER (a mark + "Clara Media LLC" + a chevron switcher,
  * over a bone hairline), a SETUP-GUIDE progress block ("Next: Move your spend
- * onto Ramp" with a ~30% green bar), the items split into bordered GROUPS
- * (Home/Insights · Manage spend…Financial accounts · Accounting…Company), and
- * a NESTED "Bills" (badge 1) tucked under the active "Bill Pay". The footer is
- * still the primitive's "About DD" showcase — the APP shell (CommonSideMenu)
- * is where that band becomes "Go to Design System".
+ * onto Ramp" with a ~30% green bar), and the items split into sections by
+ * hairline rules (Home/Insights · Manage spend…Financial accounts ·
+ * Accounting…Company) with the active "Bill Pay". The footer is still the
+ * primitive's "About DD" showcase — the APP shell (CommonSideMenu) is where
+ * that band becomes "Go to Design System".
  */
 export const UpdatedNav: Story = {
   render: () => (
@@ -143,30 +142,26 @@ export const UpdatedNav: Story = {
         </SideMenuAction>
       }
     >
-      <SideMenuGroup>
-        <SideMenuItem icon={<Home size={16} />} badge={2}>
-          Home
-        </SideMenuItem>
-        <SideMenuItem icon={<TrendingUp size={16} />}>Insights</SideMenuItem>
-      </SideMenuGroup>
-      <SideMenuGroup>
-        <SideMenuItem icon={<Wallet size={16} />}>Manage spend</SideMenuItem>
-        <SideMenuItem icon={<Receipt size={16} />}>Expenses</SideMenuItem>
-        <SideMenuItem icon={<Plane size={16} />}>Travel</SideMenuItem>
-        <SideMenuItem icon={<FileText size={16} />} active>
-          Bill Pay
-        </SideMenuItem>
-        <SideMenuItem nested badge={1}>
-          Bills
-        </SideMenuItem>
-        <SideMenuItem icon={<Landmark size={16} />}>Financial accounts</SideMenuItem>
-      </SideMenuGroup>
-      <SideMenuGroup divider={false}>
-        <SideMenuItem icon={<BookOpen size={16} />}>Accounting</SideMenuItem>
-        <SideMenuItem icon={<Store size={16} />}>Vendors</SideMenuItem>
-        <SideMenuItem icon={<SlidersHorizontal size={16} />}>Policy</SideMenuItem>
-        <SideMenuItem icon={<Building size={16} />}>Company</SideMenuItem>
-      </SideMenuGroup>
+      {/* Section 1 — a plain run of items on the limestone. */}
+      <SideMenuItem icon={<Home size={16} />} badge={2}>
+        Home
+      </SideMenuItem>
+      <SideMenuItem icon={<TrendingUp size={16} />}>Insights</SideMenuItem>
+      <SideMenuDivider />
+      {/* Section 2 — the active "Bill Pay" sits in a plain run with the rest. */}
+      <SideMenuItem icon={<Wallet size={16} />}>Manage spend</SideMenuItem>
+      <SideMenuItem icon={<Receipt size={16} />}>Expenses</SideMenuItem>
+      <SideMenuItem icon={<Plane size={16} />}>Travel</SideMenuItem>
+      <SideMenuItem icon={<FileText size={16} />} active>
+        Bill Pay
+      </SideMenuItem>
+      <SideMenuItem icon={<Landmark size={16} />}>Financial accounts</SideMenuItem>
+      <SideMenuDivider />
+      {/* Section 3 — another plain run. */}
+      <SideMenuItem icon={<BookOpen size={16} />}>Accounting</SideMenuItem>
+      <SideMenuItem icon={<Store size={16} />}>Vendors</SideMenuItem>
+      <SideMenuItem icon={<SlidersHorizontal size={16} />}>Policy</SideMenuItem>
+      <SideMenuItem icon={<Building size={16} />}>Company</SideMenuItem>
     </SideMenu>
   ),
 };
