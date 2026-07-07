@@ -48,12 +48,20 @@ insert into role_policies (role, policy_key) values
 -- Users (users.ts) — seeded identities, no signup. The role switcher acts as
 -- one of these; authorization stays real via effectivePolicies().
 -- ---------------------------------------------------------------------------
+-- Three users per role so "Add approver by role" (snapshot 10) resolves each
+-- role to a believable GROUP of avatars, not a single person — admin, AP and
+-- employee each carry three. Ids 106–109 mirror migration
+-- 0004_phantom_approver_users.sql (which tops up an already-migrated DB).
 insert into users (id, name, email, role, avatar_url) values
-  ('11111111-1111-1111-1111-111111111101', 'Diego Diaz',     'diego@ramps.demo',   'admin',            null),
-  ('11111111-1111-1111-1111-111111111102', 'Ava Chen',       'ava@ramps.demo',     'accounts_payable', null),
-  ('11111111-1111-1111-1111-111111111103', 'Marcus Reid',    'marcus@ramps.demo',  'accounts_payable', null),
-  ('11111111-1111-1111-1111-111111111104', 'Priya Nair',     'priya@ramps.demo',   'admin',            null),
-  ('11111111-1111-1111-1111-111111111105', 'Tom Ellison',    'tom@ramps.demo',     'employee',         null);
+  ('11111111-1111-1111-1111-111111111101', 'Diego Diaz',      'diego@ramps.demo',   'admin',            null),
+  ('11111111-1111-1111-1111-111111111102', 'Ava Chen',        'ava@ramps.demo',     'accounts_payable', null),
+  ('11111111-1111-1111-1111-111111111103', 'Marcus Reid',     'marcus@ramps.demo',  'accounts_payable', null),
+  ('11111111-1111-1111-1111-111111111104', 'Priya Nair',      'priya@ramps.demo',   'admin',            null),
+  ('11111111-1111-1111-1111-111111111105', 'Tom Ellison',     'tom@ramps.demo',     'employee',         null),
+  ('11111111-1111-1111-1111-111111111106', 'Nadia Okafor',    'nadia@ramps.demo',   'admin',            null),
+  ('11111111-1111-1111-1111-111111111107', 'Sofia Marin',     'sofia@ramps.demo',   'accounts_payable', null),
+  ('11111111-1111-1111-1111-111111111108', 'Leo Park',        'leo@ramps.demo',     'employee',         null),
+  ('11111111-1111-1111-1111-111111111109', 'Hannah Smolinski','hannah@ramps.demo',  'employee',         null);
 
 -- One per-user override, to exercise the model: Marcus (AP) is granted
 -- bill.approve for a specific need — include wins unless later excluded.
@@ -196,6 +204,22 @@ insert into approvals (id, bill_id, approver_id, sequence, status, comment, acte
   ('e0000000-0000-0000-0000-0000000000a3'::uuid, 'b0000000-0000-0000-0000-00000000d004'::uuid, '11111111-1111-1111-1111-111111111101', 1, 'approved', 'Looks good', '2026-06-26T15:04:00Z'),
   -- d008 (rejected): sent back with a reason (rejection requires a comment)
   ('e0000000-0000-0000-0000-0000000000a4'::uuid, 'b0000000-0000-0000-0000-00000000d008'::uuid, '11111111-1111-1111-1111-111111111101', 1, 'rejected', 'Amount exceeds the quote — please confirm with the vendor', '2026-05-22T09:30:00Z');
+
+-- ---------------------------------------------------------------------------
+-- Approval STAGES (the snapshot-10 chain editor grain — 0005_approval_stages).
+-- The editable route BEFORE materialization: each stage is roles ∪ users. d001
+-- (a draft) carries a two-step route so the editor opens on real data — step 1
+-- the "Any Admin" role group, step 2 a hand-picked user (Hannah).
+-- ---------------------------------------------------------------------------
+insert into approval_stages (id, bill_id, sequence) values
+  ('c0000000-0000-0000-0000-0000000000a1'::uuid, 'b0000000-0000-0000-0000-00000000d001'::uuid, 1),
+  ('c0000000-0000-0000-0000-0000000000a2'::uuid, 'b0000000-0000-0000-0000-00000000d001'::uuid, 2);
+
+insert into approval_stage_roles (stage_id, role) values
+  ('c0000000-0000-0000-0000-0000000000a1'::uuid, 'admin');
+
+insert into approval_stage_users (stage_id, user_id) values
+  ('c0000000-0000-0000-0000-0000000000a2'::uuid, '11111111-1111-1111-1111-111111111109'::uuid);
 
 -- ---------------------------------------------------------------------------
 -- AI pre-reviews (approvals.ts → BillReviewSchema). "ready_to_approve" iff all
