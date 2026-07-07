@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { BillDetailsContent } from '@/features/bill-details/components/BillDetailsContent';
-import { getBillDetail, getBillRefs } from '@/features/bill-details/data/bill-detail.data';
+import { getBillDetail, getBillRefs, getUsers } from '@/features/bill-details/data/bill-detail.data';
 import { publicDocumentUrl } from '@/features/bill-details/helpers/document-url.helpers';
 
 /**
@@ -19,10 +19,10 @@ import { publicDocumentUrl } from '@/features/bill-details/helpers/document-url.
 export default async function BillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const [bill, refs] = await Promise.all([getBillDetail(id), getBillRefs()]);
+  const [bill, refs, users] = await Promise.all([getBillDetail(id), getBillRefs(), getUsers()]);
   if (!bill) notFound();
 
   const documentUrl = publicDocumentUrl(bill.document_url);
 
-  return <BillDetailsContent bill={bill} refs={refs} documentUrl={documentUrl} />;
+  return <BillDetailsContent bill={bill} refs={refs} users={users} documentUrl={documentUrl} />;
 }

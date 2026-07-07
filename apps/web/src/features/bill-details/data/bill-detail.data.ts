@@ -1,9 +1,11 @@
 import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
 import type { BillDetailType } from '@ramps/schemas/bills';
 import { IdSchema } from '@ramps/schemas/primitives';
+import type { UserType } from '@ramps/schemas/users';
 import { listBillRefs } from '@ramps/sdk/bill-refs';
 import { getBill } from '@ramps/sdk/bills';
 import { createServerSupabase } from '@ramps/sdk/server';
+import { listUsers } from '@ramps/sdk/users';
 import { cache } from 'react';
 
 /**
@@ -34,4 +36,14 @@ export const getBillDetail = cache(async (billId: string): Promise<BillDetailTyp
 export const getBillRefs = cache(async (): Promise<BillDetailRefsType> => {
   const supabase = createServerSupabase();
   return listBillRefs(supabase);
+});
+
+/**
+ * The people directory — the approver catalog behind the ApprovalsWorkflow's
+ * "by role" groups and "specific user" picker. Shared across every bill, so it
+ * gets its own request-deduped cache key like the ref catalogs.
+ */
+export const getUsers = cache(async (): Promise<UserType[]> => {
+  const supabase = createServerSupabase();
+  return listUsers(supabase);
 });

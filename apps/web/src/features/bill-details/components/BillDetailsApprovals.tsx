@@ -1,59 +1,77 @@
 'use client';
 
-import { Avatar } from '@ramps/ui/Avatar';
-import { Badge } from '@ramps/ui/Badge';
-import { Button } from '@ramps/ui/Button';
-import { Plus } from '@ramps/ui/icons';
+import { ApprovalsWorkflow, type ApprovalsStage } from '@ramps/ui/ApprovalsWorkflow';
+import { FieldError } from '@ramps/ui/FieldError';
+import { useCallback, useMemo, useState } from 'react';
+
+import { apiClient } from '@/features/common/helpers/api-client.helpers';
 
 import { useBillDetail } from '../context/BillDetail.context';
-import { APPROVAL_STATUS_BADGE } from '../constants/approval-status.constants';
+import { isApprovalRouteEditable } from '../constants/approval-editable.constants';
+import {
+  fromWorkflowStages,
+  toApprovalsRoles,
+  toApprovalsUsers,
+  toWorkflowStages,
+} from '../helpers/approvals-workflow.helpers';
 import { BillDetailsSection } from './BillDetailsSection';
 
 /**
  * Approvals section (snapshot 10): the ordered approver chain — "1 · Hannah
- * Smolinski · Any Admin" — with an "Add approver" affordance. Reads the fetched
- * `approvals` off the bill (sorted by sequence in the SDK); the chain is display
- * + add UI here, not part of the editable bill schema, so it renders from the
- * read model directly. Add is stubbed for this pass.
+ * Smolinski · Any Admin" — built on the design system's {@link ApprovalsWorkflow}
+ * chain editor.
+ *
+ * This file is only the domain seam: it feeds the domain-free component its
+ * approver **catalog** (every role as an "Any …" group + the people directory)
+ * and the bill's persisted route as `initialStages`, then persists each edit
+ * back through the typed API client. The mappers in `approvals-workflow.helpers`
+ * translate between our role-enum / user-UUID model and the component's opaque
+ * string ids, so neither side leaks into the other.
+ *
+ * The chain is editable only while the bill is pre-submit (`draft` /
+ * `missing_info`); past that the same component renders `readOnly` — a static
+ * record of the route — with the identical guard the PUT route enforces, so the
+ * lock is one rule shared by client and server.
  */
 export function BillDetailsApprovals() {
-  const { bill } = useBillDetail();
+  const { bill, users } = useBillDetail();
+
+  const readOnly = !isApprovalRouteEditable(bill.status);
+
+  // The approver catalog + the bill's saved route, mapped into the DS's opaque
+  // string-id shapes once. `initialStages` seeds the component's own working
+  // state; the component owns the chain from there and calls back on each edit.
+  const roles = useMemo(() => toApprovalsRoles(), []);
+  const catalog = useMemo(() => toApprovalsUsers(users), [users]);
+  const initialStages = useMemo(() => toWorkflowStages(bill.approval_stages), [bill.approval_stages]);
+
+  // Surfaced only on a failed persist — the write is otherwise silent (the
+  // component is the source of truth for the on-screen chain).
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const handleChange = useCallback(
+    (stages: ApprovalsStage[]) => {
+      setSaveError(null);
+      // Replace-all PUT: map the DS chain back to our save payload (dropping any
+      // stale role ids / empty stages) and persist. Fire-and-forget — the
+      // component already reflects the change optimistically.
+      apiClient.bills.saveApprovalStages(bill.id, fromWorkflowStages(stages)).catch(() => {
+        setSaveError('Could not save the approval route. Your last change may not be persisted.');
+      });
+    },
+    [bill.id],
+  );
 
   return (
-    <BillDetailsSection
-      title="Approvals"
-      action={
-        <Button variant="secondary" size="sm" type="button" leadingIcon={<Plus size={14} />}>
-          Add approver
-        </Button>
-      }
-    >
-      {bill.approvals.length === 0 ? (
-        <p className="text-sm font-body text-hushed">
-          No approvers yet. Add one to route this bill for approval.
-        </p>
-      ) : (
-        <ol className="gap-rui-2 flex flex-col">
-          {bill.approvals.map((step) => {
-            const badge = APPROVAL_STATUS_BADGE[step.status];
-            return (
-              <li
-                key={step.id}
-                className="gap-rui-3 rounded-square border-bone px-rui-3 py-rui-2 flex items-center border"
-              >
-                <span className="text-xs font-heading text-hushed tabular-nums">
-                  {step.sequence}
-                </span>
-                <Avatar name={step.approver_name ?? 'Unknown approver'} size="sm" />
-                <span className="min-w-0 text-sm font-body text-ink flex-1 truncate">
-                  {step.approver_name ?? 'Unknown approver'}
-                </span>
-                <Badge tone={badge.tone}>{badge.label}</Badge>
-              </li>
-            );
-          })}
-        </ol>
-      )}
+    <BillDetailsSection title="Approvals">
+      <ApprovalsWorkflow
+        roles={roles}
+        users={catalog}
+        initialStages={initialStages}
+        readOnly={readOnly}
+        onChange={readOnly ? undefined : handleChange}
+      />
+      <FieldError size="sm">{saveError}</FieldError>
     </BillDetailsSection>
   );
 }

@@ -7,6 +7,7 @@ import {
   type BillEditFormType,
 } from '@ramps/schemas/bills';
 import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
+import type { UserType } from '@ramps/schemas/users';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { FormProvider, useForm, type UseFormReturn } from 'react-hook-form';
 
@@ -29,6 +30,8 @@ export interface BillDetailContextValue {
   bill: BillDetailType;
   /** Dropdown catalogs for the coding grid and pickers. */
   refs: BillDetailRefsType;
+  /** The people directory — the approver catalog behind the ApprovalsWorkflow. */
+  users: UserType[];
 }
 
 const BillDetailContext = createContext<BillDetailContextValue | null>(null);
@@ -36,6 +39,7 @@ const BillDetailContext = createContext<BillDetailContextValue | null>(null);
 export interface BillDetailProviderProps {
   bill: BillDetailType;
   refs: BillDetailRefsType;
+  users: UserType[];
   // Required + never storied (a provider wrapping no tree is meaningless):
   // explicit `children` over PropsWithChildren is the deliberate, stricter contract.
   children: ReactNode;
@@ -46,14 +50,17 @@ export interface BillDetailProviderProps {
  * Validation is the same zod schema the entity is defined by, narrowed to the
  * edit scope (`BillEditFormSchema`), so the form can never drift from the SSoT.
  */
-export function BillDetailProvider({ bill, refs, children }: BillDetailProviderProps) {
+export function BillDetailProvider({ bill, refs, users, children }: BillDetailProviderProps) {
   const form = useForm<BillEditFormType>({
     resolver: zodResolver(BillEditFormSchema),
     defaultValues: billToFormDefaults(bill),
     mode: 'onBlur',
   });
 
-  const value = useMemo<BillDetailContextValue>(() => ({ form, bill, refs }), [form, bill, refs]);
+  const value = useMemo<BillDetailContextValue>(
+    () => ({ form, bill, refs, users }),
+    [form, bill, refs, users],
+  );
 
   // Two providers, one form: `BillDetailContext` carries bill + refs (and the
   // form for whole-form work like submit), while RHF's own `FormProvider` lets

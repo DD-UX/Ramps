@@ -2,6 +2,7 @@
 
 import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
 import type { BillDetailType } from '@ramps/schemas/bills';
+import type { UserType } from '@ramps/schemas/users';
 import { DraggablePanel } from '@ramps/ui/DraggablePanel';
 import { EmptyState } from '@ramps/ui/EmptyState';
 import { Activity as ActivityIcon } from '@ramps/ui/icons';
@@ -16,6 +17,8 @@ import { BillDetailsTitle } from './BillDetailsTitle';
 export interface BillDetailsContentProps {
   bill: BillDetailType;
   refs: BillDetailRefsType;
+  /** The approver catalog for the ApprovalsWorkflow (by-role groups + picker). */
+  users: UserType[];
   /** Public URL of the invoice PDF, resolved on the server. */
   documentUrl: string | null;
 }
@@ -37,11 +40,11 @@ export interface BillDetailsContentProps {
  * width, the document sub-tab, scroll — and, once Activity grows real content,
  * it will keep that state for free too.
  */
-export function BillDetailsContent({ bill, refs, documentUrl }: BillDetailsContentProps) {
+export function BillDetailsContent({ bill, refs, users, documentUrl }: BillDetailsContentProps) {
   const [tab, setTab] = useState<BillDetailsTab>('overview');
 
   return (
-    <BillDetailProvider bill={bill} refs={refs}>
+    <BillDetailProvider bill={bill} refs={refs} users={users}>
       <div className="bg-white flex flex-1 flex-col">
         <div className="gap-rui-4 px-rui-6 py-rui-6 min-h-0 flex flex-1 flex-col">
           <BillDetailsTitle tab={tab} onTabChange={setTab} />
