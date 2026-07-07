@@ -55,6 +55,15 @@ supabase start && supabase db reset        # local DB + migrations + seed
   before a commit. Never hand-format against it — no manual spacing/import
   ordering that the formatter would rewrite.
 
+### Screenshots & visual artifacts
+
+- **Save throwaway/tmp screenshots as `.jpg`, never `.png`.** When capturing a
+  frame to eyeball or diff against a reference (Playwright captures, a design
+  compare, a "does this match?" pass), write it as JPEG (`type: 'jpeg'` /
+  `.jpg`). PNG grabs have failed to load back for inspection and stalled a
+  session; JPEG reads back reliably. Reference frames already committed under
+  `docs/` stay as-is — this rule is about the temporary compares you generate.
+
 ### TypeScript
 
 - Strict TS everywhere; explicit types at boundaries; no `any`, no cast-fighting.

@@ -1,6 +1,5 @@
 'use client';
 
-import { Search } from '@ramps/ui/icons';
 import { Input } from '@ramps/ui/Input';
 import { Kbd } from '@ramps/ui/Kbd';
 import { useCallback, useRef } from 'react';
@@ -11,8 +10,12 @@ import { CommonCommandKey } from './CommonCommandKey';
 /**
  * CommonTopBarSearch — the app-wide search field in the top bar. It's a general
  * search affordance (not the bills-specific `?q=` toolbar): ⌘K / Ctrl+K from
- * anywhere focuses it, and the field advertises that chord with a ⌘/Ctrl + K
- * hint on its right.
+ * anywhere focuses it.
+ *
+ * Vetted against the home-dashboard frame
+ * (docs/…/snapshots/01-home-dashboard-left-nav.jpeg): a flat, borderless field
+ * that stretches across the bar, with the ⌘/Ctrl + K keycaps leading on the
+ * LEFT and "Search for anything" placeholder beside them — no magnifying glass.
  *
  * The shortcut is wired through `useCommandPlusKey('k', …)`, which owns the
  * document listener + AbortController; here we only `preventDefault()` (so ⌘K
@@ -26,7 +29,7 @@ export interface CommonTopBarSearchProps {
 }
 
 export function CommonTopBarSearch({
-  placeholder = 'Search…',
+  placeholder = 'Search for anything',
   className,
 }: CommonTopBarSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,23 +43,23 @@ export function CommonTopBarSearch({
   useCommandPlusKey('k', focusSearch);
 
   return (
-    <div className={className}>
-      <Input
-        ref={inputRef}
-        rounded
-        type="search"
-        placeholder={placeholder}
-        aria-label="Search"
-        leadingIcon={<Search size={16} />}
-        trailingIcon={
-          <span className="gap-rui-1 flex items-center" aria-hidden>
-            <CommonCommandKey />
-            <Kbd>K</Kbd>
-          </span>
-        }
-        // Room for the two-chip hint on the right (Input's default pr-8 fits one).
-        className="w-64 pr-16"
-      />
-    </div>
+    <Input
+      ref={inputRef}
+      type="search"
+      placeholder={placeholder}
+      aria-label="Search"
+      // Keycaps lead on the LEFT (⌘/Ctrl then K), matching the frame. Extra
+      // gap keeps the placeholder off the second cap.
+      leadingIcon={
+        <span className="gap-rui-1 flex items-center" aria-hidden>
+          <CommonCommandKey />
+          <Kbd>K</Kbd>
+        </span>
+      }
+      // Flat, borderless bar that fills the top-bar's flexible middle. Left
+      // padding clears the two-chip lead; the search default border/ring is
+      // dropped so the field reads as part of the bar, not a boxed control.
+      className={'pl-20 w-full border-transparent bg-transparent focus:ring-0 ' + (className ?? '')}
+    />
   );
 }
