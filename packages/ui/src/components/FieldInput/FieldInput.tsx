@@ -156,6 +156,8 @@ export function FieldInput({
             // matched to Select so the two read as one row.
             'h-12 rounded-square bg-white px-3 text-sm font-body text-ink w-full border',
             'pt-4 pb-1',
+            // Border colour eases in (the hover/focus bottom-border darken).
+            'transition-colors duration-150',
             // Hide the native placeholder text until the label has floated, so it
             // doesn't sit under the centred label (mainly the date mm/dd/yyyy).
             floated ? undefined : 'text-transparent',
@@ -168,7 +170,11 @@ export function FieldInput({
             'focus:ring-control-ring focus:ring-2 focus:outline-none',
             isInvalid
               ? 'border-destructive focus:border-destructive'
-              : 'border-control-border focus:border-control-border-focus',
+              : // Rest = bone hairline all round; hover/focus darken ONLY the bottom
+                // border to ink — the same dark as the Tabs active underline — so it
+                // reads like an underlined field. `enabled:` so a disabled field
+                // stays inert (DISABLED_CONTROL wins).
+                'border-control-border enabled:hover:border-b-control-border-focus focus:border-b-control-border-focus',
             // Consistent inert gray when disabled (shared across all controls).
             DISABLED_CONTROL,
           )}
