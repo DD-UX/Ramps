@@ -8,6 +8,7 @@ import {
   isStageEmpty,
   membersOfRole,
   stageRoleBubbles,
+  usedRoleIds,
 } from './stageHelpers';
 
 /**
@@ -123,5 +124,35 @@ describe('isStageEmpty', () => {
 
   it('is not empty with an extra user', () => {
     expect(isStageEmpty(stage({ userIds: ['u-noone'] }), users)).toBe(false);
+  });
+});
+
+describe('usedRoleIds', () => {
+  it('collects every role committed across the chain', () => {
+    const used = usedRoleIds([
+      stage({ id: 's1', roleIds: ['role-admin'] }),
+      stage({ id: 's2', roleIds: ['role-approver'] }),
+    ]);
+    expect([...used].sort()).toEqual(['role-admin', 'role-approver']);
+  });
+
+  it('ignores user ids — only roles are one-per-chain', () => {
+    const used = usedRoleIds([stage({ id: 's1', roleIds: [], userIds: ['u-jane'] })]);
+    expect([...used]).toEqual([]);
+  });
+
+  it('excludes the edited stage so its own roles stay selectable', () => {
+    const used = usedRoleIds(
+      [
+        stage({ id: 's1', roleIds: ['role-admin'] }),
+        stage({ id: 's2', roleIds: ['role-approver'] }),
+      ],
+      's2',
+    );
+    expect([...used]).toEqual(['role-admin']);
+  });
+
+  it('is empty for an empty chain', () => {
+    expect(usedRoleIds([]).size).toBe(0);
   });
 });

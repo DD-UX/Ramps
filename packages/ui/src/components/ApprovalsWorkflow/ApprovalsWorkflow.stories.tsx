@@ -88,3 +88,31 @@ export const LongChain: Story = {
     ],
   },
 };
+
+/**
+ * Role exclusion — a role only approves once. Two of the three roles are already
+ * committed, so the "＋ Add approver" picker offers only the remaining role (plus
+ * every user). Open the picker to see "Any Admin" / "Any Approver" gone.
+ */
+export const RolesExcluded: Story = {
+  args: {
+    initialStages: [
+      { id: 'stage-1', roleIds: ['role-admin'], userIds: [] },
+      { id: 'stage-2', roleIds: ['role-approver'], userIds: [] },
+    ],
+  },
+};
+
+/**
+ * Editing a stage — open a row's ⋮ menu and choose **Edit** to reopen the picker
+ * prefilled with that stage's roles/users. Saving replaces the stage in place;
+ * the picker still hides roles used by OTHER stages but keeps this stage's own.
+ */
+export const Editing: Story = {
+  args: {
+    initialStages: [
+      { id: 'stage-1', roleIds: ['role-admin'], userIds: ['user-harrington'] },
+      { id: 'stage-2', roleIds: ['role-bookkeeper'], userIds: [] },
+    ],
+  },
+};

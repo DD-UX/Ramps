@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 
-import { ApprovalsWorkflowAddApproverPicker } from './ApprovalsWorkflowAddApproverPicker';
+import { ApprovalsWorkflowApproverPicker } from './ApprovalsWorkflowApproverPicker';
 import { ApprovalsWorkflowStageRow } from './ApprovalsWorkflowStageRow';
 import {
   type ApprovalsRole,
   type ApprovalsStage,
   type ApprovalsUser,
   isStageEmpty,
+  usedRoleIds,
 } from './stageHelpers';
 
 // Re-export the model so consumers can type their catalog off the same source.
@@ -29,18 +30,20 @@ export type {
  * from — Supabase, a mock, Storybook fixtures — is the caller's concern, so the
  * design system stays free of any domain dependency.
  *
- * Owns the working stage list in local state. Each Add commits the picker's
- * checked roles + users as one new stage; stages that would render empty after
- * the role↔user dedup are skipped. Remove drops a stage; sequence numbers
- * renumber from list position so the chain always reads 1…N. `onChange` fires
- * with the new chain after every commit/removal so a parent can persist it.
+ * Owns the working stage list in local state. Add commits the picker's checked
+ * roles + users as one new stage; Edit replaces a stage in place; both skip a
+ * selection that would render empty after the role↔user dedup. A role only
+ * approves once — roles already committed on other stages are hidden from the
+ * pickers. Remove drops a stage; sequence numbers renumber from list position so
+ * the chain always reads 1…N. `onChange` fires with the new chain after every
+ * commit/removal so a parent can persist it.
  */
 export interface ApprovalsWorkflowProps {
   roles: ApprovalsRole[];
   users: ApprovalsUser[];
   /** The chain to start from. Defaults to an empty chain. */
   initialStages?: ApprovalsStage[];
-  /** Called with the updated chain after each add/remove. */
+  /** Called with the updated chain after each add/edit/remove. */
   onChange?: (stages: ApprovalsStage[]) => void;
 }
 
@@ -76,9 +79,27 @@ export function ApprovalsWorkflow({
     commit([...stages, stage]);
   }
 
+  function handleEdit(editedId: string, selection: { roleIds: string[]; userIds: string[] }) {
+    const next: ApprovalsStage = {
+      id: editedId,
+      roleIds: selection.roleIds,
+      userIds: selection.userIds,
+    };
+    // An edit that empties a stage removes it, mirroring the add-skip rule.
+    if (isStageEmpty(next, users)) {
+      commit(stages.filter((stage) => stage.id !== editedId));
+      return;
+    }
+    commit(stages.map((stage) => (stage.id === editedId ? next : stage)));
+  }
+
   function handleRemove(removedId: string) {
     commit(stages.filter((stage) => stage.id !== removedId));
   }
+
+  // Roles already committed anywhere in the chain — hidden from the Add picker so
+  // a role only approves once. Each row hides all-but-its-own via usedRoleIds.
+  const usedRoles = usedRoleIds(stages);
 
   return (
     <div className="gap-rui-2 flex flex-col">
@@ -91,6 +112,8 @@ export function ApprovalsWorkflow({
               sequence={index + 1}
               roles={roles}
               users={users}
+              hideRoleIds={[...usedRoleIds(stages, stage.id)]}
+              onEdit={handleEdit}
               onRemove={handleRemove}
             />
           ))}
@@ -101,7 +124,12 @@ export function ApprovalsWorkflow({
         </p>
       )}
 
-      <ApprovalsWorkflowAddApproverPicker roles={roles} users={users} onAdd={handleAdd} />
+      <ApprovalsWorkflowApproverPicker
+        roles={roles}
+        users={users}
+        hideRoleIds={[...usedRoles]}
+        onSubmit={handleAdd}
+      />
     </div>
   );
 }

@@ -16,6 +16,14 @@
  * a person never renders twice on the same stage — and stays unit-testable.
  */
 
+/**
+ * The round marker used for BOTH a stage's sequence number and the "＋ Add
+ * approver" circle, so the add affordance reads as the next item in the list.
+ * A filled limestone pill — the frame's numbered chip (snapshot 10).
+ */
+export const APPROVALS_CHIP_CLASS =
+  'size-6 rounded-pill bg-limestone text-xs font-heading text-hushed inline-flex shrink-0 items-center justify-center tabular-nums';
+
 /** A named group of approvers (e.g. "Any Admin"). */
 export interface ApprovalsRole {
   id: string;
@@ -85,4 +93,19 @@ export function extraUsersForStage(stage: ApprovalsStage, users: ApprovalsUser[]
  */
 export function isStageEmpty(stage: ApprovalsStage, users: ApprovalsUser[]): boolean {
   return stage.roleIds.length === 0 && extraUsersForStage(stage, users).length === 0;
+}
+
+/**
+ * The role ids already committed across the chain — the picker hides these so a
+ * role can only approve once. `exceptStageId` excludes one stage's own roles
+ * (the stage being edited), so Edit can still see and uncheck them. Users are
+ * never excluded this way; only roles are one-per-chain.
+ */
+export function usedRoleIds(stages: ApprovalsStage[], exceptStageId?: string): Set<string> {
+  const used = new Set<string>();
+  for (const stage of stages) {
+    if (stage.id === exceptStageId) continue;
+    for (const roleId of stage.roleIds) used.add(roleId);
+  }
+  return used;
 }
