@@ -132,7 +132,16 @@ export function ApprovalsWorkflowApproverPicker({
         {trigger ?? (
           // The "＋ Add approver" row — the ＋ circle matches the numbered chips,
           // and the whole row reads as a button (hover fill + medium ink label).
-          <span className="gap-rui-2 rounded-square px-rui-3 py-rui-2 hover:bg-limestone flex w-full items-center transition-colors">
+          //
+          // A leading, invisible spacer mirrors the stage row's DRAG GRIP
+          // footprint (`size-6 -ml-rui-1` + the following `gap-rui-3`) so the ＋
+          // chip lands directly under the numbered chips of the rows above.
+          // Without it the grip-less Add row would sit one grip-width (32px) to
+          // the left, breaking the 1 → 2 → ＋ column. Structural rather than a
+          // magic pad: it tracks the same tokens, so if the grip resizes the
+          // Add row stays aligned.
+          <span className="gap-rui-3 rounded-square px-rui-3 py-rui-2 hover:bg-limestone flex w-full items-center transition-colors">
+            <span aria-hidden className="-ml-rui-1 size-6 shrink-0" />
             <span aria-hidden className={APPROVALS_CHIP_CLASS}>
               <Plus size={14} />
             </span>
