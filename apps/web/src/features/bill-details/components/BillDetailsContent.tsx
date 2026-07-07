@@ -8,8 +8,8 @@ import { EmptyState } from '@ramps/ui/EmptyState';
 import { Activity as ActivityIcon } from '@ramps/ui/icons';
 import { Activity, useState } from 'react';
 
-import { BillDetailProvider } from '../context/BillDetail.context';
 import type { BillDetailsTab } from '../constants/tabs.constants';
+import { BillDetailProvider } from '../context/BillDetail.context';
 import { BillDetailsDocument } from './BillDetailsDocument';
 import { BillDetailsForm } from './BillDetailsForm';
 import { BillDetailsTitle } from './BillDetailsTitle';
@@ -57,7 +57,7 @@ export function BillDetailsContent({ bill, refs, users, documentUrl }: BillDetai
               className="min-h-0 flex-1"
               defaultSplit={60}
               left={
-                <div className="px-rui-5 py-rui-5">
+                <div className="px-rui-5 pt-rui-5">
                   <BillDetailsForm />
                 </div>
               }

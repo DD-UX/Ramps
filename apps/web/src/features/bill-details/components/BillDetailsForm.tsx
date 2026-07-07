@@ -4,8 +4,8 @@ import type { BillEditFormType } from '@ramps/schemas/bills';
 import { Button } from '@ramps/ui/Button';
 import { Save } from '@ramps/ui/icons';
 
-import { useBillDetail } from '../context/BillDetail.context';
 import { PRIMARY_ACTION_BY_STATUS } from '../constants/primary-action.constants';
+import { useBillDetail } from '../context/BillDetail.context';
 import { BillDetailsApprovals } from './BillDetailsApprovals';
 import { BillDetailsInvoiceInfo } from './BillDetailsInvoiceInfo';
 import { BillDetailsLineItems } from './BillDetailsLineItems';
@@ -31,7 +31,6 @@ export function BillDetailsForm() {
 
   const onSubmit = (values: BillEditFormType) => {
     // Persistence is out of scope for this pass — surface the validated payload.
-    // eslint-disable-next-line no-console
     console.info('[bill-details] validated form (save stubbed):', values);
   };
 
@@ -50,7 +49,7 @@ export function BillDetailsForm() {
       {/* Sticky action bar (snapshot 9): Save draft sits far LEFT with its
           floppy-disk glyph, the status-driven primary far RIGHT — split with
           space between, not clustered. */}
-      <div className="border-bone bg-white/80 py-rui-3 bottom-0 backdrop-blur sticky flex items-center justify-between border-t">
+      <div className="border-bone bg-white/80 py-rui-3 bottom-0 backdrop-blur sticky z-10 flex items-center justify-between border-t">
         <Button type="button" variant="underline" leadingIcon={<Save size={16} />}>
           Save draft
         </Button>
