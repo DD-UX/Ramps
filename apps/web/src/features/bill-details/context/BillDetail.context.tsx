@@ -1,14 +1,14 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
 import {
-  BillEditFormSchema,
   type BillDetailType,
+  BillEditFormSchema,
   type BillEditFormType,
 } from '@ramps/schemas/bills';
-import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
 import type { UserType } from '@ramps/schemas/users';
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, type ReactNode, type RefObject,useContext, useMemo, useRef } from 'react';
 import { FormProvider, useForm, type UseFormReturn } from 'react-hook-form';
 
 import { billToFormDefaults } from '../helpers/form-defaults.helpers';
@@ -32,6 +32,13 @@ export interface BillDetailContextValue {
   refs: BillDetailRefsType;
   /** The people directory — the approver catalog behind the ApprovalsWorkflow. */
   users: UserType[];
+  /**
+   * The split's LEFT PANE scroll container (the DraggablePanel's left side).
+   * Shared so floating pickers in the form — e.g. the approver popover — can
+   * reframe within the pane instead of spilling across the divider into the
+   * invoice preview. Null until the panel mounts.
+   */
+  leftPaneRef: RefObject<HTMLDivElement | null>;
 }
 
 const BillDetailContext = createContext<BillDetailContextValue | null>(null);
@@ -57,8 +64,12 @@ export function BillDetailProvider({ bill, refs, users, children }: BillDetailPr
     mode: 'onBlur',
   });
 
+  // The split's left-pane node, filled once BillDetailsContent hands this ref to
+  // the DraggablePanel. A stable ref object, so consumers read a live `.current`.
+  const leftPaneRef = useRef<HTMLDivElement>(null);
+
   const value = useMemo<BillDetailContextValue>(
-    () => ({ form, bill, refs, users }),
+    () => ({ form, bill, refs, users, leftPaneRef }),
     [form, bill, refs, users],
   );
 

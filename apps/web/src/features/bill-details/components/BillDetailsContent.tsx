@@ -9,7 +9,7 @@ import { Activity as ActivityIcon } from '@ramps/ui/icons';
 import { Activity, useState } from 'react';
 
 import type { BillDetailsTab } from '../constants/tabs.constants';
-import { BillDetailProvider } from '../context/BillDetail.context';
+import { BillDetailProvider, useBillDetail } from '../context/BillDetail.context';
 import { BillDetailsDocument } from './BillDetailsDocument';
 import { BillDetailsForm } from './BillDetailsForm';
 import { BillDetailsTitle } from './BillDetailsTitle';
@@ -41,49 +41,62 @@ export interface BillDetailsContentProps {
  * it will keep that state for free too.
  */
 export function BillDetailsContent({ bill, refs, users, documentUrl }: BillDetailsContentProps) {
+  return (
+    <BillDetailProvider bill={bill} refs={refs} users={users}>
+      <BillDetailsBody documentUrl={documentUrl} />
+    </BillDetailProvider>
+  );
+}
+
+/**
+ * The tabbed body — rendered inside the provider so it can hand the DraggablePanel
+ * the shared `leftPaneRef`. That ref is what the approver popovers reframe within,
+ * so their cards stay inside the left pane instead of spilling into the preview.
+ */
+function BillDetailsBody({ documentUrl }: { documentUrl: string | null }) {
+  const { bill, leftPaneRef } = useBillDetail();
   const [tab, setTab] = useState<BillDetailsTab>('overview');
 
   return (
-    <BillDetailProvider bill={bill} refs={refs} users={users}>
-      <div className="bg-white flex flex-1 flex-col">
-        <div className="gap-rui-4 px-rui-6 py-rui-6 min-h-0 flex flex-1 flex-col">
-          <BillDetailsTitle tab={tab} onTabChange={setTab} />
+    <div className="bg-white flex flex-1 flex-col">
+      <div className="gap-rui-4 px-rui-6 py-rui-6 min-h-0 flex flex-1 flex-col">
+        <BillDetailsTitle tab={tab} onTabChange={setTab} />
 
-          {/* Overview holds the resizable split: form on the white left pane,
-              invoice preview on the warm limestone right pane. The panel supplies
-              each pane's surface + framing, so children only bring padding. */}
-          <Activity mode={tab === 'overview' ? 'visible' : 'hidden'}>
-            <DraggablePanel
-              className="min-h-0 flex-1"
-              defaultSplit={60}
-              left={
-                <div className="px-rui-5 pt-rui-5">
-                  <BillDetailsForm />
-                </div>
-              }
-              right={
-                <div className="px-rui-5 py-rui-5 h-full">
-                  <BillDetailsDocument
-                    documentUrl={documentUrl}
-                    invoiceNumber={bill.invoice_number}
-                  />
-                </div>
-              }
-            />
-          </Activity>
+        {/* Overview holds the resizable split: form on the white left pane,
+            invoice preview on the warm limestone right pane. The panel supplies
+            each pane's surface + framing, so children only bring padding. */}
+        <Activity mode={tab === 'overview' ? 'visible' : 'hidden'}>
+          <DraggablePanel
+            className="min-h-0 flex-1"
+            defaultSplit={60}
+            leftPaneRef={leftPaneRef}
+            left={
+              <div className="px-rui-5 pt-rui-5">
+                <BillDetailsForm />
+              </div>
+            }
+            right={
+              <div className="px-rui-5 py-rui-5 h-full">
+                <BillDetailsDocument
+                  documentUrl={documentUrl}
+                  invoiceNumber={bill.invoice_number}
+                />
+              </div>
+            }
+          />
+        </Activity>
 
-          {/* Activity — no audit trail yet, so the same empty-state treatment as
-              the document pane's "No documents" tab. */}
-          <Activity mode={tab === 'activity' ? 'visible' : 'hidden'}>
-            <EmptyState
-              className="min-h-0 flex-1"
-              icon={<ActivityIcon size={28} />}
-              title="No activity yet"
-              description="Approvals, edits and payment events for this bill will appear here."
-            />
-          </Activity>
-        </div>
+        {/* Activity — no audit trail yet, so the same empty-state treatment as
+            the document pane's "No documents" tab. */}
+        <Activity mode={tab === 'activity' ? 'visible' : 'hidden'}>
+          <EmptyState
+            className="min-h-0 flex-1"
+            icon={<ActivityIcon size={28} />}
+            title="No activity yet"
+            description="Approvals, edits and payment events for this bill will appear here."
+          />
+        </Activity>
       </div>
-    </BillDetailProvider>
+    </div>
   );
 }

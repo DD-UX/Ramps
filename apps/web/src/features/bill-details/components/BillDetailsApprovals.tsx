@@ -1,13 +1,13 @@
 'use client';
 
-import { ApprovalsWorkflow, type ApprovalsStage } from '@ramps/ui/ApprovalsWorkflow';
+import { type ApprovalsStage,ApprovalsWorkflow } from '@ramps/ui/ApprovalsWorkflow';
 import { FieldError } from '@ramps/ui/FieldError';
 import { useCallback, useMemo, useState } from 'react';
 
 import { apiClient } from '@/features/common/helpers/api-client.helpers';
 
-import { useBillDetail } from '../context/BillDetail.context';
 import { isApprovalRouteEditable } from '../constants/approval-editable.constants';
+import { useBillDetail } from '../context/BillDetail.context';
 import {
   fromWorkflowStages,
   toApprovalsRoles,
@@ -34,7 +34,7 @@ import { BillDetailsSection } from './BillDetailsSection';
  * lock is one rule shared by client and server.
  */
 export function BillDetailsApprovals() {
-  const { bill, users } = useBillDetail();
+  const { bill, users, leftPaneRef } = useBillDetail();
 
   const readOnly = !isApprovalRouteEditable(bill.status);
 
@@ -43,7 +43,10 @@ export function BillDetailsApprovals() {
   // state; the component owns the chain from there and calls back on each edit.
   const roles = useMemo(() => toApprovalsRoles(), []);
   const catalog = useMemo(() => toApprovalsUsers(users), [users]);
-  const initialStages = useMemo(() => toWorkflowStages(bill.approval_stages), [bill.approval_stages]);
+  const initialStages = useMemo(
+    () => toWorkflowStages(bill.approval_stages),
+    [bill.approval_stages],
+  );
 
   // Surfaced only on a failed persist — the write is otherwise silent (the
   // component is the source of truth for the on-screen chain).
@@ -70,6 +73,11 @@ export function BillDetailsApprovals() {
         initialStages={initialStages}
         readOnly={readOnly}
         onChange={readOnly ? undefined : handleChange}
+        // Clamp every approver-picker popover to the split's LEFT PANE so the
+        // w-80 card can't spill across the DraggablePanel divider into the
+        // invoice preview. The ref is the same node BillDetailsContent hands
+        // the DraggablePanel; it's null until that panel mounts.
+        boundary={leftPaneRef}
       />
       <FieldError size="sm">{saveError}</FieldError>
     </BillDetailsSection>
