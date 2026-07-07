@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { useEffect, useId, useRef, useState } from 'react';
+import type { ReactNode, RefObject } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { cn } from '../../lib/cn';
 import { DISABLED_CONTROL } from '../../lib/disabled';
@@ -15,6 +15,15 @@ import { IconButton } from '../IconButton/IconButton';
  * closes on outside-click and Escape, renders a list of MenuItems, and routes
  * `tone="destructive"` items to the destructive token (Delete/Remove in red).
  * Tokens only.
+ *
+ * BOUNDARY-AWARE (Popper-style), the same rule the Popover follows: `align`/`side`
+ * are the PREFERRED placement, then the open panel REFRAMES to stay on screen —
+ * it shifts along x so it never crosses an 8px viewport padding, and flips to the
+ * opposite side when the preferred side would clip and the other side fits. So a
+ * row-end ⋮ near the right edge (or a trigger low in the viewport) no longer
+ * pushes its panel off-screen. The measure runs in a layout effect (pre-paint, so
+ * a constrained panel never flashes in the wrong spot) and re-runs on resize and
+ * ancestor scroll while open.
  */
 const DotsIcon = (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
@@ -56,6 +65,15 @@ export interface MenuProps {
    * clipped by the scroll container.
    */
   side?: MenuSide;
+  /**
+   * The box the panel must stay inside when it reframes. Pass a ref to a
+   * scroll/clip container — e.g. the DraggablePanel's LEFT PANE — and the menu
+   * shifts/flips within THAT element's rect instead of the whole viewport, so a
+   * menu in the coding form never spills across the split into the invoice
+   * preview. Defaults to the viewport when omitted (or the ref is unset). The
+   * 8px padding is always inset from whichever boundary applies.
+   */
+  boundary?: RefObject<HTMLElement | null>;
   className?: string;
 }
 
@@ -64,6 +82,9 @@ const ITEM_TONE: Record<MenuItemTone, string> = {
   destructive: 'text-destructive hover:bg-tone-critical-surface',
 };
 
+/** Viewport padding the panel never crosses when reframing (matches Popover). */
+const COLLISION_PADDING = 8;
+
 export function Menu({
   items,
   label = 'More actions',
@@ -71,11 +92,20 @@ export function Menu({
   rounded = false,
   align = 'end',
   side = 'bottom',
+  boundary,
   className,
 }: MenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+
+  // Reframe state (Popper-style): `shiftX` slides the panel along x to stay
+  // inside the viewport; `flipped` moves it to the side opposite the preferred
+  // one when the preferred side would clip. Both start neutral so the first
+  // paint uses the caller's `align`/`side` untouched.
+  const [shiftX, setShiftX] = useState(0);
+  const [flipped, setFlipped] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -92,6 +122,63 @@ export function Menu({
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  // Reframe the open panel into its boundary. The panel is CSS-anchored to the
+  // trigger by `align`/`side` (its natural rect); from there we measure and:
+  //   • shift-x — nudge it back inside the [left+PADDING, right−PADDING] band,
+  //     applied as a transform on top of the natural anchoring;
+  //   • flip-y  — swap to the opposite side only when the preferred side clips
+  //     AND the opposite side fits (Popper's fallback; otherwise stay put).
+  // The boundary is the `boundary` element's rect, or the viewport when unset —
+  // so a menu can be kept inside, say, the DraggablePanel's left pane instead of
+  // spilling across the split. useLayoutEffect so the correction lands before
+  // paint (a clipped panel never flashes in the wrong place) and re-runs on
+  // resize/ancestor scroll while open.
+  useLayoutEffect(() => {
+    if (!open) return;
+
+    const compute = () => {
+      const panel = menuRef.current;
+      const anchor = rootRef.current;
+      if (!panel || !anchor) return;
+
+      const anchorRect = anchor.getBoundingClientRect();
+      // The clip box: the boundary element's rect, else the whole viewport.
+      const box = boundary?.current?.getBoundingClientRect() ?? {
+        left: 0,
+        top: 0,
+        right: window.innerWidth,
+        bottom: window.innerHeight,
+      };
+      // offsetWidth/Height: layout size, independent of any transform.
+      const panelW = panel.offsetWidth;
+      const panelH = panel.offsetHeight;
+
+      // Natural left edge from the preferred horizontal alignment: `end` right-
+      // aligns the panel to the anchor, `start` left-aligns it. Shift clamps that
+      // edge into the boundary, then we hand back the delta from the natural spot.
+      const naturalLeft = align === 'end' ? anchorRect.right - panelW : anchorRect.left;
+      const minLeft = box.left + COLLISION_PADDING;
+      const maxLeft = box.right - COLLISION_PADDING - panelW;
+      const clampedLeft = Math.min(Math.max(naturalLeft, minLeft), Math.max(minLeft, maxLeft));
+      setShiftX(clampedLeft - naturalLeft);
+
+      // Flip only when the preferred vertical side overflows the boundary AND the
+      // other side fits within it.
+      const fitsBelow = anchorRect.bottom + panelH <= box.bottom - COLLISION_PADDING;
+      const fitsAbove = anchorRect.top - panelH >= box.top + COLLISION_PADDING;
+      const preferTop = side === 'top';
+      setFlipped(preferTop ? !fitsAbove && fitsBelow : !fitsBelow && fitsAbove);
+    };
+
+    compute();
+    window.addEventListener('resize', compute);
+    window.addEventListener('scroll', compute, true);
+    return () => {
+      window.removeEventListener('resize', compute);
+      window.removeEventListener('scroll', compute, true);
+    };
+  }, [open, align, side, boundary]);
 
   return (
     <div ref={rootRef} className={cn('relative inline-flex', className)}>
@@ -127,13 +214,25 @@ export function Menu({
 
       {open && (
         <div
+          ref={menuRef}
           id={menuId}
           role="menu"
           className={cn(
             'min-w-44 rounded-square border-bone bg-white py-rui-1 shadow-lg absolute z-20 overflow-hidden border',
-            side === 'bottom' ? 'mt-rui-1 top-full' : 'mb-rui-1 bottom-full',
+            // `flipped` swaps the preferred vertical side; align stays the natural
+            // CSS anchor and the shift rides in a transform so it doesn't fight it.
+            flipped
+              ? side === 'bottom'
+                ? 'mb-rui-1 bottom-full'
+                : 'mt-rui-1 top-full'
+              : side === 'bottom'
+                ? 'mt-rui-1 top-full'
+                : 'mb-rui-1 bottom-full',
             align === 'end' ? 'right-0' : 'left-0',
           )}
+          // Shift rides in a transform (not `left`) so it layers on top of the
+          // right-0/left-0 anchor without overriding it.
+          style={shiftX ? { transform: `translateX(${shiftX}px)` } : undefined}
         >
           {items.map((item, i) => (
             <button
