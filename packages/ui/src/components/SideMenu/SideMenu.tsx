@@ -239,8 +239,8 @@ export function SideMenuItem({
           active
             ? ACTIVE_ITEM_CLASS
             : 'text-hushed hover:bg-limestone hover:text-ink bg-transparent',
-          // Focus ring: accent lime, 2px offset (control-ring standard).
-          'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
+          // Focus: reuse the hover surface (no glow ring).
+          'focus-visible:bg-limestone focus-visible:text-ink',
           // Pointer affordance.
           'cursor-pointer',
           className,
@@ -288,7 +288,7 @@ export function SideMenuHeader({
         'gap-rui-2 rounded-square px-rui-2 py-rui-1 flex w-full items-center',
         'text-sm font-body text-hushed transition-colors outline-none',
         'hover:bg-limestone cursor-pointer',
-        'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
+        'focus-visible:bg-limestone',
         divider && 'border-bone pb-rui-2 mb-rui-1 border-b',
         className,
       )}
@@ -336,7 +336,7 @@ export function SideMenuProgress({
         'gap-rui-1 rounded-square px-rui-2 py-rui-1 flex w-full flex-col',
         'text-left transition-colors outline-none',
         'hover:bg-limestone cursor-pointer',
-        'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
+        'focus-visible:bg-limestone',
         divider && 'border-bone pb-rui-2 mb-rui-1 border-b',
         className,
       )}
@@ -413,7 +413,7 @@ export function SideMenuAction({ children, icon, onClick, href, className }: Sid
         // than the hushed nav items) — the spark glyph below stays HUSHED.
         'text-sm font-body text-ink transition-colors outline-none',
         'hover:bg-limestone',
-        'focus-visible:ring-control-ring focus-visible:ring-2 focus-visible:ring-offset-2',
+        'focus-visible:bg-limestone',
         'cursor-pointer',
         className,
       )}

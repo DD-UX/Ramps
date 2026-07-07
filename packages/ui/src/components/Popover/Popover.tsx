@@ -137,7 +137,7 @@ function PopoverTrigger({
         closeDelay={closeDelay}
         className={cn(
           'rounded-square cursor-default underline-offset-2 outline-none',
-          'focus-visible:ring-control-ring focus-visible:ring-2',
+          'focus-visible:underline',
           className,
         )}
       >
@@ -153,7 +153,7 @@ function PopoverTrigger({
       onClick={() => setOpen(!open)}
       className={cn(
         'rounded-square cursor-pointer underline-offset-2 outline-none',
-        'focus-visible:ring-control-ring focus-visible:ring-2',
+        'focus-visible:underline',
         className,
       )}
     >

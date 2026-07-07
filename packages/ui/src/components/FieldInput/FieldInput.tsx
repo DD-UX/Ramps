@@ -167,7 +167,7 @@ export function FieldInput({
             // centre it against the full field height, like Select's chevron.
             selfPlaceholder &&
               '[&::-webkit-calendar-picker-indicator]:right-3 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:cursor-pointer',
-            'focus:ring-control-ring focus:ring-2 focus:outline-none',
+            'focus:outline-none',
             isInvalid
               ? 'border-destructive focus:border-destructive'
               : // Rest = bone hairline all round; hover/focus darken ONLY the bottom

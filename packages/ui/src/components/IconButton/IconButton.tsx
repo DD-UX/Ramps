@@ -58,7 +58,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cn(
-        'focus:ring-control-ring inline-flex shrink-0 items-center justify-center transition-colors focus:ring-2 focus:outline-none',
+        'inline-flex shrink-0 items-center justify-center transition-colors focus:outline-none',
         rounded ? 'rounded-pill' : 'rounded-square',
         // Enabled: pointer cursor. Disabled: the shared inert treatment (one
         // consistent gray, hover killed, dimmed + not-allowed). Placed after the

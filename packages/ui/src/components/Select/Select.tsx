@@ -93,7 +93,7 @@ export function Select({
           // Sharp square white field with room for the floated label on top.
           'h-12 rounded-square bg-white pl-3 pr-8 text-sm font-body text-ink w-full cursor-pointer appearance-none border',
           labelText ? 'pt-4 pb-1' : undefined,
-          'focus-visible:ring-control-ring outline-none focus-visible:ring-2',
+          'outline-none',
           invalid
             ? 'border-destructive'
             : 'border-control-border focus:border-control-border-focus',

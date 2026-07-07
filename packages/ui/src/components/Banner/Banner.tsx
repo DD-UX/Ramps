@@ -76,7 +76,7 @@ export function Banner({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="-mr-rui-1 rounded-square px-rui-1 focus:ring-control-ring shrink-0 cursor-pointer leading-none opacity-70 hover:opacity-100 focus:ring-2 focus:outline-none"
+          className="-mr-rui-1 rounded-square px-rui-1 shrink-0 cursor-pointer leading-none opacity-70 hover:opacity-100 focus:opacity-100 focus:outline-none"
         >
           ×
         </button>

@@ -106,7 +106,7 @@ export function DraggablePanel({
         onKeyDown={onKeyDown}
         className={cn(
           'group bg-bone p-0 relative flex w-px shrink-0 cursor-col-resize items-center justify-center',
-          'focus-visible:ring-control-ring outline-none focus-visible:ring-2',
+          'outline-none',
         )}
       >
         <span
@@ -116,7 +116,7 @@ export function DraggablePanel({
             // shadow, ink dots — no border; a full step darker than the
             // panes so it keeps contrast on the limestone canvas too.
             'size-7 rounded-pill bg-stone text-ink absolute flex items-center justify-center',
-            'shadow-card group-hover:shadow-popover transition-shadow',
+            'shadow-card group-hover:shadow-popover group-focus-visible:shadow-popover transition-shadow',
             dragging && 'shadow-popover',
           )}
         >

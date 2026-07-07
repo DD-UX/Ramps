@@ -69,14 +69,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * ("Save draft", snapshot 9 — icon + underlined ink label, no fill).
  */
 const VARIANT_STYLE: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-ink hover:bg-accent/90 focus-visible:ring-control-ring',
-  secondary:
-    'bg-white text-ink border border-bone hover:bg-limestone focus-visible:ring-control-ring',
-  subtle: 'bg-transparent text-ink hover:bg-limestone focus-visible:ring-control-ring',
-  ink: 'bg-ink text-white hover:bg-ink-strong focus-visible:ring-control-ring',
+  primary: 'bg-accent text-ink hover:bg-accent/90',
+  secondary: 'bg-white text-ink border border-bone hover:bg-limestone',
+  subtle: 'bg-transparent text-ink hover:bg-limestone',
+  ink: 'bg-ink text-white hover:bg-ink-strong',
   underline:
-    'bg-transparent text-ink underline decoration-1 underline-offset-2 hover:text-ink-strong focus-visible:ring-control-ring',
-  destructive: 'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-control-ring',
+    'bg-transparent text-ink underline decoration-1 underline-offset-2 hover:text-ink-strong',
+  destructive: 'bg-destructive text-white hover:bg-destructive/90',
 };
 
 /**
@@ -85,17 +84,14 @@ const VARIANT_STYLE: Record<ButtonVariant, string> = {
  * limestone or the tone surface) so hover always reads.
  */
 const OUTLINE_STYLE: Record<ButtonVariant, string> = {
-  primary:
-    'bg-transparent text-ink border border-accent hover:bg-accent/15 focus-visible:ring-control-ring',
-  secondary:
-    'bg-transparent text-ink border border-bone hover:bg-limestone focus-visible:ring-control-ring',
-  subtle:
-    'bg-transparent text-ink border border-bone hover:bg-limestone focus-visible:ring-control-ring',
-  ink: 'bg-transparent text-ink border border-ink hover:bg-limestone focus-visible:ring-control-ring',
+  primary: 'bg-transparent text-ink border border-accent hover:bg-accent/15',
+  secondary: 'bg-transparent text-ink border border-bone hover:bg-limestone',
+  subtle: 'bg-transparent text-ink border border-bone hover:bg-limestone',
+  ink: 'bg-transparent text-ink border border-ink hover:bg-limestone',
   underline:
-    'bg-transparent text-ink border border-bone underline decoration-1 underline-offset-2 hover:bg-limestone focus-visible:ring-control-ring',
+    'bg-transparent text-ink border border-bone underline decoration-1 underline-offset-2 hover:bg-limestone',
   destructive:
-    'bg-transparent text-destructive border border-destructive hover:bg-tone-critical-surface focus-visible:ring-control-ring',
+    'bg-transparent text-destructive border border-destructive hover:bg-tone-critical-surface',
 };
 
 /** Height / padding / text scale. Both sizes are sharp-cornered (square radius). */
@@ -130,7 +126,7 @@ export function Button({
         // toolbar pills (snapshot 1) — heading weight, inline icon rows.
         'font-heading inline-flex items-center justify-center whitespace-nowrap',
         rounded ? 'rounded-pill' : 'rounded-square',
-        'transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        'transition-colors outline-none',
         // Enabled: pointer cursor. Disabled: the shared inert treatment — one
         // consistent gray, hover reaction killed, dimmed + not-allowed — so a
         // disabled button is never pixel-identical to its base and never lights

@@ -167,7 +167,6 @@ export function Dropdown({
             // The sharp square coding cell from the line-item grid.
             'h-12 gap-2 rounded-square bg-white px-3 flex w-full cursor-pointer items-center border text-left',
             'text-sm font-body text-ink outline-none',
-            'focus-visible:ring-control-ring focus-visible:ring-2',
             invalid
               ? 'border-destructive'
               : 'border-control-border data-[popup-open]:border-control-border-focus',
@@ -205,7 +204,7 @@ export function Dropdown({
         {clearable ? (
           <Combobox.Clear
             aria-label="Clear selection"
-            className="right-8 rounded-square p-0.5 text-hushed hover:text-ink focus-visible:ring-control-ring absolute cursor-pointer outline-none focus-visible:ring-2"
+            className="right-8 rounded-square p-0.5 text-hushed hover:text-ink absolute cursor-pointer outline-none"
           >
             <X size={14} />
           </Combobox.Clear>

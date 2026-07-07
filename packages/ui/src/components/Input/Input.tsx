@@ -58,7 +58,7 @@ export function Input({
         rounded ? 'rounded-pill' : 'rounded-square',
         'h-10 px-rui-3 py-rui-2',
         'placeholder:text-control-placeholder',
-        'focus:ring-control-ring focus:ring-2 focus:outline-none',
+        'focus:outline-none',
         invalid
           ? 'border-destructive focus:border-destructive'
           : 'border-control-border focus:border-control-border-focus',
