@@ -142,6 +142,10 @@
     "./useClickAway": {
       "types": "./dist/hooks/useClickAway.d.ts",
       "import": "./dist/hooks/useClickAway.js"
+    },
+    "./usePrevious": {
+      "types": "./dist/hooks/usePrevious.d.ts",
+      "import": "./dist/hooks/usePrevious.js"
     }
   },
   "files": [
