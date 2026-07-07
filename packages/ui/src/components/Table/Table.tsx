@@ -479,7 +479,7 @@ export function Table<T, K extends string | number = string>({
         // *scroll container's* visible bottom, so a SHORT viewport can't crop it
         // (verified: pins cleanly even at a 90px box, whitespace above it on a
         // tall box, scrolls under the rows once the data overflows).
-        className="relative min-h-0 flex flex-1 flex-col overflow-auto"
+        className="min-h-0 relative flex flex-1 flex-col overflow-auto"
         style={{ maxHeight: isVirtualized ? '600px' : undefined }}
       >
         {/* border-separate + per-cell borders: sticky cells carry their own

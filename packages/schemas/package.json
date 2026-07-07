@@ -33,6 +33,10 @@
       "types": "./dist/bill-tabs.d.ts",
       "import": "./dist/bill-tabs.js"
     },
+    "./bill-refs": {
+      "types": "./dist/bill-refs.d.ts",
+      "import": "./dist/bill-refs.js"
+    },
     "./approvals": {
       "types": "./dist/approvals.d.ts",
       "import": "./dist/approvals.js"

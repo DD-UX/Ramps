@@ -1,8 +1,14 @@
 import type { BillFlagType, BillListItemType } from '@ramps/schemas/bills';
 import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { BillsTable } from './BillsTable';
+
+// The table navigates to /bills/:id on row click via `useRouter`; stub the
+// navigation hook so the component can render outside an App Router context.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 /**
  * BillsTable is a thin client wrapper over the kit Table: it owns the column
@@ -61,14 +67,14 @@ describe('BillsTable', () => {
   });
 
   it('shows the "No vendor" placeholder for a vendor-less draft', () => {
-    render(<BillsTable bills={[makeBill({ vendor_name: null, status: 'missing_info' })]} total={1} />);
+    render(
+      <BillsTable bills={[makeBill({ vendor_name: null, status: 'missing_info' })]} total={1} />,
+    );
     expect(screen.getByText('No vendor')).toBeInTheDocument();
   });
 
   it('renders an em dash for a missing invoice number and due date', () => {
-    render(
-      <BillsTable bills={[makeBill({ invoice_number: null, due_date: null })]} total={1} />,
-    );
+    render(<BillsTable bills={[makeBill({ invoice_number: null, due_date: null })]} total={1} />);
     // Two em dashes: invoice # and due date.
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
   });

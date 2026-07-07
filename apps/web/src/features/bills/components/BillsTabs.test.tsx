@@ -58,7 +58,9 @@ describe('BillsTabs', () => {
 
   it('marks the active tab as selected (and only it)', () => {
     render(<BillsTabs tabs={TABS} activeCode="drafts" />);
-    const selected = screen.getAllByRole('tab').filter((t) => t.getAttribute('aria-selected') === 'true');
+    const selected = screen
+      .getAllByRole('tab')
+      .filter((t) => t.getAttribute('aria-selected') === 'true');
     expect(selected).toHaveLength(1);
     expect(selected[0]).toHaveTextContent('Drafts');
   });

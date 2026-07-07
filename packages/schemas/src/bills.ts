@@ -248,3 +248,88 @@ export type BillCreateType = z.infer<typeof BillCreateSchema>;
 /** Patchable draft fields — status moves ONLY through `transitionBill()`. */
 export const BillUpdateSchema = BillCreateSchema.omit({ line_items: true }).partial();
 export type BillUpdateType = z.infer<typeof BillUpdateSchema>;
+
+/* ────────────────────────────────────────────────────────────────────────
+ * Bill DETAIL page (`/bills/[id]`) — the full editable record + edit-form scope
+ *
+ * The list crosses the wire as `BillListItemSchema` (header + vendor label +
+ * flags). The detail PAGE needs more: the line items, the approval chain with
+ * approver labels, the entity label, and the AI pre-review. These extend the
+ * existing schemas rather than redefine them — the header shape stays single-
+ * sourced from `BillSchema`.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * One approval step, denormalized with its approver's display name — the
+ * `1 · Hannah Smolinski · <role>` rows in the Approvals section (findings §7,
+ * snapshot 10). The name is a join label the chain renders; the raw approval
+ * row lives in {@link ApprovalSchema} (../approvals).
+ */
+export const BillApprovalStepSchema = z.object({
+  id: IdSchema,
+  approver_id: IdSchema,
+  approver_name: z.string().nullable(),
+  sequence: z.number().int().min(1),
+  status: z.enum(['pending', 'approved', 'rejected']),
+  comment: z.string().nullable(),
+});
+export type BillApprovalStepType = z.infer<typeof BillApprovalStepSchema>;
+
+/**
+ * The full bill record the detail page reads — a bill with its lines, flags,
+ * the vendor/entity labels the form shows read-only, and the approval chain.
+ * Every section on `/bills/[id]` projects some slice of this one object.
+ */
+export const BillDetailSchema = BillWithLineItemsSchema.extend({
+  /** Joined vendor label (null on an unmatched `missing_info` draft). */
+  vendor_name: z.string().nullable(),
+  /** Joined "Create bill under" entity label. */
+  entity_name: z.string().nullable(),
+  /** The ordered approval chain with approver names (empty pre-submit). */
+  approvals: z.array(BillApprovalStepSchema).default([]),
+});
+export type BillDetailType = z.infer<typeof BillDetailSchema>;
+
+/**
+ * The react-hook-form EDIT scope for the detail page — the subset of the bill
+ * a reviewer actually edits in the draft form, plus the line-item grid. Status,
+ * ids, source and provenance are NOT here: status moves through
+ * `transitionBill()`, ids are the server's, and the form never rewrites them.
+ *
+ * This is the resolver schema (`zodResolver(BillEditFormSchema)`); it mirrors
+ * the entity so validation can't drift, but relaxes the draft-blank fields to
+ * `''`/null so an in-progress draft is a valid form state (the SUBMIT
+ * transition — not the resolver — is what demands a vendor, a due date, etc.).
+ */
+export const BillEditLineItemSchema = z.object({
+  /** Present for existing lines, absent for a freshly-added row. */
+  id: IdSchema.nullable(),
+  kind: LineItemKindSchema,
+  description: z.string(),
+  qty: z.number().int().positive().nullable(),
+  unit_price_cents: MoneyCentsSchema.nullable(),
+  amount_cents: MoneyCentsSchema,
+  gl_account_id: IdSchema.nullable(),
+  department_id: IdSchema.nullable(),
+  class_id: IdSchema.nullable(),
+  location_id: IdSchema.nullable(),
+  tax_code_id: IdSchema.nullable(),
+  custom_dimension_id: IdSchema.nullable(),
+  billable: z.boolean(),
+});
+export type BillEditLineItemType = z.infer<typeof BillEditLineItemSchema>;
+
+export const BillEditFormSchema = z.object({
+  vendor_id: IdSchema.nullable(),
+  entity_id: IdSchema.nullable(),
+  invoice_number: z.string(),
+  invoice_date: IsoDateSchema.nullable(),
+  due_date: IsoDateSchema.nullable(),
+  accounting_date: IsoDateSchema.nullable(),
+  po_number: z.string(),
+  amount_cents: MoneyCentsSchema,
+  currency: CurrencyCodeSchema,
+  memo: z.string(),
+  line_items: z.array(BillEditLineItemSchema),
+});
+export type BillEditFormType = z.infer<typeof BillEditFormSchema>;

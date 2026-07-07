@@ -4,6 +4,7 @@ import type { BillFlagType, BillListItemType } from '@ramps/schemas/bills';
 import { Money } from '@ramps/ui/Money';
 import { StatusPill } from '@ramps/ui/StatusPill';
 import { Table, TableAnnotationLink, type TableColumn } from '@ramps/ui/Table';
+import { useRouter } from 'next/navigation';
 
 import { formatBillDate } from '../helpers/format-date.helpers';
 
@@ -84,6 +85,7 @@ const COLUMNS: TableColumn<BillListItemType>[] = [
 ];
 
 export function BillsTable({ bills, total }: BillsTableProps) {
+  const router = useRouter();
   const totalCents = bills.reduce((sum, bill) => sum + bill.amount_cents, 0);
 
   return (
@@ -92,6 +94,7 @@ export function BillsTable({ bills, total }: BillsTableProps) {
       columns={COLUMNS}
       getRowId={(bill) => bill.id}
       selectable
+      onRowClick={(bill) => router.push(`/bills/${bill.id}`)}
       getRowAnnotation={(bill) =>
         bill.flags.length > 0 ? (
           <div className="gap-rui-1 flex flex-col">{bill.flags.map(renderFlag)}</div>

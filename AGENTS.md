@@ -161,6 +161,17 @@ features/<feature>/
 One category per file (no constants inside component files). Tests colocated:
 `Foo.tsx` + `Foo.test.tsx`.
 
+**Hard rule — never repeat the feature name in a component's own name.** The
+feature prefix is added _once_. A component whose remaining name would restate
+the feature (e.g. a "Bill details" section inside the `bill-details` feature)
+must be named for the concern it owns, not the feature: use
+`BillDetailsInvoiceInfo`, not `BillDetailsBillDetails`. If the prefix and the
+rest of the name are the same token, the name is wrong — rename the section
+after what it actually contains. When a component is the core/holistic piece of
+the feature (not one narrow concern), reach for a generic suffix — `Main`,
+`Content`, `Overview`, `Summary`, `Data` (e.g. `BillDetailsMain`) — instead of
+echoing the feature name.
+
 ### Imports & module graph
 
 - **Avoid barrels.** No `index.ts` files that re-export a folder. Import the

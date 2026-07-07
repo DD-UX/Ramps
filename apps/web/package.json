@@ -16,12 +16,14 @@
     "clean": "rm -rf .next .turbo public/storybook *.tsbuildinfo"
   },
   "dependencies": {
+    "@hookform/resolvers": "5.4.0",
     "@ramps/schemas": "workspace:*",
     "@ramps/sdk": "workspace:*",
     "@ramps/ui": "workspace:*",
     "next": "16.2.10",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "react-hook-form": "7.81.0",
     "zod": "4.4.3"
   },
   "devDependencies": {

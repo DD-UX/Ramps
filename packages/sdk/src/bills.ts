@@ -1,4 +1,6 @@
 import {
+  BillDetailSchema,
+  type BillDetailType,
   BillListItemSchema,
   type BillListItemType,
   type BillStatusType,
@@ -137,6 +139,91 @@ export async function listBills(
   });
 
   return { bills, total: count ?? bills.length };
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+ * Single bill — the `/bills/[id]` DETAIL read
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The detail select. Beyond the header columns it embeds everything the
+ * `/bills/[id]` page renders in one round-trip:
+ *  - `vendors(name)` / `entities(name)` — the read-only labels the form shows.
+ *  - `line_items(*)` — the coding grid, ordered by `line_no`.
+ *  - undismissed `flags` — the red risk annotations (same OWNER-edge
+ *    disambiguation as the list select, see {@link BILL_LIST_SELECT}).
+ *  - `approvals(*, users(name))` — the ordered approval chain with approver
+ *    labels; PostgREST embeds the approver via the `approver_id` FK.
+ */
+const BILL_DETAIL_SELECT = `
+  id, vendor_id, entity_id, created_by, source,
+  invoice_number, invoice_date, due_date, accounting_date, po_number,
+  amount_cents, currency, memo, document_url, status,
+  vendors ( name ),
+  entities ( name ),
+  line_items:bill_line_items ( * ),
+  flags:bill_flags!bill_flags_bill_id_fkey ( id, bill_id, type, message, related_bill_id, amount_cents, dismissed ),
+  approvals ( id, approver_id, sequence, status, comment, approver:users!approvals_approver_id_fkey ( name ) )
+` as const;
+
+/** The row shape PostgREST returns for {@link BILL_DETAIL_SELECT}. */
+interface BillDetailRow {
+  vendors: { name: string } | null;
+  entities: { name: string } | null;
+  line_items: { line_no: number }[];
+  flags: unknown[];
+  approvals: {
+    id: string;
+    approver_id: string;
+    sequence: number;
+    status: string;
+    comment: string | null;
+    approver: { name: string } | null;
+  }[];
+  [key: string]: unknown;
+}
+
+/**
+ * Fetch one bill with everything the detail page edits — lines, flags, the
+ * vendor/entity labels, and the approval chain. Returns `null` when no row
+ * matches (the route turns that into a 404). Validated at the boundary against
+ * {@link BillDetailSchema}, so every section downstream trusts the shape.
+ */
+export async function getBill(
+  supabase: ServerSupabase,
+  billId: string,
+): Promise<BillDetailType | null> {
+  const { data, error } = await supabase
+    .from('bills')
+    .select(BILL_DETAIL_SELECT)
+    .eq('id', billId)
+    .eq('flags.dismissed', false)
+    .maybeSingle();
+
+  if (error) throw toSdkError(error);
+  if (!data) return null;
+
+  const row = data as unknown as BillDetailRow;
+  const { vendors, entities, line_items, approvals, ...bill } = row;
+
+  // Flatten the joined labels, sort the lines by number, and lift the approver
+  // name out of its embed — then let the schema guard the whole shape.
+  return BillDetailSchema.parse({
+    ...bill,
+    vendor_name: vendors?.name ?? null,
+    entity_name: entities?.name ?? null,
+    line_items: [...line_items].sort((a, b) => a.line_no - b.line_no),
+    approvals: approvals
+      .map((step) => ({
+        id: step.id,
+        approver_id: step.approver_id,
+        approver_name: step.approver?.name ?? null,
+        sequence: step.sequence,
+        status: step.status,
+        comment: step.comment,
+      }))
+      .sort((a, b) => a.sequence - b.sequence),
+  });
 }
 
 /**
