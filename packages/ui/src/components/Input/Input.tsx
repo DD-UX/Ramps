@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode } from 'react';
+import type { InputHTMLAttributes, ReactNode, Ref } from 'react';
 
 import { cn } from '../../lib/cn';
 import { DISABLED_CONTROL } from '../../lib/disabled';
@@ -28,6 +28,12 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
    * in the frames are square.
    */
   rounded?: boolean;
+  /**
+   * Ref to the underlying `<input>` — so a consumer can focus/select it (e.g.
+   * the top-bar search field focusing itself on ⌘K). Forwarded even when the
+   * field is wrapped for adornments, so it always points at the real element.
+   */
+  ref?: Ref<HTMLInputElement>;
 }
 
 export function Input({
@@ -37,10 +43,12 @@ export function Input({
   rounded = false,
   className,
   type,
+  ref,
   ...props
 }: InputProps) {
   const input = (
     <input
+      ref={ref}
       type={type ?? 'text'}
       aria-invalid={invalid || undefined}
       className={cn(

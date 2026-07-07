@@ -7,6 +7,7 @@ import type { PropsWithChildren } from 'react';
 
 import { CommonSideMenu } from '@/features/common/components/CommonSideMenu';
 import { CommonTopBar } from '@/features/common/components/CommonTopBar';
+import { CommonTopBarSearch } from '@/features/common/components/CommonTopBarSearch';
 
 export const metadata: Metadata = {
   title: 'Ramps — payables',
@@ -22,7 +23,9 @@ export default function RootLayout({ children }: PropsWithChildren) {
 
         {/* Right: Top bar + main content column */}
         <div className="flex flex-1 flex-col overflow-auto">
-          <CommonTopBar />
+          <CommonTopBar>
+            <CommonTopBarSearch />
+          </CommonTopBar>
           <main className="flex flex-1 flex-col">{children}</main>
         </div>
       </body>
