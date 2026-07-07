@@ -53,6 +53,66 @@ export type ApprovalPolicyType = z.infer<typeof ApprovalPolicySchema>;
 export const ApprovalStatusSchema = z.enum(['pending', 'approved', 'rejected']);
 export type ApprovalStatusType = z.infer<typeof ApprovalStatusSchema>;
 
+/**
+ * An approval STAGE — one step of the editable chain BEFORE materialization
+ * (snapshot 10, the "Add approver" author view). A stage is a compound of role
+ * groups AND/OR individually-picked users: `roles` are role groups ("Any
+ * Admin"), `user_ids` are hand-picked people. This is the grain the DS
+ * ApprovalsWorkflow edits; on submit these stages materialize into per-person
+ * {@link ApprovalSchema} rows (which carry status). Distinct from
+ * {@link ApprovalPolicySchema} (admin routing rules) — a stage is this bill's
+ * concrete route.
+ *
+ * A stage must name at least one target (a role or a user); an all-empty stage
+ * is dropped by the editor and rejected here.
+ */
+export const ApprovalStageSchema = z
+  .object({
+    id: IdSchema,
+    bill_id: IdSchema,
+    /** 1-based position in the chain; unique per bill (DB `unique(bill_id, sequence)`). */
+    sequence: z.number().int().min(1),
+    /** Role groups checked for this step (e.g. `['admin']` → "Any Admin"). */
+    roles: z.array(RoleSchema),
+    /** Individually-picked user ids for this step (beyond role coverage). */
+    user_ids: z.array(IdSchema),
+  })
+  .refine((s) => s.roles.length > 0 || s.user_ids.length > 0, {
+    message: 'An approval stage must name at least one role or user',
+  });
+export type ApprovalStageType = z.infer<typeof ApprovalStageSchema>;
+
+/**
+ * The PUT payload to replace a bill's whole chain — the ordered stages the
+ * editor emits on change. Sequence is derived from array position on write, so
+ * the client sends only each stage's picks (roles + users); the id is optional
+ * (a freshly-added stage has no server id yet). Replace-all semantics: the
+ * absent stages are deleted.
+ */
+export const SaveApprovalStagesSchema = z.object({
+  stages: z.array(
+    z
+      .object({
+        roles: z.array(RoleSchema),
+        user_ids: z.array(IdSchema),
+      })
+      .refine((s) => s.roles.length > 0 || s.user_ids.length > 0, {
+        message: 'An approval stage must name at least one role or user',
+      }),
+  ),
+});
+export type SaveApprovalStagesType = z.infer<typeof SaveApprovalStagesSchema>;
+
+/**
+ * The response of the save route — the persisted chain, echoed back with server
+ * ids so the client can reconcile freshly-added stages. Parsed at the browser
+ * boundary (the SDK never returns raw JSON).
+ */
+export const ApprovalStagesResponseSchema = z.object({
+  approval_stages: z.array(ApprovalStageSchema),
+});
+export type ApprovalStagesResponseType = z.infer<typeof ApprovalStagesResponseSchema>;
+
 /** One materialized step of a bill's approval chain (the N-of-M counter). */
 export const ApprovalSchema = z.object({
   id: IdSchema,

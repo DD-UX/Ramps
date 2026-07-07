@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { ApprovalStageSchema } from './approvals.js';
 import { CurrencyCodeSchema, IdSchema, IsoDateSchema, MoneyCentsSchema } from './primitives.js';
 
 /**
@@ -287,6 +288,12 @@ export const BillDetailSchema = BillWithLineItemsSchema.extend({
   entity_name: z.string().nullable(),
   /** The ordered approval chain with approver names (empty pre-submit). */
   approvals: z.array(BillApprovalStepSchema).default([]),
+  /**
+   * The editable approval ROUTE (stages of roles ∪ users) the ApprovalsWorkflow
+   * renders — distinct from `approvals` (the materialized, status-bearing rows).
+   * Empty until an author adds steps. (../approvals → ApprovalStageSchema.)
+   */
+  approval_stages: z.array(ApprovalStageSchema).default([]),
 });
 export type BillDetailType = z.infer<typeof BillDetailSchema>;
 
