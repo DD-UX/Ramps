@@ -26,8 +26,10 @@ import { DISABLED_CONTROL } from '../../lib/disabled';
  *
  * Tokens only. `"use client"` — it owns the filled/focused floating state.
  */
-export interface FieldInputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'placeholder'> {
+export interface FieldInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'placeholder'
+> {
   /** The floating label, inside the box (centred when empty, risen when filled). */
   label: string;
   /**
@@ -162,7 +164,7 @@ export function FieldInput({
             // room for the floated label. Lift it out of the padding flow and
             // centre it against the full field height, like Select's chevron.
             selfPlaceholder &&
-              '[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-3 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:cursor-pointer',
+              '[&::-webkit-calendar-picker-indicator]:right-3 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:cursor-pointer',
             'focus:ring-control-ring focus:ring-2 focus:outline-none',
             isInvalid
               ? 'border-destructive focus:border-destructive'

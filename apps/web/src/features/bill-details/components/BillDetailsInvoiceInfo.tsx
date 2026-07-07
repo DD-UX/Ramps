@@ -29,10 +29,16 @@ export function BillDetailsInvoiceInfo() {
   return (
     <BillDetailsSection title="Bill details" completeness={completeness}>
       <div className="gap-rui-4 grid grid-cols-2">
-        <BillDetailsTextField name="invoice_number" label="Invoice number" required />
-        <BillDetailsTextField name="accounting_date" label="Accounting date" type="date" />
-        <BillDetailsTextField name="invoice_date" label="Invoice date" type="date" required />
-        <BillDetailsTextField name="due_date" label="Due date" type="date" required />
+        <span className="col-span-full">
+          <BillDetailsTextField name="invoice_number" label="Invoice number" />
+        </span>
+        <BillDetailsTextField name="invoice_date" label="Invoice date" type="date" />
+        <BillDetailsTextField name="due_date" label="Due date" type="date" />
+        {/* This field will be changed to be a text under last field, with a change text link
+        <span className="col-span-full">
+          <BillDetailsTextField name="accounting_date" label="Accounting date" type="date" />
+        </span>
+          */}
       </div>
     </BillDetailsSection>
   );

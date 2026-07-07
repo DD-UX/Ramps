@@ -41,12 +41,11 @@ export function BillDetailsVendor() {
           description="This invoice isn't matched to a vendor yet. Select one or create a new vendor to continue."
         />
       )}
-      <div className="gap-rui-4 grid grid-cols-2">
+      <div className="gap-rui-2 grid">
         <BillDetailsSelectField
           name="vendor_id"
           label="Vendor"
           options={vendors}
-          required
           placeholder="Select a vendor"
         />
         <BillDetailsSelectField
@@ -55,6 +54,12 @@ export function BillDetailsVendor() {
           options={entities}
           placeholder="Select an entity"
         />
+        {/* We are missing adding the State and Contact email fields */}
+        {/* State (required) */}
+        {/* Due to regulatory requirements, Ramp needs to know where this vendor is located in order to pay this bill */}
+        {/* [                      ] */}
+        {/* Contact email (required) */}
+        {/* [                      ] */}
       </div>
     </BillDetailsSection>
   );

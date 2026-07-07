@@ -51,7 +51,6 @@ export function BillDetailsLineItemRow({ index, onRemove }: BillDetailsLineItemR
           name={`line_items.${index}.gl_account_id`}
           label="Category"
           options={glAccounts}
-          required
           placeholder="Select a GL account"
         />
       </div>

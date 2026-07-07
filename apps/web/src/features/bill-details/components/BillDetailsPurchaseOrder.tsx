@@ -18,7 +18,7 @@ export function BillDetailsPurchaseOrder() {
 
   return (
     <BillDetailsSection title="Purchase order" completeness={completeness}>
-      <BillDetailsTextField name="po_number" label="PO number" placeholder="e.g. PO-5521" />
+      <BillDetailsTextField name="po_number" label="PO number" />
     </BillDetailsSection>
   );
 }

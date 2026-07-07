@@ -1,4 +1,3 @@
-import { Card } from '@ramps/ui/Card';
 import type { ReactNode } from 'react';
 
 import type { SectionCompleteness } from '../helpers/section-completeness.helpers';
@@ -28,18 +27,13 @@ export function BillDetailsSection({
   children,
 }: BillDetailsSectionProps) {
   return (
-    <Card>
-      <Card.Header
-        action={
-          <div className="gap-rui-2 flex items-center">
-            {action}
-            {completeness && <BillDetailsCompletenessBadge state={completeness} />}
-          </div>
-        }
-      >
-        {title}
-      </Card.Header>
-      <Card.Body className="gap-rui-4 flex flex-col">{children}</Card.Body>
-    </Card>
+    <div className="gap-rui-2 grid">
+      <div className="gap-rui-3 flex items-center">
+        <span className="text-[1.125rem]">{title}</span>
+        {completeness && <BillDetailsCompletenessBadge state={completeness} />}
+        {action}
+      </div>
+      <div className="gap-rui-4 flex flex-col">{children}</div>
+    </div>
   );
 }
