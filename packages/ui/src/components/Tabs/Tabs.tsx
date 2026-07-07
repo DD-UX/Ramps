@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { useId } from 'react';
 
 import { cn } from '../../lib/cn';
 
@@ -32,6 +33,11 @@ export interface TabsProps {
 }
 
 export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
+  // Scope the shared-layout underline to THIS bar. `layoutId` is a global key in
+  // Motion, so two Tabs on one page that both used a fixed "tab-underline" would
+  // share one indicator and cross-animate — the underline would fly from one bar
+  // to the other. A per-instance id keeps each bar's glide to itself.
+  const underlineId = useId();
   return (
     <div
       role="tablist"
@@ -64,7 +70,7 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
             )}
             {active && (
               <motion.span
-                layoutId="tab-underline"
+                layoutId={underlineId}
                 data-testid="tab-underline"
                 className="inset-x-0 h-0.5 rounded-pill bg-ink absolute -bottom-px"
                 transition={{ type: 'spring', stiffness: 500, damping: 40 }}
