@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { PaymentMethodSchema } from './payments.js';
-import { IdSchema } from './primitives.js';
+import { IdSchema, MoneyCentsSchema } from './primitives.js';
 
 /**
  * Vendors are first-class (ANALYSIS §1 insight 3): the vendor record owns
@@ -11,6 +11,20 @@ import { IdSchema } from './primitives.js';
 
 export const VendorStatusSchema = z.enum(['active', 'inactive']);
 export type VendorStatusType = z.infer<typeof VendorStatusSchema>;
+
+/**
+ * The workflow bucket behind the non-Overview Vendors tabs (Needs review /
+ * Renewals / Duplicates / Switch cards). NULL on the vendor means it's in no
+ * special workflow, so those tabs filter to no rows until data lands — the
+ * tabs are functional, just empty.
+ */
+export const VendorReviewStateSchema = z.enum([
+  'needs_review',
+  'renewal',
+  'duplicate',
+  'switch_card',
+]);
+export type VendorReviewStateType = z.infer<typeof VendorReviewStateSchema>;
 
 /** Payment details on file — shape depends on the rail, all simulated. */
 export const VendorBankDetailsSchema = z.object({
@@ -43,6 +57,10 @@ export const VendorSchema = z.object({
   name: z.string().min(1),
   /** The human responsible for this vendor relationship. */
   owner_id: IdSchema,
+  /** Industry label shown as the subtitle under the name in the list. */
+  category: z.string().nullable(),
+  /** Workflow bucket behind the non-Overview tabs; NULL = no special workflow. */
+  review_state: VendorReviewStateSchema.nullable(),
   default_payment_method: PaymentMethodSchema.nullable(),
   /** Default coding applied when a bill lands for this vendor (§5). */
   default_coding: VendorDefaultCodingSchema.nullable(),
@@ -58,13 +76,16 @@ export const VendorCreateSchema = VendorSchema.omit({ id: true, status: true }).
 export type VendorCreateType = z.infer<typeof VendorCreateSchema>;
 
 /**
- * What the vendor LIST renders — the vendor header plus the denormalised owner
- * label (the `users.name` behind `owner_id`). Mirrors {@link BillListItemSchema}:
- * the table trusts a flat, joined shape, and the SDK's `.parse()` is the single
- * gate that produces it. `owner_name` is nullable to survive an orphaned owner
- * FK rather than dropping the row.
+ * What the vendor LIST renders — the vendor header plus two denormalised joins:
+ * the owner label (the `users.name` behind `owner_id`) and `total_spend_cents`,
+ * the sum of this vendor's bills (there is no spend column; it's derived at read
+ * time). Mirrors {@link BillListItemSchema}: the table trusts a flat, joined
+ * shape, and the SDK's `.parse()` is the single gate that produces it.
+ * `owner_name` is nullable to survive an orphaned owner FK rather than dropping
+ * the row; `total_spend_cents` defaults to 0 for a vendor with no bills yet.
  */
 export const VendorListItemSchema = VendorSchema.extend({
   owner_name: z.string().nullable(),
+  total_spend_cents: MoneyCentsSchema,
 });
 export type VendorListItemType = z.infer<typeof VendorListItemSchema>;

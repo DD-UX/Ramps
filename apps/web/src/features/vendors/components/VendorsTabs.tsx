@@ -10,10 +10,9 @@ import { tabHref } from '../helpers/vendor-tabs.helpers';
 export interface VendorsTabsProps {
   tabs: readonly VendorTab[];
   activeCode: VendorTab['code'];
-  counts?: Record<VendorTab['code'], number>;
 }
 
-export function VendorsTabs({ tabs, activeCode, counts }: VendorsTabsProps) {
+export function VendorsTabs({ tabs, activeCode }: VendorsTabsProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -26,10 +25,11 @@ export function VendorsTabs({ tabs, activeCode, counts }: VendorsTabsProps) {
     [router, pathname, defaultCode],
   );
 
+  // No count badges — the workflow tabs are empty by design, so the design
+  // shows no counts (unlike Bill Pay's populated tabs).
   const tabItems = tabs.map((tab) => ({
     value: tab.code,
     label: tab.name,
-    count: counts?.[tab.code],
   }));
 
   return (

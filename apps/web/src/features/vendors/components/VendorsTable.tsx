@@ -1,6 +1,9 @@
 'use client';
 
 import type { VendorListItemType } from '@ramps/schemas/vendors';
+import { IconButton } from '@ramps/ui/IconButton';
+import { MoreVertical } from '@ramps/ui/icons';
+import { Money } from '@ramps/ui/Money';
 import { Table, type TableColumn } from '@ramps/ui/Table';
 import { useRouter } from 'next/navigation';
 
@@ -16,9 +19,16 @@ const COLUMNS: TableColumn<VendorListItemType>[] = [
   {
     id: 'name',
     header: 'Vendor',
-    width: 'minmax(220px, 1fr)',
+    width: 'minmax(240px, 1fr)',
     sticky: 'left',
-    cell: (vendor) => <span className="text-ink">{vendor.name}</span>,
+    // Name over a hushed category subtitle — the design's two-line vendor cell
+    // ("Anderson Legal" / "Legal Services"). Category is null-safe.
+    cell: (vendor) => (
+      <div className="flex flex-col">
+        <span className="text-ink">{vendor.name}</span>
+        {vendor.category && <span className="text-xs text-hushed">{vendor.category}</span>}
+      </div>
+    ),
   },
   {
     id: 'owner',
@@ -32,6 +42,15 @@ const COLUMNS: TableColumn<VendorListItemType>[] = [
       ),
   },
   {
+    id: 'total_spend',
+    header: 'Total spend',
+    width: '160px',
+    align: 'right',
+    // Derived at read time (sum of the vendor's bills) — stands in for the
+    // design's 365-day spend column, which we don't have windowed data for.
+    cell: (vendor) => <Money cents={vendor.total_spend_cents} />,
+  },
+  {
     id: 'default_payment_method',
     header: 'Payment method',
     width: '180px',
@@ -41,8 +60,22 @@ const COLUMNS: TableColumn<VendorListItemType>[] = [
     id: 'status',
     header: 'Status',
     width: '160px',
-    sticky: 'right',
     cell: (vendor) => <VendorsStatusPill status={vendor.status} />,
+  },
+  {
+    id: 'menu',
+    header: '',
+    width: '56px',
+    align: 'center',
+    sticky: 'right',
+    // The trailing row-action menu from the design. Disabled placeholder — the
+    // per-vendor actions aren't wired yet. `stopPropagation` keeps a click here
+    // from also firing the row's navigate-to-detail.
+    cell: () => (
+      <div onClick={(event) => event.stopPropagation()}>
+        <IconButton label="Vendor actions" icon={<MoreVertical size={16} />} disabled />
+      </div>
+    ),
   },
 ];
 
