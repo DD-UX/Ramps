@@ -59,7 +59,7 @@ export function CommonTopBarSearch({
       // Flat, borderless bar that fills the top-bar's flexible middle. Left
       // padding clears the two-chip lead; the search default border/ring is
       // dropped so the field reads as part of the bar, not a boxed control.
-      className={'pl-20 w-full border-transparent bg-transparent focus:ring-0 ' + (className ?? '')}
+      className={'pl-20 bg-stone-50 w-full border-transparent focus:ring-0 ' + (className ?? '')}
     />
   );
 }

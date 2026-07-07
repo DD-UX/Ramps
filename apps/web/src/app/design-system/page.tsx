@@ -18,7 +18,7 @@ export default function DesignSystemPage() {
     <main className="bg-limestone flex h-dvh flex-col">
       <header className="border-bone px-rui-4 py-rui-3 flex items-center justify-between border-b">
         <div>
-          <h1 className="text-sm font-heading text-ink">Design system</h1>
+          <h2 className="text-sm font-heading text-ink">Design system</h2>
           <p className="text-xs font-body text-hushed">
             Verified Ramp tokens + primitives, rendered live in Storybook.
           </p>

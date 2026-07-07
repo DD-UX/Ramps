@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { CommonTopBar } from './CommonTopBar';
 
 /**
- * CommonTopBar is a pure layout shell: an optional <h1> title on the left, a
+ * CommonTopBar is a pure layout shell: an optional <h2> title on the left, a
  * children slot (the search) in the flexible middle, and a right cluster of
  * quick actions (bell, plus) BEFORE the current user's Avatar. No logic, no
  * hooks — these tests pin the composition: the title renders as a heading only

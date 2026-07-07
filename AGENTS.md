@@ -120,6 +120,12 @@ export type BillStatusType = 'draft' | 'awaiting_approval';   // free to drift f
   merge `className` last. Variant styling via lookup map, never ternary chains.
 - `"use client"` only for state/effects/handlers — presentational components stay
   server-renderable.
+- **`<h1>` is reserved for the brand.** There is exactly one `<h1>` per page and
+  it belongs to the product/brand identity (the "ramps" mark / brand heading).
+  Every other heading — page titles, section titles, card headers, the top bar —
+  starts at `<h2>` and steps down from there (`<h2>` → `<h3>` → …), never skipping
+  a level. Visual size is a token/`className` choice; the tag reflects document
+  hierarchy, not how big the text looks.
 - **`children` → `PropsWithChildren`, always.** When a component accepts children,
   type its props with React's `PropsWithChildren`. Never hand-write
   `children: ReactNode` or `children?: ReactNode` in the interface — it drifts from

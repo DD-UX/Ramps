@@ -20,22 +20,22 @@ export interface CommonTopBarProps extends PropsWithChildren {
 }
 
 export function CommonTopBar({ title, children, className }: CommonTopBarProps) {
-  const baseClasses = 'flex items-center border-b border-bone bg-white px-rui-6 py-rui-3';
+  const baseClasses = 'flex items-center border-b border-bone bg-white px-rui-6 py-rui-2';
   const finalClasses = className ? `${baseClasses} ${className}` : baseClasses;
 
   return (
     <header className={finalClasses}>
       {/* Left: optional page title */}
-      {title && <h1 className="font-heading text-ink mr-rui-4 text-lg">{title}</h1>}
+      {title && <h2 className="font-heading text-ink mr-rui-4 text-lg">{title}</h2>}
 
       {/* Middle: the general search fills the flexible space. */}
       <div className="min-w-0 flex flex-1 items-center">{children}</div>
 
       {/* Right: quick actions (bell, plus) then the user — actions BEFORE user. */}
-      <div className="gap-rui-2 ml-rui-4 flex items-center">
-        <IconButton label="Notifications" variant="ghost" rounded icon={<Bell size={18} />} />
-        <IconButton label="Create new" variant="ghost" rounded icon={<Plus size={18} />} />
-        <Avatar name="Diego Diaz" size="sm" />
+      <div className="gap-rui-2 flex items-center">
+        <IconButton label="Notifications" variant="ghost" rounded icon={<Bell size={20} />} />
+        <IconButton label="Create new" variant="ghost" rounded icon={<Plus size={20} />} />
+        <Avatar name="Diego Diaz" size="md" />
       </div>
     </header>
   );
