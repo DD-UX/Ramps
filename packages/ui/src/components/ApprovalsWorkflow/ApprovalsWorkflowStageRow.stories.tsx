@@ -1,18 +1,22 @@
+import { DndContext } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { ApprovalsWorkflowStageRow } from './ApprovalsWorkflowStageRow';
 import type { ApprovalsRole, ApprovalsUser } from './stageHelpers';
 
 /**
- * ApprovalsWorkflowStageRow stories — one numbered step in the chain: the
- * sequence chip, the stage's approver bubbles (roles first, then a deduped
- * "Users" bubble), and the ⋮ overflow menu with **Edit** + a destructive
+ * ApprovalsWorkflowStageRow stories — one numbered step in the chain: the drag
+ * grip, the sequence chip, the stage's approver bubbles (roles first, then a
+ * deduped "Users" bubble), and the ⋮ overflow menu with **Edit** + a destructive
  * **Remove**. Edit reopens the shared picker prefilled with this stage's
  * selection, anchored to the row's ⋮.
  *
- * The row renders an `<li>`, so every story wraps it in a bordered `<ol>` — the
- * same list ApprovalsWorkflow mounts it in. `onEdit`/`onRemove` are no-ops here;
- * the ApprovalsWorkflow stories cover the wired-up commit/remove behaviour.
+ * The row is a **sortable `<li>`** ({@link useSortable}), so every story wraps it
+ * in the `DndContext` + `SortableContext` the workflow provides — without them
+ * the sortable hook has no context and the grip is inert. `onEdit`/`onRemove`
+ * are no-ops here; the ApprovalsWorkflow stories cover the wired-up
+ * commit/remove/reorder behaviour.
  */
 const ROLES: ApprovalsRole[] = [
   { id: 'role-admin', name: 'Any Admin' },
@@ -39,13 +43,21 @@ const meta = {
     onEdit: () => {},
     onRemove: () => {},
   },
-  // The row is an <li>; mount it in the bordered card + <ol> the workflow uses.
+  // The row is a sortable <li>; mount it in the DnD context + bordered <ol> the
+  // workflow provides, seeding SortableContext with this story's stage id.
   decorators: [
-    (Story) => (
+    (Story, context) => (
       <div className="max-w-xl rounded-square border-bone bg-white p-rui-4 border">
-        <ol>
-          <Story />
-        </ol>
+        <DndContext>
+          <SortableContext
+            items={context.args.stage ? [context.args.stage.id] : []}
+            strategy={verticalListSortingStrategy}
+          >
+            <ol>
+              <Story />
+            </ol>
+          </SortableContext>
+        </DndContext>
       </div>
     ),
   ],
@@ -110,5 +122,17 @@ export const WithHiddenRole: Story = {
     stage: { id: 'stage-1', roleIds: ['role-admin'], userIds: [] },
     sequence: 1,
     hideRoleIds: ['role-approver'],
+  },
+};
+
+/**
+ * Read-only — the frozen row: the drag grip and the ⋮ Edit/Remove menu are both
+ * dropped, so it renders as a static record of the step with no affordances.
+ */
+export const ReadOnly: Story = {
+  args: {
+    stage: { id: 'stage-1', roleIds: ['role-admin'], userIds: ['user-harrington'] },
+    sequence: 1,
+    disabled: true,
   },
 };

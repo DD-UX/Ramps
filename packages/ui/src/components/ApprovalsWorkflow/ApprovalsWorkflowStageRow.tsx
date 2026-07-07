@@ -1,6 +1,8 @@
 'use client';
 
-import { Pencil, Trash2 } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Menu } from '../Menu/Menu';
@@ -29,6 +31,15 @@ import {
  * users; saving replaces the stage in place via `onEdit`. `hideRoleIds` are the
  * roles used by OTHER stages (this stage's own roles stay selectable so they can
  * be unchecked).
+ *
+ * The row is a **sortable item** ({@link useSortable} keyed by `stage.id`): a
+ * leading grip handle carries the drag listeners (pointer + keyboard), and the
+ * whole `<li>` translates under the active drag. The parent's `SortableContext`
+ * + `DndContext` own the drop → reorder; the row just reports the handle.
+ *
+ * When `disabled` (the workflow is read-only), sorting is switched off at the
+ * `useSortable` level and the grip handle is dropped entirely — the row still
+ * renders its approvers, just frozen in place.
  */
 export interface ApprovalsWorkflowStageRowProps {
   stage: ApprovalsStage;
@@ -38,6 +49,8 @@ export interface ApprovalsWorkflowStageRowProps {
   users: ApprovalsUser[];
   /** Roles already used by OTHER stages — hidden from this stage's edit picker. */
   hideRoleIds?: string[];
+  /** Read-only: no drag handle, no ⋮ actions — the row is frozen. */
+  disabled?: boolean;
   onEdit: (stageId: string, selection: { roleIds: string[]; userIds: string[] }) => void;
   onRemove: (stageId: string) => void;
 }
@@ -48,6 +61,7 @@ export function ApprovalsWorkflowStageRow({
   roles,
   users,
   hideRoleIds,
+  disabled = false,
   onEdit,
   onRemove,
 }: ApprovalsWorkflowStageRowProps) {
@@ -55,8 +69,43 @@ export function ApprovalsWorkflowStageRow({
   const extraUsers = extraUsersForStage(stage, users);
   const [editing, setEditing] = useState(false);
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: stage.id,
+    disabled,
+  });
+
+  // Translate the row under an active drag; lift it above its siblings so it
+  // never renders behind the next row while moving.
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : undefined,
+  };
+
   return (
-    <li className="gap-rui-3 rounded-square border-bone px-rui-3 py-rui-2 flex items-center border">
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`gap-rui-3 rounded-square border-bone px-rui-3 py-rui-2 bg-white flex items-center border ${
+        isDragging ? 'shadow-popover opacity-90' : ''
+      }`}
+    >
+      {/* Drag handle — an open-hand pad that carries the sortable listeners
+          (pointer + keyboard). Dropped entirely when the workflow is read-only.
+          `cursor-grab` shows the open hand; `active:cursor-grabbing` closes it
+          while dragging. */}
+      {!disabled ? (
+        <button
+          type="button"
+          aria-label={`Reorder stage ${sequence}`}
+          className="text-hushed hover:text-ink hover:bg-limestone rounded-square -ml-rui-1 size-6 flex shrink-0 cursor-grab touch-none items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical aria-hidden size={16} />
+        </button>
+      ) : null}
+
       {/* Sequence marker — the round number chip from the frame. */}
       <span aria-hidden className={APPROVALS_CHIP_CLASS}>
         {sequence}
@@ -74,39 +123,42 @@ export function ApprovalsWorkflowStageRow({
 
       {/* The ⋮ menu, and — anchored to the same corner — the controlled edit
           picker it opens. The picker's trigger is a zero-size anchor; the menu
-          drives its open state so the two popovers never fight for the click. */}
-      <div className="relative inline-flex">
-        <Menu
-          label={`Stage ${sequence} actions`}
-          items={[
-            {
-              label: 'Edit',
-              icon: <Pencil size={14} />,
-              onSelect: () => setEditing(true),
-            },
-            {
-              label: 'Remove',
-              tone: 'destructive',
-              icon: <Trash2 size={14} />,
-              onSelect: () => onRemove(stage.id),
-            },
-          ]}
-        />
-        <div className="right-0 absolute top-full">
-          <ApprovalsWorkflowApproverPicker
-            mode="edit"
-            roles={roles}
-            users={users}
-            hideRoleIds={hideRoleIds}
-            initialRoleIds={stage.roleIds}
-            initialUserIds={stage.userIds}
-            open={editing}
-            onOpenChange={setEditing}
-            onSubmit={(selection) => onEdit(stage.id, selection)}
-            trigger={<span aria-hidden className="size-0 block" />}
+          drives its open state so the two popovers never fight for the click.
+          Dropped when read-only — a frozen row offers no edit/remove. */}
+      {!disabled ? (
+        <div className="relative inline-flex">
+          <Menu
+            label={`Stage ${sequence} actions`}
+            items={[
+              {
+                label: 'Edit',
+                icon: <Pencil size={14} />,
+                onSelect: () => setEditing(true),
+              },
+              {
+                label: 'Remove',
+                tone: 'destructive',
+                icon: <Trash2 size={14} />,
+                onSelect: () => onRemove(stage.id),
+              },
+            ]}
           />
+          <div className="right-0 absolute top-full">
+            <ApprovalsWorkflowApproverPicker
+              mode="edit"
+              roles={roles}
+              users={users}
+              hideRoleIds={hideRoleIds}
+              initialRoleIds={stage.roleIds}
+              initialUserIds={stage.userIds}
+              open={editing}
+              onOpenChange={setEditing}
+              onSubmit={(selection) => onEdit(stage.id, selection)}
+              trigger={<span aria-hidden className="size-0 block" />}
+            />
+          </div>
         </div>
-      </div>
+      ) : null}
     </li>
   );
 }

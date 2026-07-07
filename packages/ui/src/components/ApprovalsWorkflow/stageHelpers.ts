@@ -109,3 +109,33 @@ export function usedRoleIds(stages: ApprovalsStage[], exceptStageId?: string): S
   }
   return used;
 }
+
+/**
+ * Reorder the chain by moving the `activeId` stage into the `overId` stage's
+ * slot — the commit behind a drag-to-reorder drop. Returns a NEW array (never
+ * mutates); a no-op (same array identity) when the ids match, either id is
+ * unknown, or the order wouldn't change, so a stray drop can't churn state.
+ *
+ * Index-based and dependency-free on purpose: the drag library resolves which
+ * ids are involved, but the actual list transform lives here so it stays pure
+ * and unit-tested (the DS sequence numbers derive from list position, so this
+ * IS the reordering).
+ */
+export function moveStage(
+  stages: ApprovalsStage[],
+  activeId: string,
+  overId: string,
+): ApprovalsStage[] {
+  if (activeId === overId) return stages;
+  const from = stages.findIndex((stage) => stage.id === activeId);
+  const to = stages.findIndex((stage) => stage.id === overId);
+  if (from === -1 || to === -1 || from === to) return stages;
+
+  const next = [...stages];
+  const [moved] = next.splice(from, 1);
+  // `from` was validated above, so splice always yields the row; the guard is
+  // for the compiler's noUncheckedIndexedAccess, not a real runtime case.
+  if (!moved) return stages;
+  next.splice(to, 0, moved);
+  return next;
+}

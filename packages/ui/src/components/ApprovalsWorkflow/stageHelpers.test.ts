@@ -7,6 +7,7 @@ import {
   extraUsersForStage,
   isStageEmpty,
   membersOfRole,
+  moveStage,
   stageRoleBubbles,
   usedRoleIds,
 } from './stageHelpers';
@@ -154,5 +155,39 @@ describe('usedRoleIds', () => {
 
   it('is empty for an empty chain', () => {
     expect(usedRoleIds([]).size).toBe(0);
+  });
+});
+
+describe('moveStage', () => {
+  const chain: ApprovalsStage[] = [stage({ id: 's1' }), stage({ id: 's2' }), stage({ id: 's3' })];
+
+  it('moves a stage DOWN into the target slot', () => {
+    expect(moveStage(chain, 's1', 's3').map((s) => s.id)).toEqual(['s2', 's3', 's1']);
+  });
+
+  it('moves a stage UP into the target slot', () => {
+    expect(moveStage(chain, 's3', 's1').map((s) => s.id)).toEqual(['s3', 's1', 's2']);
+  });
+
+  it('moves to an adjacent slot', () => {
+    expect(moveStage(chain, 's1', 's2').map((s) => s.id)).toEqual(['s2', 's1', 's3']);
+  });
+
+  it('returns the same array reference when the ids match (no churn)', () => {
+    expect(moveStage(chain, 's2', 's2')).toBe(chain);
+  });
+
+  it('is a no-op for an unknown active id', () => {
+    expect(moveStage(chain, 's-ghost', 's2')).toBe(chain);
+  });
+
+  it('is a no-op for an unknown over id', () => {
+    expect(moveStage(chain, 's1', 's-ghost')).toBe(chain);
+  });
+
+  it('does not mutate the input array', () => {
+    const before = chain.map((s) => s.id);
+    moveStage(chain, 's1', 's3');
+    expect(chain.map((s) => s.id)).toEqual(before);
   });
 });

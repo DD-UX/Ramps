@@ -116,3 +116,37 @@ export const Editing: Story = {
     ],
   },
 };
+
+/**
+ * Drag-to-reorder — grab a row's grip handle (or tab to it and press Space, then
+ * the arrow keys) to move a stage; the drop renumbers the chain 1…N. To insert a
+ * step "in between", add it with the picker (it appends at the end) and drag it
+ * up into place. The grip cursor opens (`grab`) on hover and closes (`grabbing`)
+ * while dragging.
+ */
+export const Reorderable: Story = {
+  args: {
+    initialStages: [
+      { id: 'stage-1', roleIds: ['role-admin'], userIds: [] },
+      { id: 'stage-2', roleIds: ['role-approver'], userIds: [] },
+      { id: 'stage-3', roleIds: ['role-bookkeeper'], userIds: [] },
+      { id: 'stage-4', roleIds: [], userIds: ['user-harrington'] },
+    ],
+  },
+};
+
+/**
+ * Read-only — the frozen chain: no grip handles, no ⋮ actions, and no "＋ Add
+ * approver" picker. The workflow renders as a static record of the approval
+ * route, e.g. on a submitted bill.
+ */
+export const ReadOnly: Story = {
+  args: {
+    readOnly: true,
+    initialStages: [
+      { id: 'stage-1', roleIds: ['role-admin'], userIds: ['user-harrington'] },
+      { id: 'stage-2', roleIds: ['role-approver'], userIds: [] },
+      { id: 'stage-3', roleIds: ['role-bookkeeper'], userIds: [] },
+    ],
+  },
+};
