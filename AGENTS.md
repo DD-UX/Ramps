@@ -126,24 +126,33 @@ export type BillStatusType = 'draft' | 'awaiting_approval';   // free to drift f
   starts at `<h2>` and steps down from there (`<h2>` → `<h3>` → …), never skipping
   a level. Visual size is a token/`className` choice; the tag reflects document
   hierarchy, not how big the text looks.
-- **`children` → `PropsWithChildren`, always.** When a component accepts children,
-  type its props with React's `PropsWithChildren`. Never hand-write
-  `children: ReactNode` or `children?: ReactNode` in the interface — it drifts from
-  React's own type and trips Storybook CSF (a required `children` forces every
-  render-only story to pass `args`). This is repo-wide (`apps/web` + `packages/ui`),
-  not just the kit.
+- **`children` → `PropsWithChildren` by default.** When a component accepts
+  children, type its props with React's `PropsWithChildren` rather than
+  hand-writing `children?: ReactNode`. The default matters most in `packages/ui`:
+  a _required_ `children` trips Storybook CSF (it forces every render-only story to
+  pass `args`), and `PropsWithChildren` also keeps optional-children props aligned
+  with React's own type.
+  - **Carve-out — a _required_ `children: ReactNode` is allowed** for an `apps/web`
+    feature component that is **never storied** and is meaningless without its
+    children (a layout wrapper, a section card, a context provider). There the CSF
+    reason doesn't apply, and the explicit field is the stricter, truer contract:
+    `<Foo />` with no children becomes a compile error instead of a silent empty
+    render. Add a one-line comment on the field recording that this is deliberate.
+  - If a component _could_ be storied (anything in `packages/ui`, or a leaf you'd
+    plausibly add a story for), stay with `PropsWithChildren`.
 
 ```tsx
-// ✅ DO
+// ✅ DO — storied / kit component (children optional per React's type)
 import type { PropsWithChildren } from 'react';
 export interface CardProps extends PropsWithChildren {
   title: string;
 }
-// ❌ DON'T
-export interface CardProps {
+// ✅ ALSO OK — never-storied apps/web wrapper whose children are required
+export interface BillDetailsSectionProps {
   title: string;
-  children: ReactNode;
+  children: ReactNode; // required + never storied → explicit is the truer contract
 }
+// ❌ DON'T — hand-write children on a component that is (or could be) storied
 ```
 
 ### Files & naming

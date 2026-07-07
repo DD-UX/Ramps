@@ -36,6 +36,8 @@ const BillDetailContext = createContext<BillDetailContextValue | null>(null);
 export interface BillDetailProviderProps {
   bill: BillDetailType;
   refs: BillDetailRefsType;
+  // Required + never storied (a provider wrapping no tree is meaningless):
+  // explicit `children` over PropsWithChildren is the deliberate, stricter contract.
   children: ReactNode;
 }
 

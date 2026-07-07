@@ -12,6 +12,8 @@ export interface BillDetailsFormFieldProps {
   /** Field-level validation message (from react-hook-form). */
   error?: string;
   htmlFor?: string;
+  // Required + never storied (apps/web): explicit `children` over PropsWithChildren
+  // is deliberate — a field wrapping no control is a compile error, not a no-op.
   children: ReactNode;
 }
 

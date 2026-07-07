@@ -16,6 +16,8 @@ export interface BillDetailsSectionProps {
   completeness?: SectionCompleteness;
   /** Extra header action (e.g. "Select another vendor"). */
   action?: ReactNode;
+  // Required + never storied (apps/web): explicit `children` over PropsWithChildren
+  // is deliberate — a section card with an empty body is a compile error, not a no-op.
   children: ReactNode;
 }
 

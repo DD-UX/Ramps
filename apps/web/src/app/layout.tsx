@@ -5,30 +5,22 @@ import './globals.css';
 import type { Metadata } from 'next';
 import type { PropsWithChildren } from 'react';
 
-import { CommonSideMenu } from '@/features/common/components/CommonSideMenu';
-import { CommonTopBar } from '@/features/common/components/CommonTopBar';
-import { CommonTopBarSearch } from '@/features/common/components/CommonTopBarSearch';
-
 export const metadata: Metadata = {
   title: 'Ramps — payables',
   description: 'Accounts payable, Ramp Bill Pay-inspired.',
 };
 
+/**
+ * The root layout owns only the document shell — `<html>` + `<body>` and the
+ * global stylesheet. It is intentionally chrome-free so route groups can pick
+ * their own frame: `(shell)/` adds the persistent SideMenu + TopBar for the
+ * list/overview pages, while `(detail)/` gives each detail entity its own
+ * focused layout. Both compose *inside* this body.
+ */
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en">
-      <body className="flex h-dvh min-h-dvh flex-row overflow-hidden">
-        {/* Left: SideMenu (full viewport height) */}
-        <CommonSideMenu />
-
-        {/* Right: Top bar + main content column */}
-        <div className="flex flex-1 flex-col overflow-auto">
-          <CommonTopBar>
-            <CommonTopBarSearch />
-          </CommonTopBar>
-          <main className="flex flex-1 flex-col">{children}</main>
-        </div>
-      </body>
+      <body className="flex h-dvh min-h-dvh flex-row overflow-hidden">{children}</body>
     </html>
   );
 }
