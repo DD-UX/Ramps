@@ -3,23 +3,25 @@
 import { Money } from '@ramps/ui/Money';
 import { StatusPill } from '@ramps/ui/StatusPill';
 import { Tabs } from '@ramps/ui/Tabs';
-import { useState } from 'react';
 
 import { useBillDetail } from '../context/BillDetail.context';
+import type { BillDetailsTab } from '../constants/tabs.constants';
+import { BILL_DETAILS_TABS } from '../constants/tabs.constants';
 
-const OVERVIEW_TABS = [
-  { value: 'overview', label: 'Overview' },
-  { value: 'activity', label: 'Activity' },
-];
+export interface BillDetailsTitleProps {
+  /** The active header tab, owned by the surface so it can swap the body. */
+  tab: BillDetailsTab;
+  onTabChange: (tab: BillDetailsTab) => void;
+}
 
 /**
  * BillDetailsTitle — the header concern (snapshots 5–6): the status pill, the
  * invoice number as the page heading, the amount, and the Overview / Activity
- * tabs. Its own component so the title owns exactly its slice of the screen.
+ * tabs. The tab selection is owned by the surface ({@link BillDetailsContent})
+ * so it can swap the body beneath, so this is a controlled consumer.
  */
-export function BillDetailsTitle() {
+export function BillDetailsTitle({ tab, onTabChange }: BillDetailsTitleProps) {
   const { bill } = useBillDetail();
-  const [tab, setTab] = useState('overview');
 
   return (
     <div className="gap-rui-3 flex flex-col">
@@ -35,7 +37,11 @@ export function BillDetailsTitle() {
         </div>
         <Money cents={bill.amount_cents} currency={bill.currency} className="text-xl" />
       </div>
-      <Tabs tabs={OVERVIEW_TABS} value={tab} onValueChange={setTab} />
+      <Tabs
+        tabs={[...BILL_DETAILS_TABS]}
+        value={tab}
+        onValueChange={(value) => onTabChange(value as BillDetailsTab)}
+      />
     </div>
   );
 }

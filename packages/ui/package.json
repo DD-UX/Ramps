@@ -27,6 +27,14 @@
       "types": "./dist/components/Select/Select.d.ts",
       "import": "./dist/components/Select/Select.js"
     },
+    "./SegmentedControl": {
+      "types": "./dist/components/SegmentedControl/SegmentedControl.d.ts",
+      "import": "./dist/components/SegmentedControl/SegmentedControl.js"
+    },
+    "./SegmentedArea": {
+      "types": "./dist/components/SegmentedArea/SegmentedArea.d.ts",
+      "import": "./dist/components/SegmentedArea/SegmentedArea.js"
+    },
     "./Checkbox": {
       "types": "./dist/components/Checkbox/Checkbox.d.ts",
       "import": "./dist/components/Checkbox/Checkbox.js"

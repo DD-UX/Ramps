@@ -2,6 +2,7 @@
 
 import type { BillEditFormType } from '@ramps/schemas/bills';
 import { Button } from '@ramps/ui/Button';
+import { Save } from '@ramps/ui/icons';
 
 import { useBillDetail } from '../context/BillDetail.context';
 import { PRIMARY_ACTION_BY_STATUS } from '../constants/primary-action.constants';
@@ -46,9 +47,11 @@ export function BillDetailsForm() {
       <BillDetailsMemo />
       <BillDetailsApprovals />
 
-      {/* Sticky action bar (snapshot 9): Save draft + the status-driven primary. */}
-      <div className="gap-rui-2 border-bone bg-white/80 py-rui-3 bottom-0 backdrop-blur sticky flex items-center justify-end border-t">
-        <Button type="button" variant="underline">
+      {/* Sticky action bar (snapshot 9): Save draft sits far LEFT with its
+          floppy-disk glyph, the status-driven primary far RIGHT — split with
+          space between, not clustered. */}
+      <div className="border-bone bg-white/80 py-rui-3 bottom-0 backdrop-blur sticky flex items-center justify-between border-t">
+        <Button type="button" variant="underline" leadingIcon={<Save size={16} />}>
           Save draft
         </Button>
         <Button type="submit" variant="primary" keys={['⌘', '↵']}>

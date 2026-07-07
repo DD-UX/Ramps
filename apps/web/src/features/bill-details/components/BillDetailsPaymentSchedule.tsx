@@ -1,7 +1,8 @@
 'use client';
 
 import { Badge } from '@ramps/ui/Badge';
-import { Button } from '@ramps/ui/Button';
+import { FieldInput } from '@ramps/ui/FieldInput';
+import { SegmentedArea } from '@ramps/ui/SegmentedArea';
 import { useState } from 'react';
 
 import { addBusinessDays } from '../helpers/arrival-date.helpers';
@@ -9,48 +10,62 @@ import { BillDetailsFormField } from './BillDetailsFormField';
 
 type Schedule = 'now' | 'later';
 
-/** The two schedule choices, rendered as a segmented pair of toggle buttons. */
-const SCHEDULE_OPTIONS: ReadonlyArray<{ value: Schedule; label: string }> = [
-  { value: 'now', label: 'Schedule now' },
-  { value: 'later', label: 'Schedule later' },
-];
-
 /**
- * The scheduling side of the payment section (snapshot 9): pay now vs. later.
- * "Later" reveals a payment date whose arrival date derives from
- * {@link addBusinessDays} ("2 business days"). Schedule and date are local UI
- * state — not part of the editable bill schema.
+ * The scheduling side of the payment section (snapshot 9): pay now vs. later,
+ * built on the design system's {@link SegmentedArea} — the "Schedule now /
+ * Schedule later" strip sits on top and the panel beneath swaps its content
+ * with the segment. "Now" shows the immediate arrival read-out; "Later" reveals
+ * the payment-date field whose arrival derives from {@link addBusinessDays}
+ * ("2 business days"). Schedule and date are local UI state — not part of the
+ * editable bill schema.
  */
 export function BillDetailsPaymentSchedule() {
   const [schedule, setSchedule] = useState<Schedule>('now');
   const [payDate, setPayDate] = useState('');
 
-  const scheduledDate =
-    schedule === 'later' ? payDate || null : new Date().toISOString().slice(0, 10);
+  const scheduledDate = schedule === 'later' ? payDate || null : todayIso();
   const arrival = addBusinessDays(scheduledDate);
 
   return (
-    <>
-      <BillDetailsFormField label="Payment schedule">
-        <div className="gap-rui-2 flex items-center">
-          {SCHEDULE_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              type="button"
-              size="sm"
-              variant={schedule === option.value ? 'ink' : 'secondary'}
-              onClick={() => setSchedule(option.value)}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
-      </BillDetailsFormField>
+    <BillDetailsFormField label="Payment schedule">
+      <SegmentedArea
+        value={schedule}
+        onValueChange={(value) => setSchedule(value as Schedule)}
+        tabs={[
+          {
+            value: 'now',
+            label: 'Schedule now',
+            content: <ArrivalReadout arrival={arrival} />,
+          },
+          {
+            value: 'later',
+            label: 'Schedule later',
+            content: (
+              <BillDetailsPaymentDate
+                payDate={payDate}
+                onPayDateChange={setPayDate}
+                arrival={arrival}
+              />
+            ),
+          },
+        ]}
+      />
+    </BillDetailsFormField>
+  );
+}
 
-      {schedule === 'later' && (
-        <BillDetailsPaymentDate payDate={payDate} onPayDateChange={setPayDate} arrival={arrival} />
-      )}
-    </>
+/** Today as an ISO `yyyy-mm-dd` date string (the "Schedule now" baseline). */
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** The bare arrival read-out shown for "Schedule now" (no date to pick). */
+function ArrivalReadout({ arrival }: { arrival: string | null }) {
+  return (
+    <div className="gap-rui-2 flex items-center">
+      <span className="text-sm font-body text-ink">Arrives {arrival ?? '—'}</span>
+      {arrival && <Badge tone="neutral">2 business days</Badge>}
+    </div>
   );
 }
 
@@ -60,7 +75,7 @@ interface BillDetailsPaymentDateProps {
   arrival: string | null;
 }
 
-/** Pay-date input paired with its derived "2 business days" arrival readout. */
+/** Pay-date field paired with its derived "2 business days" arrival read-out. */
 function BillDetailsPaymentDate({
   payDate,
   onPayDateChange,
@@ -68,17 +83,14 @@ function BillDetailsPaymentDate({
 }: BillDetailsPaymentDateProps) {
   return (
     <div className="gap-rui-4 grid grid-cols-2 items-end">
-      <BillDetailsFormField label="Payment date" htmlFor="payment-date">
-        <input
-          id="payment-date"
-          type="date"
-          value={payDate}
-          onChange={(event) => onPayDateChange(event.target.value)}
-          className="bg-white text-sm font-body text-ink rounded-square border-control-border h-10 px-rui-3 w-full border"
-        />
-      </BillDetailsFormField>
+      <FieldInput
+        label="Payment date"
+        type="date"
+        value={payDate}
+        onChange={(event) => onPayDateChange(event.target.value)}
+      />
       <BillDetailsFormField label="Arrival date">
-        <div className="gap-rui-2 h-10 flex items-center">
+        <div className="gap-rui-2 h-12 flex items-center">
           <span className="text-sm font-body text-ink">{arrival ?? '—'}</span>
           {arrival && <Badge tone="neutral">2 business days</Badge>}
         </div>
