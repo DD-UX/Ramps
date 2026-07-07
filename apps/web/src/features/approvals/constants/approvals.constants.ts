@@ -1,26 +1,24 @@
-import type {
-  ApprovalRoleType,
-  ApprovalStageType,
-  ApprovalUserType,
-} from '../types/approvals.types';
+import type { ApprovalsRole, ApprovalsStage, ApprovalsUser } from '@ramps/ui/ApprovalsWorkflow';
 
 /**
  * Mocked approver catalog for the Approvals workflow demo. Stands in for what
  * would otherwise come from the org's members/roles API — enough shape to
  * exercise the compounding chain (multi-role users, role↔user dedup, overflow
- * "+N" clusters) without a backend.
+ * "+N" clusters) without a backend. The workflow itself now lives in the design
+ * system (`@ramps/ui/ApprovalsWorkflow`); this file is only the demo DATA fed in
+ * as props.
  *
  * Names echo the snapshot-10 frame ("Hannah Smolinski", "Any Admin"). Some
  * users hold multiple roles on purpose, so a stage that picks a role AND one of
  * its members proves the dedup (the member never double-renders).
  */
-export const APPROVAL_ROLES: ApprovalRoleType[] = [
+export const APPROVAL_ROLES: ApprovalsRole[] = [
   { id: 'role-admin', name: 'Any Admin' },
   { id: 'role-approver', name: 'Any Approver' },
   { id: 'role-bookkeeper', name: 'Any Bookkeeper' },
 ];
 
-export const APPROVAL_USERS: ApprovalUserType[] = [
+export const APPROVAL_USERS: ApprovalsUser[] = [
   { id: 'user-hannah', name: 'Hannah Smolinski', roleIds: ['role-admin'] },
   { id: 'user-diego', name: 'Diego Díaz', roleIds: ['role-admin', 'role-approver'] },
   { id: 'user-jane', name: 'Jane Doe', roleIds: ['role-approver'] },
@@ -35,6 +33,6 @@ export const APPROVAL_USERS: ApprovalUserType[] = [
  * The starter chain the demo opens with — mirrors the frame's first row
  * ("① Hannah Smolinski · Any Admin"). A single stage carrying the Admin role.
  */
-export const INITIAL_APPROVAL_STAGES: ApprovalStageType[] = [
+export const INITIAL_APPROVAL_STAGES: ApprovalsStage[] = [
   { id: 'stage-1', roleIds: ['role-admin'], userIds: [] },
 ];
