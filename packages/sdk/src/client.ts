@@ -1,3 +1,8 @@
+import {
+  ApprovalStagesResponseSchema,
+  type ApprovalStagesResponseType,
+  type SaveApprovalStagesType,
+} from '@ramps/schemas/approvals';
 import { BillListResponseSchema, type BillListResponseType } from '@ramps/schemas/bills';
 import type { ZodType } from 'zod';
 
@@ -20,7 +25,7 @@ export interface RampsClientOptions {
 }
 
 export interface RequestOptions<T> {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** Schema the response body is validated against before returning. */
   schema: ZodType<T>;
   body?: unknown;
@@ -61,6 +66,24 @@ export function createRampsClient(options: RampsClientOptions) {
     list(params: { tab?: string } = {}, signal?: AbortSignal): Promise<BillListResponseType> {
       const query = params.tab ? `?tab=${encodeURIComponent(params.tab)}` : '';
       return request(`/bills${query}`, { schema: BillListResponseSchema, signal });
+    },
+
+    /**
+     * PUT /bills/:id/approval-stages — replace a bill's editable approval route
+     * with `input`'s stages. Returns the persisted chain (server ids echoed) so
+     * the caller can reconcile freshly-added stages against optimistic ones.
+     */
+    saveApprovalStages(
+      billId: string,
+      input: SaveApprovalStagesType,
+      signal?: AbortSignal,
+    ): Promise<ApprovalStagesResponseType> {
+      return request(`/bills/${encodeURIComponent(billId)}/approval-stages`, {
+        method: 'PUT',
+        schema: ApprovalStagesResponseSchema,
+        body: input,
+        signal,
+      });
     },
   };
 

@@ -154,6 +154,8 @@ export async function listBills(
  *    disambiguation as the list select, see {@link BILL_LIST_SELECT}).
  *  - `approvals(*, users(name))` — the ordered approval chain with approver
  *    labels; PostgREST embeds the approver via the `approver_id` FK.
+ *  - `approval_stages(*, roles, users)` — the editable ROUTE (roles ∪ users per
+ *    step) the ApprovalsWorkflow renders, embedded via the stage's child tables.
  */
 const BILL_DETAIL_SELECT = `
   id, vendor_id, entity_id, created_by, source,
@@ -163,7 +165,8 @@ const BILL_DETAIL_SELECT = `
   entities ( name ),
   line_items:bill_line_items ( * ),
   flags:bill_flags!bill_flags_bill_id_fkey ( id, bill_id, type, message, related_bill_id, amount_cents, dismissed ),
-  approvals ( id, approver_id, sequence, status, comment, approver:users!approvals_approver_id_fkey ( name ) )
+  approvals ( id, approver_id, sequence, status, comment, approver:users!approvals_approver_id_fkey ( name ) ),
+  approval_stages ( id, bill_id, sequence, roles:approval_stage_roles ( role ), users:approval_stage_users ( user_id ) )
 ` as const;
 
 /** The row shape PostgREST returns for {@link BILL_DETAIL_SELECT}. */
@@ -179,6 +182,13 @@ interface BillDetailRow {
     status: string;
     comment: string | null;
     approver: { name: string } | null;
+  }[];
+  approval_stages: {
+    id: string;
+    bill_id: string;
+    sequence: number;
+    roles: { role: string }[];
+    users: { user_id: string }[];
   }[];
   [key: string]: unknown;
 }
@@ -204,7 +214,7 @@ export async function getBill(
   if (!data) return null;
 
   const row = data as unknown as BillDetailRow;
-  const { vendors, entities, line_items, approvals, ...bill } = row;
+  const { vendors, entities, line_items, approvals, approval_stages, ...bill } = row;
 
   // Flatten the joined labels, sort the lines by number, and lift the approver
   // name out of its embed — then let the schema guard the whole shape.
@@ -223,6 +233,17 @@ export async function getBill(
         comment: step.comment,
       }))
       .sort((a, b) => a.sequence - b.sequence),
+    // Collapse each stage's role/user child rows to flat arrays; schema guards
+    // the shape (an all-empty stage can't exist — the DB never writes one).
+    approval_stages: [...approval_stages]
+      .sort((a, b) => a.sequence - b.sequence)
+      .map((stage) => ({
+        id: stage.id,
+        bill_id: stage.bill_id,
+        sequence: stage.sequence,
+        roles: stage.roles.map((r) => r.role),
+        user_ids: stage.users.map((u) => u.user_id),
+      })),
   });
 }
 

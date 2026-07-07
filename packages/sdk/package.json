@@ -21,6 +21,14 @@
       "types": "./dist/vendors.d.ts",
       "import": "./dist/vendors.js"
     },
+    "./users": {
+      "types": "./dist/users.d.ts",
+      "import": "./dist/users.js"
+    },
+    "./approvals": {
+      "types": "./dist/approvals.d.ts",
+      "import": "./dist/approvals.js"
+    },
     "./bill-tabs": {
       "types": "./dist/bill-tabs.d.ts",
       "import": "./dist/bill-tabs.js"
