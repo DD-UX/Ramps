@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Tag } from 'lucide-react';
+import { useRef } from 'react';
 
 import { Avatar } from '../Avatar/Avatar';
 import { Popover } from './Popover';
@@ -141,4 +142,36 @@ export const NearViewportEdges: Story = {
       </div>
     </div>
   ),
+};
+
+/**
+ * Scoped reframing — the card is clamped to a `boundary` container (the dashed
+ * box) instead of the viewport. The trigger sits at the box's right edge, so
+ * the centered card SHIFTS left to stay inside the box's rect (not the page's),
+ * mirroring how the approver-picker card is kept inside the bill-detail split's
+ * LEFT PANE. Without `boundary` it would reframe to the window and could spill
+ * across the divider. Click the trigger to see it.
+ */
+export const WithinBoundary: Story = {
+  parameters: { layout: 'fullscreen' },
+  render: () => {
+    const boundary = useRef<HTMLDivElement>(null);
+    return (
+      <div className="p-rui-8 flex h-screen items-center justify-center">
+        <div
+          ref={boundary}
+          className="border-bone rounded-square p-rui-4 w-96 relative flex justify-end overflow-hidden border border-dashed"
+        >
+          <Popover open boundary={boundary}>
+            <Popover.Trigger>
+              <span className="text-sm font-heading text-ink underline decoration-dotted">
+                Near the box edge
+              </span>
+            </Popover.Trigger>
+            <VendorCard />
+          </Popover>
+        </div>
+      </div>
+    );
+  },
 };

@@ -14,7 +14,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useState } from 'react';
+import { type RefObject, useState } from 'react';
 
 import { ApprovalsWorkflowApproverPicker } from './ApprovalsWorkflowApproverPicker';
 import { ApprovalsWorkflowStageRow } from './ApprovalsWorkflowStageRow';
@@ -74,6 +74,13 @@ export interface ApprovalsWorkflowProps {
   onChange?: (stages: ApprovalsStage[]) => void;
   /** Freeze the chain: no reorder, no add, no per-row edit/remove. */
   readOnly?: boolean;
+  /**
+   * Clip box for the add/edit approver popovers. Pass a ref to the surrounding
+   * scroll container (e.g. the split view's LEFT PANE) so the picker card
+   * reframes within it instead of spilling across a divider. Viewport when
+   * unset.
+   */
+  boundary?: RefObject<HTMLElement | null>;
 }
 
 /** Prefer the platform UUID; fall back for non-secure/older runtimes. */
@@ -90,6 +97,7 @@ export function ApprovalsWorkflow({
   initialStages = [],
   onChange,
   readOnly = false,
+  boundary,
 }: ApprovalsWorkflowProps) {
   const [stages, setStages] = useState<ApprovalsStage[]>(initialStages);
 
@@ -158,6 +166,7 @@ export function ApprovalsWorkflow({
       users={users}
       hideRoleIds={[...usedRoleIds(stages, stage.id)]}
       disabled={readOnly}
+      boundary={boundary}
       onEdit={handleEdit}
       onRemove={handleRemove}
     />
@@ -189,6 +198,7 @@ export function ApprovalsWorkflow({
           roles={roles}
           users={users}
           hideRoleIds={[...usedRoles]}
+          boundary={boundary}
           onSubmit={handleAdd}
         />
       )}

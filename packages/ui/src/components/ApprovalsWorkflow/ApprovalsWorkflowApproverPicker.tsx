@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, type RefObject, useMemo, useState } from 'react';
 
 import { Button } from '../Button/Button';
 import { Checkbox } from '../Checkbox/Checkbox';
@@ -54,6 +54,8 @@ export interface ApprovalsWorkflowApproverPickerProps {
   /** Controlled open (edit mode drives this from the row). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Clip box for the popover card — forwarded to `Popover`. Viewport if unset. */
+  boundary?: RefObject<HTMLElement | null>;
 }
 
 function toggle(set: Set<string>, id: string): Set<string> {
@@ -74,6 +76,7 @@ export function ApprovalsWorkflowApproverPicker({
   trigger,
   open: controlledOpen,
   onOpenChange,
+  boundary,
 }: ApprovalsWorkflowApproverPickerProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
@@ -127,7 +130,7 @@ export function ApprovalsWorkflowApproverPicker({
   }
 
   return (
-    <Popover trigger="click" open={open} onOpenChange={handleOpenChange}>
+    <Popover trigger="click" open={open} onOpenChange={handleOpenChange} boundary={boundary}>
       <Popover.Trigger className="w-full">
         {trigger ?? (
           // The "＋ Add approver" row — the ＋ circle matches the numbered chips,

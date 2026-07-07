@@ -1,7 +1,7 @@
 'use client';
 
 import { GripVertical } from 'lucide-react';
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 
 import { cn } from '../../lib/cn';
 
@@ -35,6 +35,13 @@ export interface DraggablePanelProps {
   /** Clamp bounds for the left pane, in percent. */
   min?: number;
   max?: number;
+  /**
+   * Ref to the LEFT pane's scroll container. Handed out so floating content
+   * inside the left pane (e.g. a Popover/Menu) can pass it as a `boundary` and
+   * reframe within the pane instead of spilling across the divider into the
+   * right pane. Layout is otherwise unchanged whether or not it's supplied.
+   */
+  leftPaneRef?: RefObject<HTMLDivElement | null>;
   className?: string;
 }
 
@@ -44,6 +51,7 @@ export function DraggablePanel({
   defaultSplit = 55,
   min = 25,
   max = 75,
+  leftPaneRef,
   className,
 }: DraggablePanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -97,6 +105,7 @@ export function DraggablePanel({
           scroll here instead of stretching the panel; overflow-x-auto keeps wide
           content in-pane. Scrolls independently of the right side. */}
       <div
+        ref={leftPaneRef}
         className="min-w-0 min-h-0 flex flex-col overflow-x-auto overflow-y-auto"
         style={{ width: `${split}%` }}
       >

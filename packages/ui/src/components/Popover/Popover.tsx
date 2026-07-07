@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   createContext,
   type PropsWithChildren,
+  type RefObject,
   useCallback,
   useContext,
   useLayoutEffect,
@@ -35,6 +36,12 @@ import { cn } from '../../lib/cn';
  * PopoverContent — shift along x to stay inside the viewport (8px padding),
  * flip above the trigger when the bottom would clip and the top fits.
  *
+ * By default the click-mode card reframes inside the VIEWPORT. Pass `boundary`
+ * — a ref to a scroll/clip container, e.g. the DraggablePanel's LEFT PANE — to
+ * clamp it inside THAT element's rect instead, so a card anchored deep in a
+ * split view never spills across the divider into the other pane. Same contract
+ * as Menu's `boundary`; the 8px padding is inset from whichever box applies.
+ *
  * Compound so callers assemble their own trigger + content.
  * `"use client"` — it holds open state.
  */
@@ -44,6 +51,8 @@ type PopoverContextValue = {
   mode: PopoverTriggerMode;
   open: boolean;
   setOpen: (open: boolean) => void;
+  /** Clip box for click-mode reframing; viewport when unset. */
+  boundary?: RefObject<HTMLElement | null>;
 };
 
 const PopoverContext = createContext<PopoverContextValue | null>(null);
@@ -60,6 +69,14 @@ export type PopoverProps = PropsWithChildren<{
   /** Controlled open state (optional in either mode). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Click-mode only — the box the card must stay inside when it reframes. Pass
+   * a ref to a scroll/clip container (e.g. the DraggablePanel's LEFT PANE) and
+   * the card shifts/flips within THAT element's rect instead of the whole
+   * viewport, so it never spills across a split. Defaults to the viewport when
+   * omitted (or the ref is unset). Hover mode reframes via Base UI on its own.
+   */
+  boundary?: RefObject<HTMLElement | null>;
   className?: string;
 }>;
 
@@ -67,6 +84,7 @@ export function Popover({
   trigger = 'click',
   open: controlledOpen,
   onOpenChange,
+  boundary,
   className,
   children,
 }: PopoverProps) {
@@ -88,7 +106,7 @@ export function Popover({
 
   if (trigger === 'hover') {
     return (
-      <PopoverContext.Provider value={{ mode: 'hover', open, setOpen }}>
+      <PopoverContext.Provider value={{ mode: 'hover', open, setOpen, boundary }}>
         <PreviewCard.Root open={controlledOpen} onOpenChange={onOpenChange}>
           {children}
         </PreviewCard.Root>
@@ -97,7 +115,7 @@ export function Popover({
   }
 
   return (
-    <PopoverContext.Provider value={{ mode: 'click', open, setOpen }}>
+    <PopoverContext.Provider value={{ mode: 'click', open, setOpen, boundary }}>
       {/* The relative root anchors the click-mode card AND is the click-away
           boundary — clicks on the trigger or inside the card never dismiss. */}
       <div ref={rootRef} className={cn('relative inline-block', className)}>
@@ -173,7 +191,7 @@ const COLLISION_PADDING = 8;
 
 /** The floating card surface — white, near-square, soft popover shadow. */
 function PopoverContent({ children, sideOffset = 8, className }: PopoverContentProps) {
-  const { mode, open } = usePopoverContext('Content');
+  const { mode, open, boundary } = usePopoverContext('Content');
 
   // Click-mode collision handling (Popper-style, hand-rolled): the card is
   // CSS-anchored centered under the trigger, then nudged to stay inside the
@@ -194,23 +212,30 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
       if (!card || !anchor) return;
 
       const anchorRect = anchor.getBoundingClientRect();
+      // The clip box: the `boundary` element's rect (e.g. a split pane), else
+      // the whole viewport. Both shift and flip clamp to this box.
+      const box = boundary?.current?.getBoundingClientRect() ?? {
+        left: 0,
+        top: 0,
+        right: window.innerWidth,
+        bottom: window.innerHeight,
+      };
       // offsetWidth/Height: layout size, immune to the enter animation's
       // scale transform (a getBoundingClientRect mid-fade under-measures).
       const cardW = card.offsetWidth;
       const cardH = card.offsetHeight;
 
-      // Shift: clamp the centered card into the horizontal viewport range.
+      // Shift: clamp the centered card into the box's horizontal range.
       const naturalLeft = anchorRect.left + anchorRect.width / 2 - cardW / 2;
-      const minLeft = COLLISION_PADDING;
-      const maxLeft = window.innerWidth - COLLISION_PADDING - cardW;
+      const minLeft = box.left + COLLISION_PADDING;
+      const maxLeft = box.right - COLLISION_PADDING - cardW;
       const clampedLeft = Math.min(Math.max(naturalLeft, minLeft), Math.max(minLeft, maxLeft));
       setShiftX(clampedLeft - naturalLeft);
 
-      // Flip: only when below overflows AND above actually fits — otherwise
-      // stay below (matching Popper's fallback behavior).
-      const fitsBelow =
-        anchorRect.bottom + sideOffset + cardH <= window.innerHeight - COLLISION_PADDING;
-      const fitsAbove = anchorRect.top - sideOffset - cardH >= COLLISION_PADDING;
+      // Flip: only when below overflows the box AND above actually fits within
+      // it — otherwise stay below (matching Popper's fallback behavior).
+      const fitsBelow = anchorRect.bottom + sideOffset + cardH <= box.bottom - COLLISION_PADDING;
+      const fitsAbove = anchorRect.top - sideOffset - cardH >= box.top + COLLISION_PADDING;
       setFlipped(!fitsBelow && fitsAbove);
     };
 
@@ -222,7 +247,7 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
       window.removeEventListener('resize', compute);
       window.removeEventListener('scroll', compute, true);
     };
-  }, [mode, open, sideOffset]);
+  }, [mode, open, sideOffset, boundary]);
 
   // The one skin, shared by both modes.
   const surface = cn(

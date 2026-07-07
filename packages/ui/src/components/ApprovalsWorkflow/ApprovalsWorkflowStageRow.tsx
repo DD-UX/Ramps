@@ -3,7 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pencil, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { type RefObject, useState } from 'react';
 
 import { Menu } from '../Menu/Menu';
 import { ApprovalsWorkflowApproverBubble } from './ApprovalsWorkflowApproverBubble';
@@ -51,6 +51,8 @@ export interface ApprovalsWorkflowStageRowProps {
   hideRoleIds?: string[];
   /** Read-only: no drag handle, no ⋮ actions — the row is frozen. */
   disabled?: boolean;
+  /** Clip box for the edit picker's popover — forwarded to the picker. */
+  boundary?: RefObject<HTMLElement | null>;
   onEdit: (stageId: string, selection: { roleIds: string[]; userIds: string[] }) => void;
   onRemove: (stageId: string) => void;
 }
@@ -62,6 +64,7 @@ export function ApprovalsWorkflowStageRow({
   users,
   hideRoleIds,
   disabled = false,
+  boundary,
   onEdit,
   onRemove,
 }: ApprovalsWorkflowStageRowProps) {
@@ -153,6 +156,7 @@ export function ApprovalsWorkflowStageRow({
               initialUserIds={stage.userIds}
               open={editing}
               onOpenChange={setEditing}
+              boundary={boundary}
               onSubmit={(selection) => onEdit(stage.id, selection)}
               trigger={<span aria-hidden className="size-0 block" />}
             />
