@@ -56,3 +56,15 @@ export const VendorCreateSchema = VendorSchema.omit({ id: true, status: true }).
   status: VendorStatusSchema.default('active'),
 });
 export type VendorCreateType = z.infer<typeof VendorCreateSchema>;
+
+/**
+ * What the vendor LIST renders — the vendor header plus the denormalised owner
+ * label (the `users.name` behind `owner_id`). Mirrors {@link BillListItemSchema}:
+ * the table trusts a flat, joined shape, and the SDK's `.parse()` is the single
+ * gate that produces it. `owner_name` is nullable to survive an orphaned owner
+ * FK rather than dropping the row.
+ */
+export const VendorListItemSchema = VendorSchema.extend({
+  owner_name: z.string().nullable(),
+});
+export type VendorListItemType = z.infer<typeof VendorListItemSchema>;

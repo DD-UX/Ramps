@@ -17,6 +17,10 @@
       "types": "./dist/bills.d.ts",
       "import": "./dist/bills.js"
     },
+    "./vendors": {
+      "types": "./dist/vendors.d.ts",
+      "import": "./dist/vendors.js"
+    },
     "./bill-tabs": {
       "types": "./dist/bill-tabs.d.ts",
       "import": "./dist/bill-tabs.js"
