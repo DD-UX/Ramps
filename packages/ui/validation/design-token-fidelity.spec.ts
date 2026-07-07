@@ -58,6 +58,15 @@ test.describe('token fidelity', () => {
     await expect(input).toHaveCSS('border-top-color', hexToRgb(RUI['--rui-destructive']));
   });
 
+  test('FieldError renders its message in the orange destructive token, never a raw red', async ({
+    page,
+  }) => {
+    await page.goto(storyUrl('primitives-fielderror--single'));
+    const alert = page.getByRole('alert');
+    await expect(alert).toHaveCSS('color', hexToRgb(RUI['--rui-destructive']));
+    await expect(alert).not.toHaveCSS('color', 'rgb(255, 0, 0)');
+  });
+
   test('Toast is a white, square-cornered card with a bone border (snapshot 3)', async ({
     page,
   }) => {

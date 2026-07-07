@@ -87,6 +87,10 @@
       "types": "./dist/components/EmptyState/EmptyState.d.ts",
       "import": "./dist/components/EmptyState/EmptyState.js"
     },
+    "./FieldError": {
+      "types": "./dist/components/FieldError/FieldError.d.ts",
+      "import": "./dist/components/FieldError/FieldError.js"
+    },
     "./FieldInput": {
       "types": "./dist/components/FieldInput/FieldInput.d.ts",
       "import": "./dist/components/FieldInput/FieldInput.js"

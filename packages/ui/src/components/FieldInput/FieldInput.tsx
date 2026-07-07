@@ -5,6 +5,7 @@ import { useId, useState } from 'react';
 
 import { cn } from '../../lib/cn';
 import { DISABLED_CONTROL } from '../../lib/disabled';
+import { FieldError } from '../FieldError/FieldError';
 
 /**
  * FieldInput — the text/date field that carries its label INSIDE the box, the
@@ -182,19 +183,10 @@ export function FieldInput({
         />
       </label>
 
-      {/* Error group — one line per message, announced together via role="alert". */}
-      {hasErrors && (
-        <div
-          id={errorId}
-          role="alert"
-          data-testid="field-input-errors"
-          className="text-xs font-body text-destructive gap-rui-1 flex flex-col"
-        >
-          {errorList.map((message, index) => (
-            <span key={`${message}-${index}`}>{message}</span>
-          ))}
-        </div>
-      )}
+      {/* Error group — the shared FieldError primitive: one destructive line per
+          message, announced together via role="alert". `errorId` wires it to the
+          input's aria-describedby. */}
+      <FieldError id={errorId}>{errorList}</FieldError>
     </div>
   );
 }
