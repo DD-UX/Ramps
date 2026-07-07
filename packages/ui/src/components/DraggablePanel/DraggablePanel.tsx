@@ -16,6 +16,15 @@ import { cn } from '../../lib/cn';
  * announces the current split via its label. `"use client"` — it tracks drag
  * state.
  *
+ * **Independent scroll + always-centered grip.** The panel fills the height its
+ * parent hands it (`h-full min-h-0`) and each pane is its OWN scroll container
+ * (`min-h-0 overflow-y-auto`), so the two sides scroll independently — reading a
+ * long invoice on the right never moves the coding form on the left. The grip
+ * lives in the full-height handle rail BETWEEN the two scrollers (not inside
+ * either one), so it stays pinned to the panel's vertical center and remains
+ * visible no matter how far either side is scrolled. The caller MUST bound the
+ * panel's height (e.g. a viewport-tall flex parent) for the scroll to engage.
+ *
  * Layout only: callers pass whatever content they like into `left`/`right`.
  */
 export interface DraggablePanelProps {
@@ -79,12 +88,18 @@ export function DraggablePanel({
     <div
       ref={containerRef}
       className={cn(
-        'rounded-square border-bone bg-white flex w-full items-stretch overflow-hidden border',
+        'rounded-square border-bone bg-white min-h-0 flex h-full w-full items-stretch overflow-hidden border',
         dragging && 'select-none',
         className,
       )}
     >
-      <div className="min-w-0 overflow-auto" style={{ width: `${split}%` }}>
+      {/* Left pane — its OWN vertical scroll container. min-h-0 lets tall content
+          scroll here instead of stretching the panel; overflow-x-auto keeps wide
+          content in-pane. Scrolls independently of the right side. */}
+      <div
+        className="min-w-0 min-h-0 flex flex-col overflow-x-auto overflow-y-auto"
+        style={{ width: `${split}%` }}
+      >
         {left}
       </div>
 
@@ -94,7 +109,10 @@ export function DraggablePanel({
           frame 7 at 1px: the face is #dcdbd6–#e6e2df — the stone token —
           NOT limestone, which had no contrast against the panes.
           A native <button> carries the separator semantics so it's focusable
-          and keyboard-operable without fighting the a11y linter. */}
+          and keyboard-operable without fighting the a11y linter.
+          The rail is a full-height sibling BETWEEN the two scroll containers, so
+          the absolute-centered grip stays pinned to the panel's vertical center
+          and never scrolls out of view with either pane. */}
       <button
         type="button"
         data-testid="drag-handle"
@@ -127,7 +145,9 @@ export function DraggablePanel({
       {/* Right pane = the preview CANVAS. Frames 7/8/10 sample #f6f5f1–#fbfaf6
           out there — the warm limestone wash the white invoice sheet floats
           on — never the same white as the form pane. */}
-      <div className="min-w-0 bg-limestone flex-1 overflow-auto">{right}</div>
+      <div className="min-w-0 min-h-0 bg-limestone flex flex-1 flex-col overflow-x-auto overflow-y-auto">
+        {right}
+      </div>
     </div>
   );
 }
