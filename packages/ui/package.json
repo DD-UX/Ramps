@@ -11,6 +11,10 @@
       "types": "./dist/icons/index.d.ts",
       "import": "./dist/icons/index.js"
     },
+    "./ApprovalsWorkflow": {
+      "types": "./dist/components/ApprovalsWorkflow/ApprovalsWorkflow.d.ts",
+      "import": "./dist/components/ApprovalsWorkflow/ApprovalsWorkflow.js"
+    },
     "./Button": {
       "types": "./dist/components/Button/Button.d.ts",
       "import": "./dist/components/Button/Button.js"
