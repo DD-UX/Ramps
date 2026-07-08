@@ -52,10 +52,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
   }
   if (!isApprovalRouteEditable(bill.status)) {
-    return NextResponse.json(
-      { error: 'This bill is no longer editable' },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: 'This bill is no longer editable' }, { status: 409 });
   }
 
   const approval_stages = await saveApprovalStages(supabase, id, parsed.data);

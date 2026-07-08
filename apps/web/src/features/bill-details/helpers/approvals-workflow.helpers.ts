@@ -59,9 +59,7 @@ export function fromWorkflowStages(stages: readonly ApprovalsStage[]): SaveAppro
   return {
     stages: stages
       .map((stage) => ({
-        roles: stage.roleIds
-          .map(toRole)
-          .filter((role): role is RoleType => role !== null),
+        roles: stage.roleIds.map(toRole).filter((role): role is RoleType => role !== null),
         user_ids: [...stage.userIds],
       }))
       .filter((stage) => stage.roles.length > 0 || stage.user_ids.length > 0),

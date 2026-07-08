@@ -35,8 +35,7 @@ interface TableCalls {
  */
 function makeSupabase() {
   const calls: Record<string, TableCalls> = {};
-  const seen = (table: string) =>
-    (calls[table] ??= { delete: 0, deleteEq: [], insert: [] });
+  const seen = (table: string) => (calls[table] ??= { delete: 0, deleteEq: [], insert: [] });
 
   function builderFor(table: string) {
     let mode: 'delete' | 'insert' | null = null;

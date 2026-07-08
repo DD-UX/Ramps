@@ -1,7 +1,11 @@
 import { notFound } from 'next/navigation';
 
 import { BillDetailsContent } from '@/features/bill-details/components/BillDetailsContent';
-import { getBillDetail, getBillRefs, getUsers } from '@/features/bill-details/data/bill-detail.data';
+import {
+  getBillDetail,
+  getBillRefs,
+  getUsers,
+} from '@/features/bill-details/data/bill-detail.data';
 import { publicDocumentUrl } from '@/features/bill-details/helpers/document-url.helpers';
 
 /**
