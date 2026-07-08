@@ -50,7 +50,7 @@ export function BillDetailsForm() {
   const primaryLabel = PRIMARY_ACTION_BY_STATUS[bill.status];
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="gap-rui-4 flex flex-col">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="gap-rui-4 flex h-full flex-col">
       <BillDetailsPane>
         <BillDetailsTitle />
       </BillDetailsPane>
@@ -82,7 +82,7 @@ export function BillDetailsForm() {
       <Activity
         mode={tab === BILL_DETAILS_TAB.ACTIVITY ? ACTIVITY_MODE.VISIBLE : ACTIVITY_MODE.HIDDEN}
       >
-        <BillDetailsPane>
+        <BillDetailsPane className="h-full">
           <EmptyState
             className="min-h-0 flex-1"
             icon={<ActivityIcon size={28} />}
@@ -94,14 +94,14 @@ export function BillDetailsForm() {
       {/* Sticky action bar (snapshot 9): Save draft sits far LEFT with its
           floppy-disk glyph, the status-driven primary far RIGHT — split with
           space between, not clustered. */}
-      <div className="border-bone bg-white/80 py-rui-3 bottom-0 backdrop-blur sticky z-10 flex items-center justify-between border-t">
+      <BillDetailsPane className="border-bone bg-white/80 py-rui-3 bottom-0 backdrop-blur sticky z-10 grid grid-flow-col items-center justify-between border-t">
         <Button type="button" variant="underline" leadingIcon={<Save size={16} />}>
           Save draft
         </Button>
         <Button type="submit" variant="primary" keys={['⌘', '↵']}>
           {primaryLabel}
         </Button>
-      </div>
+      </BillDetailsPane>
     </form>
   );
 }

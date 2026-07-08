@@ -1,7 +1,6 @@
 'use client';
 
 import { Banner } from '@ramps/ui/Banner';
-import { Button } from '@ramps/ui/Button';
 import { useWatch } from 'react-hook-form';
 
 import { useBillDetail } from '../context/BillDetail.context';
@@ -25,15 +24,7 @@ export function BillDetailsVendor() {
   const unmatched = completeness === 'incomplete';
 
   return (
-    <BillDetailsSection
-      title="Vendor"
-      completeness={completeness}
-      action={
-        <Button variant="secondary" size="sm" type="button">
-          Create new vendor
-        </Button>
-      }
-    >
+    <BillDetailsSection title="Vendor" completeness={completeness}>
       {unmatched && (
         <Banner
           tone="critical"
