@@ -5,6 +5,7 @@ import {
   countBillsByStatus,
   createDemoBill,
   listBills,
+  rollPaymentNow,
   saveBill,
   submitBill,
 } from './bills.js';
@@ -231,6 +232,23 @@ function makeDetailRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** A canonical PAID-able payment row (embedded under a detail read's `payments`). */
+function makePaymentRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'e0000000-0000-4000-8000-00000000e001',
+    bill_id: 'b0000000-0000-4000-8000-00000000d001',
+    method: 'ach',
+    account_id: 'c0000000-0000-4000-8000-00000000c001',
+    amount_cents: 129755,
+    scheduled_date: '2025-06-01',
+    arrival_date: null,
+    batch_id: null,
+    status: 'scheduled',
+    failure_reason: null,
+    ...overrides,
+  };
+}
+
 /** A minimal, valid BillSaveType (edit-form) payload. */
 function makeSavePayload(overrides: Record<string, unknown> = {}) {
   return {
@@ -437,6 +455,95 @@ describe('submitBill', () => {
     await expect(
       submitBill(supabase, 'b0000000-0000-4000-8000-00000000d001', makeSavePayload()),
     ).rejects.toBeInstanceOf(BillNotEditableError);
+  });
+});
+
+describe('rollPaymentNow', () => {
+  it('settles the payment (paid, dates → today) and moves the bill to paid', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const { supabase, ops } = makeWriteSupabase([
+      // guard read: a scheduled bill carrying its live payment
+      {
+        data: makeDetailRow({ status: 'scheduled', payments: [makePaymentRow()] }),
+      },
+      { error: null }, // payments update
+      { error: null }, // bills status update
+      // final re-read: the now-paid bill
+      {
+        data: makeDetailRow({
+          status: 'paid',
+          payments: [
+            makePaymentRow({ status: 'paid', scheduled_date: today, arrival_date: today }),
+          ],
+        }),
+      },
+    ]);
+
+    const paid = await rollPaymentNow(supabase, 'b0000000-0000-4000-8000-00000000d001');
+
+    expect(paid.status).toBe('paid');
+
+    // The payment row is settled: status paid, and both dates pulled to today.
+    const settle = ops.find((o) => o.table === 'payments' && o.op === 'update');
+    expect(settle).toBeDefined();
+    const payload = settle!.payload as Record<string, unknown>;
+    expect(payload.status).toBe('paid');
+    expect(payload.scheduled_date).toBe(today);
+    expect(payload.arrival_date).toBe(today);
+
+    // The bill is advanced to paid.
+    const move = ops.find((o) => o.table === 'bills' && o.op === 'update');
+    expect((move!.payload as Record<string, unknown>).status).toBe('paid');
+  });
+
+  it('also completes a partially_paid bill (partially_paid → paid)', async () => {
+    const { supabase, ops } = makeWriteSupabase([
+      { data: makeDetailRow({ status: 'partially_paid', payments: [makePaymentRow()] }) },
+      { error: null }, // payments update
+      { error: null }, // bills status update
+      { data: makeDetailRow({ status: 'paid', payments: [makePaymentRow({ status: 'paid' })] }) },
+    ]);
+
+    const paid = await rollPaymentNow(supabase, 'b0000000-0000-4000-8000-00000000d001');
+
+    expect(paid.status).toBe('paid');
+    // The transition guard admits partially_paid → paid, so both writes ran.
+    expect(ops.some((o) => o.table === 'payments' && o.op === 'update')).toBe(true);
+    expect(ops.some((o) => o.table === 'bills' && o.op === 'update')).toBe(true);
+  });
+
+  it('refuses a bill that is not scheduled (BillNotEditableError, no writes)', async () => {
+    const { supabase, ops } = makeWriteSupabase([
+      { data: makeDetailRow({ status: 'approved', payments: [makePaymentRow()] }) },
+    ]);
+
+    await expect(
+      rollPaymentNow(supabase, 'b0000000-0000-4000-8000-00000000d001'),
+    ).rejects.toBeInstanceOf(BillNotEditableError);
+
+    // The transition guard bites before any settle/advance write.
+    expect(ops).toHaveLength(0);
+  });
+
+  it('throws when the scheduled bill has no live payment to complete', async () => {
+    const { supabase, ops } = makeWriteSupabase([
+      { data: makeDetailRow({ status: 'scheduled', payments: [] }) },
+    ]);
+
+    await expect(
+      rollPaymentNow(supabase, 'b0000000-0000-4000-8000-00000000d001'),
+    ).rejects.toThrow();
+
+    // No payment → no writes: neither the settle nor the status move ran.
+    expect(ops).toHaveLength(0);
+  });
+
+  it('throws when the bill does not exist', async () => {
+    const { supabase } = makeWriteSupabase([{ data: null }]);
+
+    await expect(
+      rollPaymentNow(supabase, 'b0000000-0000-4000-8000-00000000d001'),
+    ).rejects.toThrow();
   });
 });
 

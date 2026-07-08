@@ -43,6 +43,17 @@ vi.mock('./BillDetailsPaymentSchedule', () => ({
   ),
 }));
 
+// The shared "Complete payment" action carried in view mode owns its own roll
+// flow (useRollPayment → context + api-client) and is covered by its own test —
+// stub it to a marker so this suite stays on the modal's contract.
+vi.mock('./BillDetailsCompletePaymentButton', () => ({
+  BillDetailsCompletePaymentButton: (props: { onDone?: () => void }) => (
+    <button type="button" data-testid="complete-payment" onClick={() => props.onDone?.()}>
+      Complete payment
+    </button>
+  ),
+}));
+
 const onClose = vi.fn();
 
 /**
@@ -148,6 +159,27 @@ describe('BillDetailsScheduleModal — view mode', () => {
     // The schedule control is told to freeze; the account picker is frozen by
     // the disabled <fieldset> the modal wraps the body in.
     expect(screen.getByTestId('schedule-control')).toHaveAttribute('data-readonly', 'true');
+  });
+
+  it('pairs Close with the shared "Complete payment" action', () => {
+    payment = { method: 'ach', accountId: 'acc-1', schedule: 'later', payDate: '2026-01-15' };
+    render(<BillDetailsScheduleModal open onClose={onClose} mode="view" />);
+
+    // The real money-movement action rides in beside Close — the same shared
+    // button the footer uses, wired here to close the dialog on a done roll.
+    expect(screen.getByTestId('complete-payment')).toBeInTheDocument();
+  });
+
+  it('closes when the Complete payment roll reports done', async () => {
+    payment = { method: 'ach', accountId: 'acc-1', schedule: 'later', payDate: '2026-01-15' };
+    const user = userEvent.setup();
+    render(<BillDetailsScheduleModal open onClose={onClose} mode="view" />);
+
+    // The stub fires onDone on click (the modal passes its onClose) — a
+    // completed payment dismisses the read-only dialog.
+    await user.click(screen.getByTestId('complete-payment'));
+
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('closes via Close and never schedules', async () => {

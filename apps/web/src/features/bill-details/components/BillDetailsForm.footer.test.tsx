@@ -98,6 +98,13 @@ vi.mock('./BillDetailsScheduleModal', () => ({
     open ? <div data-testid="schedule-modal" data-mode={mode} /> : null,
 }));
 
+// The shared "Complete payment" action → a marker: it owns its own roll flow
+// (context + api-client), covered by its own test. Here we only assert the
+// footer PLACES it beside a `scheduled` bill's "View schedule".
+vi.mock('./BillDetailsCompletePaymentButton', () => ({
+  BillDetailsCompletePaymentButton: () => <div data-testid="complete-payment" />,
+}));
+
 beforeEach(() => {
   approve.mockReset();
   submit.mockReset();
@@ -140,6 +147,25 @@ describe('BillDetailsForm footer primary', () => {
     expect(modal).toHaveAttribute('data-mode', 'view');
   });
 
+  it('scheduled: the shared "Complete payment" action sits beside View schedule', () => {
+    status = 'scheduled';
+    render(<BillDetailsForm />);
+
+    // The real money-movement action rides in next to the read-only "View
+    // schedule" primary — the same shared button the modal uses.
+    expect(screen.getByRole('button', { name: /view schedule/i })).toBeInTheDocument();
+    expect(screen.getByTestId('complete-payment')).toBeInTheDocument();
+  });
+
+  it('approved: shows no "Complete payment" — only the Schedule primary', () => {
+    status = 'approved';
+    render(<BillDetailsForm />);
+
+    // Complete payment is a `scheduled`-only companion; an approved bill (still
+    // to be scheduled) must not offer it.
+    expect(screen.queryByTestId('complete-payment')).not.toBeInTheDocument();
+  });
+
   it('draft: the primary reads "Create bill" and rides the form submit', async () => {
     status = 'draft';
     const user = userEvent.setup();
@@ -151,11 +177,24 @@ describe('BillDetailsForm footer primary', () => {
     expect(approve).not.toHaveBeenCalled();
   });
 
+  it('partially_paid: the primary IS the shared "Complete payment" action', () => {
+    status = 'partially_paid';
+    render(<BillDetailsForm />);
+
+    // No inert generic primary — the shared roll button stands in as the primary.
+    expect(screen.getByTestId('complete-payment')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^complete payment$/i })).not.toBeInTheDocument();
+    // It's the primary, so there's no `scheduled`-style companion + View pairing.
+    expect(screen.queryByRole('button', { name: /view schedule/i })).not.toBeInTheDocument();
+  });
+
   it('paid: the primary reads its label but is inert (disabled, no modal)', () => {
     status = 'paid';
     render(<BillDetailsForm />);
 
     expect(screen.getByRole('button', { name: /view payment/i })).toBeDisabled();
     expect(screen.queryByTestId('schedule-modal')).not.toBeInTheDocument();
+    // Complete payment is not offered on a fully-paid bill.
+    expect(screen.queryByTestId('complete-payment')).not.toBeInTheDocument();
   });
 });

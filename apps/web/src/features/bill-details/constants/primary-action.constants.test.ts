@@ -12,7 +12,8 @@ import {
  * one button off these, so a wrong entry silently mislabels the action or fires
  * the wrong write. Locking every status pins the whole lifecycle: pre-submit
  * creates, `awaiting_approval` approves, `approved` schedules, `scheduled`
- * views read-only, and the terminal states stay inert.
+ * views read-only, `partially_paid` completes the payment, and the remaining
+ * terminal states stay inert.
  */
 describe('resolvePrimaryAction', () => {
   it.each([
@@ -21,7 +22,7 @@ describe('resolvePrimaryAction', () => {
     ['awaiting_approval', PRIMARY_ACTION.APPROVE],
     ['approved', PRIMARY_ACTION.SCHEDULE],
     ['scheduled', PRIMARY_ACTION.VIEW],
-    ['partially_paid', PRIMARY_ACTION.NONE],
+    ['partially_paid', PRIMARY_ACTION.COMPLETE],
     ['paid', PRIMARY_ACTION.NONE],
     ['rejected', PRIMARY_ACTION.NONE],
     ['archived', PRIMARY_ACTION.NONE],
@@ -43,5 +44,6 @@ describe('PRIMARY_ACTION_BY_STATUS labels', () => {
     expect(PRIMARY_ACTION_BY_STATUS.awaiting_approval).toBe('Approve');
     expect(PRIMARY_ACTION_BY_STATUS.approved).toBe('Schedule payment');
     expect(PRIMARY_ACTION_BY_STATUS.scheduled).toBe('View schedule');
+    expect(PRIMARY_ACTION_BY_STATUS.partially_paid).toBe('Complete payment');
   });
 });

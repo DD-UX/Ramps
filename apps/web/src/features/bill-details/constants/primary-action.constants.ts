@@ -1,4 +1,5 @@
 import type { BillStatusType } from '@ramps/schemas/bills';
+import { CalendarClock, Eye, type LucideIcon } from '@ramps/ui/icons';
 
 /**
  * The primary CTA label per bill status — the status-specific action the footer
@@ -28,6 +29,9 @@ export const PRIMARY_ACTION_BY_STATUS: Record<BillStatusType, string> = {
  *   if the shared payment slice is complete the server schedules, else approves.
  * - `schedule` — `approved`: open the schedule-payment modal (book the payment).
  * - `view` — `scheduled`: open the same modal read-only ("View schedule").
+ * - `complete` — `partially_paid`: roll the booked payment NOW (→ `paid`). The
+ *   footer renders the shared Complete-payment button AS the primary here, so
+ *   the money-movement flow is wired identically to the `scheduled` companion.
  * - `none` — everything else (terminal / out-of-scope states): the button is
  *   inert this pass, so the footer disables it rather than firing a wrong write.
  */
@@ -36,6 +40,7 @@ export const PRIMARY_ACTION = {
   APPROVE: 'approve',
   SCHEDULE: 'schedule',
   VIEW: 'view',
+  COMPLETE: 'complete',
   NONE: 'none',
 } as const;
 
@@ -47,9 +52,11 @@ const PRIMARY_ACTION_BY_STATUS_KIND: Record<BillStatusType, PrimaryAction> = {
   awaiting_approval: PRIMARY_ACTION.APPROVE,
   approved: PRIMARY_ACTION.SCHEDULE,
   scheduled: PRIMARY_ACTION.VIEW,
+  // A part-settled bill's primary IS the working "Complete payment" — roll the
+  // booked payment now to finish it (`partially_paid → paid`).
+  partially_paid: PRIMARY_ACTION.COMPLETE,
   // Terminal / not-yet-wired states — the label still reads (e.g. "View
   // payment"), but there's no flow behind it this pass, so it's inert.
-  partially_paid: PRIMARY_ACTION.NONE,
   paid: PRIMARY_ACTION.NONE,
   rejected: PRIMARY_ACTION.NONE,
   archived: PRIMARY_ACTION.NONE,
@@ -58,4 +65,20 @@ const PRIMARY_ACTION_BY_STATUS_KIND: Record<BillStatusType, PrimaryAction> = {
 /** The behaviour kind of the footer's primary CTA for the given bill status. */
 export function resolvePrimaryAction(status: BillStatusType): PrimaryAction {
   return PRIMARY_ACTION_BY_STATUS_KIND[status];
+}
+
+/**
+ * The leading glyph for the two payment-modal primaries — CalendarClock for
+ * "Schedule payment" (a date being set) and Eye for the read-only "View
+ * schedule". Only the SCHEDULE / VIEW kinds carry one; Create keeps its ⌘↵ chip
+ * and Approve/None read as plain labels, so those map to null (no icon).
+ */
+const PRIMARY_ACTION_ICON: Partial<Record<PrimaryAction, LucideIcon>> = {
+  [PRIMARY_ACTION.SCHEDULE]: CalendarClock,
+  [PRIMARY_ACTION.VIEW]: Eye,
+};
+
+/** The leading icon for a primary-action kind, or null when it shows none. */
+export function resolvePrimaryActionIcon(action: PrimaryAction): LucideIcon | null {
+  return PRIMARY_ACTION_ICON[action] ?? null;
 }

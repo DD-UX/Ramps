@@ -2,11 +2,13 @@
 
 import { Button } from '@ramps/ui/Button';
 import { FieldError } from '@ramps/ui/FieldError';
+import { CalendarClock } from '@ramps/ui/icons';
 import { Modal } from '@ramps/ui/Modal';
 
 import { useBillDetail } from '../context/BillDetail.context';
 import { isPaymentComplete } from '../helpers/payment-completeness.helpers';
 import { useSchedulePayment } from '../hooks/useSchedulePayment';
+import { BillDetailsCompletePaymentButton } from './BillDetailsCompletePaymentButton';
 import { BillDetailsPaymentAccount } from './BillDetailsPaymentAccount';
 import { PaymentScheduleControl } from './BillDetailsPaymentSchedule';
 
@@ -21,8 +23,9 @@ import { PaymentScheduleControl } from './BillDetailsPaymentSchedule';
  *    the slice is complete (a pay-from account + a resolved date) and closes on
  *    success. The hook's inline error surfaces beside Cancel.
  *  - `mode="view"` (a `scheduled` bill) — READ-ONLY "View schedule". The slice
- *    was seeded from the booked payment, the inputs are frozen, and the footer
- *    is a single "Close". No write path.
+ *    was seeded from the booked payment and the inputs are frozen. The footer
+ *    pairs "Close" with the shared "Complete payment" button, which rolls the
+ *    booked payment NOW (`scheduled → paid`) and closes the dialog on success.
  *
  * The account picker is frozen in view mode by wrapping the body in a disabled
  * `<fieldset>` — the same native lock the form uses — while the segmented
@@ -67,10 +70,13 @@ export function BillDetailsScheduleModal({ open, onClose, mode }: BillDetailsSch
       <Modal.Footer>
         {readOnly ? (
           <>
-            <span />
-            <Button type="button" variant="primary" onClick={onClose}>
+            {/* View schedule: Close on the left, "Complete payment" (roll it
+                now) on the right — the same shared button the footer uses; a
+                completed payment closes the dialog via onDone. */}
+            <Button type="button" variant="underline" onClick={onClose}>
               Close
             </Button>
+            <BillDetailsCompletePaymentButton variant="primary" onDone={onClose} />
           </>
         ) : (
           <>
@@ -83,6 +89,7 @@ export function BillDetailsScheduleModal({ open, onClose, mode }: BillDetailsSch
             <Button
               type="button"
               variant="primary"
+              leadingIcon={<CalendarClock size={16} />}
               onClick={() => void onSchedule()}
               disabled={submitting || !isPaymentComplete(payment)}
             >

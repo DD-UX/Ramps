@@ -182,6 +182,20 @@ export function createRampsClient(options: RampsClientOptions) {
         signal,
       });
     },
+
+    /**
+     * POST /bills/:id/roll — COMPLETE PAYMENT ("roll it now"). Releases a
+     * `scheduled` bill's payment immediately: settles the payment row and moves
+     * `scheduled → paid` (arrival pulled to today). No body — the account +
+     * amount are already booked on the payment. Returns the re-read `paid` bill.
+     */
+    rollPaymentNow(billId: string, signal?: AbortSignal): Promise<BillMutationResponseType> {
+      return request(`/bills/${encodeURIComponent(billId)}/roll`, {
+        method: 'POST',
+        schema: BillMutationResponseSchema,
+        signal,
+      });
+    },
   };
 
   return { request, bills };

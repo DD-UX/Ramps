@@ -19,6 +19,7 @@ import {
   PRIMARY_ACTION,
   PRIMARY_ACTION_BY_STATUS,
   resolvePrimaryAction,
+  resolvePrimaryActionIcon,
 } from '../constants/primary-action.constants';
 import {
   BILL_DETAILS_TAB,
@@ -31,6 +32,7 @@ import { useApproveBill } from '../hooks/useApproveBill';
 import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
 import { useSubmitBill } from '../hooks/useSubmitBill';
 import { BillDetailsApprovals } from './BillDetailsApprovals';
+import { BillDetailsCompletePaymentButton } from './BillDetailsCompletePaymentButton';
 import { BillDetailsHeader } from './BillDetailsHeader';
 import { BillDetailsInvoiceInfo } from './BillDetailsInvoiceInfo';
 import { BillDetailsLineItems } from './BillDetailsLineItems';
@@ -179,6 +181,10 @@ export function BillDetailsForm() {
   // off this record instead of branching on the status inline.
   const primaryAction = resolvePrimaryAction(bill.status);
   const primaryLabel = PRIMARY_ACTION_BY_STATUS[bill.status];
+  // The primary's leading glyph, per kind: CalendarClock for Schedule, Eye for
+  // View schedule; Create/Approve/None carry none. Resolved to a component so
+  // the JSX renders `<PrimaryIcon />` only when one exists.
+  const PrimaryIcon = resolvePrimaryActionIcon(primaryAction);
 
   // create is the only kind whose enablement is form-driven (valid + complete);
   // the others gate on their own in-flight state. `none` (terminal states) is
@@ -215,6 +221,10 @@ export function BillDetailsForm() {
           disabled: false,
           isSubmit: false,
         };
+      case PRIMARY_ACTION.COMPLETE:
+        // The shared Complete-payment button renders AS the primary (below) and
+        // owns its own flow — this record is never rendered for this kind.
+        return { label: primaryLabel, onClick: () => undefined, disabled: false, isSubmit: false };
       default:
         // Terminal / not-yet-wired states — the label reads but the button is inert.
         return { label: primaryLabel, onClick: () => undefined, disabled: true, isSubmit: false };
@@ -312,15 +322,30 @@ export function BillDetailsForm() {
             flow's own error surfaces beside it, mirroring Save draft's line. */}
         <div className="gap-rui-3 flex items-center">
           <FieldError size="sm">{submitError ?? approveError}</FieldError>
-          <Button
-            type={primary.isSubmit ? 'submit' : 'button'}
-            variant="primary"
-            disabled={primary.disabled}
-            onClick={primary.isSubmit ? undefined : primary.onClick}
-            keys={primary.isSubmit && !primary.disabled ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined}
-          >
-            {primary.label}
-          </Button>
+          {/* A `scheduled` bill's primary reads "View schedule" (read-only) — the
+              real money-movement action, "Complete payment", sits beside it as
+              the SAME shared button the View-schedule modal uses (secondary here
+              so View stays the visual primary). It owns its own roll flow. */}
+          {bill.status === 'scheduled' && <BillDetailsCompletePaymentButton variant="secondary" />}
+          {primaryAction === PRIMARY_ACTION.COMPLETE ? (
+            /* A `partially_paid` bill's primary IS "Complete payment" — the same
+               shared button, rendered as the primary (no separate inert CTA) so
+               the roll flow is wired identically to the `scheduled` companion. */
+            <BillDetailsCompletePaymentButton variant="primary" />
+          ) : (
+            <Button
+              type={primary.isSubmit ? 'submit' : 'button'}
+              variant="primary"
+              leadingIcon={PrimaryIcon ? <PrimaryIcon size={16} /> : undefined}
+              disabled={primary.disabled}
+              onClick={primary.isSubmit ? undefined : primary.onClick}
+              keys={
+                primary.isSubmit && !primary.disabled ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined
+              }
+            >
+              {primary.label}
+            </Button>
+          )}
         </div>
       </BillDetailsPane>
       {/* Direct child of the <form>, NOT the footer pane: the pane's

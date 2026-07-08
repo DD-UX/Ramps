@@ -581,6 +581,49 @@ export async function schedulePayment(
   return scheduled;
 }
 
+/**
+ * Complete payment ("roll it now") — release a `scheduled` bill's payment
+ * immediately instead of waiting for its scheduled date. Moves the bill
+ * `scheduled → paid` and settles its live payment row: status `paid`, and both
+ * `scheduled_date` + `arrival_date` pulled to TODAY (the money moves now, so it
+ * lands now — no 2-day ACH wait). A demo shortcut past the simulator's
+ * `initiated` step; the end state is what a released payment looks like.
+ *
+ * Guarded against the transition map: a bill not sitting on `scheduled` raises
+ * {@link BillNotEditableError} (→ 409). Returns the re-read `paid` bill.
+ */
+export async function rollPaymentNow(
+  supabase: ServerSupabase,
+  billId: string,
+): Promise<BillDetailType> {
+  const existing = await getBill(supabase, billId);
+  if (!existing) throw toSdkError({ message: 'Bill not found', code: 'PGRST116' });
+
+  if (!canTransitionBill(existing.status, 'paid')) {
+    throw new BillNotEditableError(existing.status);
+  }
+
+  // The live payment row is what "View schedule" reads; settle THAT one so the
+  // paid bill carries a paid payment rather than a stale scheduled stub.
+  if (!existing.payment) {
+    throw toSdkError({ message: 'No scheduled payment to complete', code: 'PGRST116' });
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const settle = await supabase
+    .from('payments')
+    .update({ status: 'paid', scheduled_date: today, arrival_date: today })
+    .eq('id', existing.payment.id);
+  if (settle.error) throw toSdkError(settle.error);
+
+  const move = await supabase.from('bills').update({ status: 'paid' }).eq('id', billId);
+  if (move.error) throw toSdkError(move.error);
+
+  const paid = await getBill(supabase, billId);
+  if (!paid) throw toSdkError({ message: 'Bill vanished after roll', code: 'PGRST116' });
+  return paid;
+}
+
 /* ────────────────────────────────────────────────────────────────────────
  * CREATE A BILL — the demo "give me another bill to test with" generator
  *
