@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { useId } from 'react';
 
 import { cn } from '../../lib/cn';
+import { TAP } from '../motion/pressVariants';
 
 /**
  * Tabs — the lifecycle shell navigation: Overview · Drafts · For approval ·
@@ -46,12 +47,17 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
       {tabs.map((tab) => {
         const active = tab.value === value;
         return (
-          <button
+          <motion.button
             key={tab.value}
             type="button"
             role="tab"
             aria-selected={active}
             onClick={() => onValueChange?.(tab.value)}
+            // Press-only feel (TAP): a quiet squash under the finger, NO hover
+            // lift — the tab's hover language is the colour shift + the gliding
+            // underline, which a scale-on-hover would fight. Scale is on the
+            // button; the underline `layoutId` child rides along untouched.
+            {...TAP}
             className={cn(
               'gap-rui-2 px-rui-1 py-rui-3 text-sm font-heading relative -mb-px inline-flex cursor-pointer items-center',
               active ? 'text-ink' : 'text-hushed hover:text-ink',
@@ -59,14 +65,20 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
           >
             {tab.label}
             {tab.count !== undefined && (
-              <span
+              <motion.span
+                // The count pops in with a spring when it first appears (a bill
+                // lands in "For approval"), then settles — a small "something
+                // changed here" cue, not a loop.
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 24 }}
                 className={cn(
                   'rounded-pill px-rui-2 text-xs font-body',
                   active ? 'bg-ink text-limestone' : 'bg-limestone text-hushed',
                 )}
               >
                 {tab.count}
-              </span>
+              </motion.span>
             )}
             {active && (
               <motion.span
@@ -76,7 +88,7 @@ export function Tabs({ tabs, value, onValueChange, className }: TabsProps) {
                 transition={{ type: 'spring', stiffness: 500, damping: 40 }}
               />
             )}
-          </button>
+          </motion.button>
         );
       })}
     </div>

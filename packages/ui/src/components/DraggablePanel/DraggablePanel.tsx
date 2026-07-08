@@ -58,6 +58,10 @@ export function DraggablePanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const [split, setSplit] = useState(defaultSplit);
   const [dragging, setDragging] = useState(false);
+  // Pad hover, tracked in React (via Framer's onHoverStart/End) rather than CSS
+  // `group-hover` — because hovering the pad must recolor a SEPARATE element (the
+  // divider line, the pad's parent), which a self-scoped hover can't reach.
+  const [hovering, setHovering] = useState(false);
 
   const clamp = useCallback((pct: number) => Math.min(max, Math.max(min, pct)), [min, max]);
 
@@ -123,10 +127,10 @@ export function DraggablePanel({
           The rail is a full-height sibling BETWEEN the two scroll containers, so
           the absolute-centered grip stays pinned to the panel's vertical center
           and never scrolls out of view with either pane.
-          Interaction: on HOVER the line darkens (bone → hushed) and the pad
-          grows; while DRAGGING the line goes electric blue and the pad presses
-          in (shrinks) and goes electric to match — so grabbing the divider reads
-          as a live, physical control. */}
+          Interaction: on HOVER the line darkens (bone → hushed), the pad grows
+          and its ring darkens to ink; while DRAGGING the line goes electric blue
+          and the pad presses in (shrinks) and goes electric to match — so
+          grabbing the divider reads as a live, physical control. */}
       <button
         type="button"
         data-testid="drag-handle"
@@ -139,28 +143,43 @@ export function DraggablePanel({
         className={cn(
           'group p-0 relative flex w-px shrink-0 cursor-col-resize items-center justify-center',
           'transition-colors outline-none',
-          // The divider LINE: bone at rest, darkens to hushed on hover, and
-          // turns electric blue the whole time you're dragging it — the live
-          // "you're manipulating this" cue.
-          dragging ? 'bg-electric' : 'bg-bone group-hover:bg-hushed',
+          // The divider LINE: bone at rest, darkens to INK while the pad is
+          // hovered, and turns electric blue the whole time you're dragging it —
+          // the live "you're manipulating this" cue. Hover comes from React
+          // state (below), not group-hover, so it reliably reaches this element.
+          dragging ? 'bg-electric' : hovering ? 'bg-ink' : 'bg-bone',
         )}
       >
         <motion.span
           data-testid="drag-grip"
           // Hover GROWS the pad; dragging PRESSES it (shrinks past rest) so it
-          // feels pushed in. Snappy spring settle, no wobble.
-          animate={{ scale: dragging ? 0.9 : 1 }}
-          whileHover={dragging ? undefined : { scale: 1.15 }}
+          // feels pushed in. Snappy spring settle, no wobble. Framer owns the
+          // hover here (onHoverStart/End) and reports it up to React state, so
+          // ONE source of truth drives both the pad AND the divider line — no
+          // CSS group-hover racing the scale animation.
+          animate={{ scale: dragging ? 0.9 : hovering ? 1.15 : 1 }}
+          onHoverStart={() => setHovering(true)}
+          onHoverEnd={() => setHovering(false)}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           className={cn(
             // Frame 7 at 10x + 1px sampling: a circular STONE chip, soft
-            // shadow, ink dots — no border; a full step darker than the
-            // panes so it keeps contrast on the limestone canvas too.
+            // shadow, ink dots — a full step darker than the panes so it keeps
+            // contrast on the limestone canvas too. NO border at rest (the
+            // shadow does the lifting — the vetted contract).
             'size-7 rounded-pill bg-stone text-ink absolute flex items-center justify-center',
-            'shadow-card group-hover:shadow-popover group-focus-visible:shadow-popover transition-[box-shadow,background-color,color]',
-            // While dragging the pad reads as the active control: it goes
-            // electric to match the line and the dots flip to white.
-            dragging ? 'bg-electric text-white shadow-popover' : 'group-hover:bg-bone',
+            // The hover outline is an OUTLINE (its own CSS property), not a
+            // border, so it darkens the pad's edge WITHOUT adding layout width —
+            // no size jump, and the resting chip stays border-free.
+            'outline outline-1 -outline-offset-1 outline-transparent',
+            'shadow-card group-focus-visible:shadow-popover transition-[box-shadow,background-color,color,outline-color]',
+            // While dragging the pad reads as the active control: electric fill +
+            // outline, dots flip white. On HOVER the outline darkens to INK, the
+            // fill warms to bone, and the shadow lifts — all off the same state.
+            dragging
+              ? 'bg-electric outline-electric text-white shadow-popover'
+              : hovering
+                ? 'bg-bone outline-ink shadow-popover'
+                : '',
           )}
         >
           <GripVertical size={14} />

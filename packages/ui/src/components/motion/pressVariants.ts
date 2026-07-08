@@ -46,10 +46,31 @@ export const PRESS = {
   transition: PRESS_SPRING,
 } as const satisfies PressMotionPreset;
 
+/**
+ * TAP — the press-ONLY sibling of {@link PRESS}. Same spring, same "gives under
+ * the finger" squash, but NO hover lift and a gentler dip (0.97).
+ *
+ * It's for controls that already own a hover language of their own and must NOT
+ * also scale on hover: the nav Tabs and SegmentedControl (whose hover is a
+ * colour shift and a gliding `layoutId` plate) and the Menu rows (whose hover is
+ * a limestone wash). Lifting those on hover would fight their indicator; a quiet
+ * tap-squash still makes the click feel physical. Scale-only, so it composes
+ * over a child `layoutId` background without moving it.
+ */
+export const TAP = {
+  whileTap: { scale: 0.97 },
+  transition: PRESS_SPRING,
+} as const satisfies PressMotionPreset;
+
 /** The inert counterpart — spread on a disabled control so it never reacts. */
 export const NO_PRESS = {} as const satisfies PressMotionPreset;
 
-/** Pick the right preset for a control's enabled/disabled state. */
+/** Pick the full press preset (hover lift + squash) for an enabled/disabled control. */
 export function pressPreset(disabled: boolean | undefined): PressMotionPreset {
   return disabled ? NO_PRESS : PRESS;
+}
+
+/** Pick the press-ONLY {@link TAP} preset (no hover lift) for an enabled/disabled control. */
+export function tapPreset(disabled: boolean | undefined): PressMotionPreset {
+  return disabled ? NO_PRESS : TAP;
 }

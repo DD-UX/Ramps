@@ -1,9 +1,13 @@
+'use client';
+
+import { AnimatePresence, motion } from 'motion/react';
 import type { ReactNode, RefObject } from 'react';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { cn } from '../../lib/cn';
 import { DISABLED_CONTROL } from '../../lib/disabled';
 import { IconButton } from '../IconButton/IconButton';
+import { tapPreset } from '../motion/pressVariants';
 
 /**
  * Menu — the overflow / action menu that hangs off the three-dot IconButton in
@@ -180,6 +184,11 @@ export function Menu({
     };
   }, [open, align, side, boundary]);
 
+  // Does the panel end up BELOW the trigger? `side` is the preference; `flipped`
+  // inverts it. Drives the enter/exit slide direction and the scale origin so
+  // the panel always unfurls out of the trigger edge, whichever way it opens.
+  const opensBelow = side === 'bottom' ? !flipped : flipped;
+
   return (
     <div ref={rootRef} className={cn('relative inline-flex', className)}>
       {trigger ? (
@@ -212,55 +221,75 @@ export function Menu({
         />
       )}
 
-      {open && (
-        <div
-          ref={menuRef}
-          id={menuId}
-          role="menu"
-          className={cn(
-            'min-w-44 rounded-square border-bone bg-white py-rui-1 shadow-lg absolute z-20 overflow-hidden border',
-            // `flipped` swaps the preferred vertical side; align stays the natural
-            // CSS anchor and the shift rides in a transform so it doesn't fight it.
-            flipped
-              ? side === 'bottom'
-                ? 'mb-rui-1 bottom-full'
-                : 'mt-rui-1 top-full'
-              : side === 'bottom'
-                ? 'mt-rui-1 top-full'
-                : 'mb-rui-1 bottom-full',
-            align === 'end' ? 'right-0' : 'left-0',
-          )}
-          // Shift rides in a transform (not `left`) so it layers on top of the
-          // right-0/left-0 anchor without overriding it.
-          style={shiftX ? { transform: `translateX(${shiftX}px)` } : undefined}
-        >
-          {items.map((item, i) => (
-            <button
-              key={i}
-              type="button"
-              role="menuitem"
-              disabled={item.disabled}
-              onClick={() => {
-                if (item.disabled) return;
-                setOpen(false);
-                item.onSelect?.();
-              }}
-              className={cn(
-                'gap-rui-2 px-rui-3 py-rui-2 text-sm font-body flex w-full cursor-pointer items-center text-left transition-colors',
-                'focus:bg-limestone focus:outline-none',
-                ITEM_TONE[item.tone ?? 'default'],
-                // Consistent inert gray when disabled (after the tone so it
-                // wins the fill/hover conflict). The item is natively disabled
-                // and the onSelect is guarded, so no pointer-events hack needed.
-                DISABLED_CONTROL,
-              )}
-            >
-              {item.icon && <span aria-hidden>{item.icon}</span>}
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            ref={menuRef}
+            id={menuId}
+            role="menu"
+            // Enter/exit: fade + a slight scale-up from the anchored corner, with
+            // a small slide FROM the trigger side — opensBelow → drops down from
+            // −4px, opensAbove → rises up from +4px, so the panel reads as
+            // unfurling out of its trigger, not blinking into place. Origin is
+            // the anchored corner (top/bottom × start/end) so the scale grows
+            // away from the trigger. Same 0.15s-in / 0.1s-out timing as Popover.
+            initial={{ opacity: 0, scale: 0.96, y: opensBelow ? -4 : 4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: opensBelow ? -4 : 4 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className={cn(
+              'min-w-44 rounded-square border-bone bg-white py-rui-1 shadow-lg absolute z-20 overflow-hidden border',
+              // `flipped` swaps the preferred vertical side; align stays the natural
+              // CSS anchor and the shift rides in a transform so it doesn't fight it.
+              flipped
+                ? side === 'bottom'
+                  ? 'mb-rui-1 bottom-full'
+                  : 'mt-rui-1 top-full'
+                : side === 'bottom'
+                  ? 'mt-rui-1 top-full'
+                  : 'mb-rui-1 bottom-full',
+              align === 'end' ? 'right-0 origin-top-right' : 'left-0 origin-top-left',
+              // When the panel opens ABOVE the trigger, grow from the bottom
+              // corner so the scale-in still emanates from the trigger edge.
+              !opensBelow && (align === 'end' ? 'origin-bottom-right' : 'origin-bottom-left'),
+            )}
+            // Shift rides in the transform template (not `left`) so it layers on
+            // top of the right-0/left-0 anchor. Motion owns `transform` for the
+            // scale/opacity, so the x-shift is handed in via `x` (a motion value)
+            // rather than a raw CSS transform that Motion would overwrite.
+            style={{ x: shiftX || undefined }}
+          >
+            {items.map((item, i) => (
+              <motion.button
+                key={i}
+                type="button"
+                role="menuitem"
+                disabled={item.disabled}
+                onClick={() => {
+                  if (item.disabled) return;
+                  setOpen(false);
+                  item.onSelect?.();
+                }}
+                // Press-only squash — the row gives under the finger; its hover
+                // is the limestone (or critical) wash, so no hover lift.
+                {...tapPreset(item.disabled)}
+                className={cn(
+                  'gap-rui-2 px-rui-3 py-rui-2 text-sm font-body flex w-full cursor-pointer items-center text-left transition-colors',
+                  'focus:bg-limestone focus:outline-none',
+                  ITEM_TONE[item.tone ?? 'default'],
+                  // Consistent inert gray when disabled (after the tone so it
+                  // wins the fill/hover conflict). The item is natively disabled
+                  // and the onSelect is guarded, so no pointer-events hack needed.
+                  DISABLED_CONTROL,
+                )}
+              >
+                {item.icon && <span aria-hidden>{item.icon}</span>}
+                {item.label}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { type ReactNode, useId } from 'react';
 
 import { cn } from '../../lib/cn';
+import { TAP } from '../motion/pressVariants';
 
 /**
  * SegmentedControl — the `[ New card | Existing card ]` switch on the
@@ -57,12 +58,17 @@ export function SegmentedControl({
       {options.map((option) => {
         const active = option.value === value;
         return (
-          <button
+          <motion.button
             key={option.value}
             type="button"
             role="tab"
             aria-selected={active}
             onClick={() => onValueChange?.(option.value)}
+            // Press-only feel (TAP): a quiet squash under the finger, no hover
+            // lift — the segment's own language is the gliding white plate, so
+            // hover-scaling would fight it. The whole segment (plate + label)
+            // gives under the press together.
+            {...TAP}
             className="px-rui-4 py-rui-2 text-sm font-heading text-ink relative cursor-pointer"
           >
             {active && (
@@ -76,7 +82,7 @@ export function SegmentedControl({
               />
             )}
             <span className="relative z-10">{option.label}</span>
-          </button>
+          </motion.button>
         );
       })}
     </div>

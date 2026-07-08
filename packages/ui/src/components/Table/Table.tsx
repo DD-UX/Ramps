@@ -554,11 +554,16 @@ export function Table<T, K extends string | number = string>({
                     onClick={isClickable ? () => onRowClick(row) : undefined}
                     className={cn(
                       // group/row lets STICKY cells (which need their own
-                      // opaque bg) follow the row's hover/selected state —
-                      // without it they stayed white and read as vertical
+                      // opaque bg) follow the row's hover/selected/pressed state
+                      // — without it they stayed white and read as vertical
                       // bands over hovered/selected rows.
                       'group/row transition-colors',
-                      isClickable && 'hover:bg-limestone cursor-pointer',
+                      // Tactile press: a clickable row can't SCALE (a transform
+                      // on a <tr> breaks the sticky pinned cells + border-
+                      // separate), so it flashes one step DEEPER than hover
+                      // (limestone → bone) while the pointer is down — the
+                      // sticky-safe equivalent of the buttons' squash.
+                      isClickable && 'hover:bg-limestone active:bg-bone cursor-pointer',
                       isSelected && 'bg-tone-selected-surface',
                     )}
                     style={isVirtualized ? { height: rowHeight } : undefined}
@@ -568,7 +573,9 @@ export function Table<T, K extends string | number = string>({
                         className={cn(
                           'left-0 border-limestone px-rui-3 py-rui-3 sticky z-10 border-b align-middle',
                           isSelected ? 'bg-tone-selected-surface' : 'bg-white',
-                          isClickable && !isSelected && 'group-hover/row:bg-limestone',
+                          isClickable &&
+                            !isSelected &&
+                            'group-hover/row:bg-limestone group-active/row:bg-bone',
                         )}
                         style={checkboxCellStyle}
                         onClick={(e) => e.stopPropagation()}
@@ -599,7 +606,7 @@ export function Table<T, K extends string | number = string>({
                             isSticky &&
                               isClickable &&
                               !isSelected &&
-                              'group-hover/row:bg-limestone',
+                              'group-hover/row:bg-limestone group-active/row:bg-bone',
                           )}
                           style={{
                             width: col.width,
