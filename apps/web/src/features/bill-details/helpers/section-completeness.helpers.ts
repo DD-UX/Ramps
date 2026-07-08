@@ -64,3 +64,19 @@ export function lineItemsCompleteness(form: LineItemFields): SectionCompleteness
 export function lineItemsTotalCents(form: LineItemFields): number {
   return form.line_items.reduce((sum, li) => sum + (li.amount_cents ?? 0), 0);
 }
+
+/**
+ * Submit-readiness — the footer's primary action gate. The RESOLVER schema is
+ * deliberately lenient (an in-progress draft with blanks is a valid FORM
+ * state), so `formState.isValid` alone would offer "Create bill" on an
+ * unmatched, number-less draft. What the submit transition demands is the
+ * REQUIRED sections reading complete: a matched vendor, the identifying
+ * invoice trio, and a fully-coded line grid. (The PO stays out — optional.)
+ */
+export function billSubmitReady(form: VendorFields & InvoiceFields & LineItemFields): boolean {
+  return (
+    vendorCompleteness(form) === 'complete' &&
+    billDetailsCompleteness(form) === 'complete' &&
+    lineItemsCompleteness(form) === 'complete'
+  );
+}

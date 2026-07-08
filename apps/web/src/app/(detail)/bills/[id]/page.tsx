@@ -63,7 +63,12 @@ export default async function BillDetailPage({ params }: { params: Promise<{ id:
       <div className="min-h-0 grid h-full flex-1 grid-cols-[16rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">
         <BillDetailsRail bills={railBills} statuses={railStatuses} activeId={bill.id} />
         <div className="min-h-0 min-w-0 flex flex-col">
-          <BillDetailsContent bill={bill} refs={refs} documentUrl={documentUrl} />
+          {/* key={bill.id} is LOAD-BEARING: rail hops are client-side, and an
+              unkeyed provider would be state-preserved across records — the
+              form instance (and its pristine/dirty state, values, staged
+              approvals) would still be the PREVIOUS bill's. Keyed, every
+              record mounts a fresh editing surface seeded from ITS OWN data. */}
+          <BillDetailsContent key={bill.id} bill={bill} refs={refs} documentUrl={documentUrl} />
         </div>
       </div>
     </SWRConfig>

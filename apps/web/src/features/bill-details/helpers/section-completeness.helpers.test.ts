@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   billDetailsCompleteness,
+  billSubmitReady,
   lineItemsCompleteness,
   lineItemsTotalCents,
   purchaseOrderCompleteness,
@@ -97,5 +98,30 @@ describe('lineItemsTotalCents', () => {
 
   it('is zero for an empty grid', () => {
     expect(lineItemsTotalCents({ ...base, line_items: [] })).toBe(0);
+  });
+});
+
+describe('billSubmitReady', () => {
+  it('is ready when the required sections all read complete', () => {
+    expect(billSubmitReady(base)).toBe(true);
+  });
+
+  it('is not ready on the unmatched draft (no vendor)', () => {
+    expect(billSubmitReady({ ...base, vendor_id: null })).toBe(false);
+  });
+
+  it('is not ready without the invoice trio', () => {
+    expect(billSubmitReady({ ...base, invoice_number: '' })).toBe(false);
+    expect(billSubmitReady({ ...base, due_date: null })).toBe(false);
+  });
+
+  it('is not ready with an empty or uncoded line grid', () => {
+    expect(billSubmitReady({ ...base, line_items: [] })).toBe(false);
+  });
+
+  it('ignores the optional PO (base ships with a blank one)', () => {
+    const withPo: BillEditFormType = { ...base, po_number: 'PO-5521' };
+    expect(billSubmitReady(base)).toBe(true);
+    expect(billSubmitReady(withPo)).toBe(true);
   });
 });

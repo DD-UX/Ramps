@@ -1,14 +1,16 @@
 'use client';
 
-import type { BillEditFormType } from '@ramps/schemas/bills';
+import { BillEditFormSchema, type BillEditFormType } from '@ramps/schemas/bills';
 import { Button } from '@ramps/ui/Button';
 import { EmptyState } from '@ramps/ui/EmptyState';
 import { FieldError } from '@ramps/ui/FieldError';
 import { ActivityIcon, Save } from '@ramps/ui/icons';
 import { Tabs } from '@ramps/ui/Tabs';
-import { Activity, useState } from 'react';
+import { Activity, useEffect, useState } from 'react';
+import { useFormState, useWatch } from 'react-hook-form';
 
 import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
+import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 
 import { PRIMARY_ACTION_BY_STATUS } from '../constants/primary-action.constants';
 import {
@@ -17,6 +19,7 @@ import {
   type BillDetailsTab,
 } from '../constants/tabs.constants';
 import { useBillDetail } from '../context/BillDetail.context';
+import { billSubmitReady } from '../helpers/section-completeness.helpers';
 import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
 import { BillDetailsApprovals } from './BillDetailsApprovals';
 import { BillDetailsHeader } from './BillDetailsHeader';
@@ -26,6 +29,7 @@ import { BillDetailsMemo } from './BillDetailsMemo';
 import { BillDetailsPane } from './BillDetailsPane';
 import { BillDetailsPayment } from './BillDetailsPayment';
 import { BillDetailsPurchaseOrder } from './BillDetailsPurchaseOrder';
+import { BillDetailsSaveToast, type SaveToastPhase } from './BillDetailsSaveToast';
 import { BillDetailsTitle } from './BillDetailsTitle';
 import { BillDetailsVendor } from './BillDetailsVendor';
 
@@ -51,6 +55,64 @@ export function BillDetailsForm() {
   const { form, bill } = useBillDetail();
   const [tab, setTab] = useState<BillDetailsTab>(BILL_DETAILS_TAB.OVERVIEW);
   const { saveDraft, saving: savingDraft, error: saveError } = useSaveBillDraft();
+  // The Save-draft toast's phase: 'saving' while the flow runs, 'saved' once
+  // it resolves ok, null otherwise (a failure falls back to the inline error).
+  const [saveToast, setSaveToast] = useState<SaveToastPhase | null>(null);
+
+  const onSaveDraft = async () => {
+    setSaveToast('saving');
+    const ok = await saveDraft();
+    setSaveToast(ok ? 'saved' : null);
+  };
+  // The submit chip spells the OS's own modifier — ⌘ on Apple, Ctrl elsewhere —
+  // via the same hydration-safe read the top bar's ⌘K keycap uses.
+  const isApple = useIsApplePlatform();
+  // useFormState — NOT `form.formState` — on purpose: formState is a lazy
+  // proxy scoped to the component that CALLED useForm (the provider). Read
+  // through the context in a child, the isValid subscription registers too
+  // late and RHF never runs the mount-time validity pass — the button would
+  // sit disabled forever on a perfectly valid bill. useFormState opens this
+  // component's own subscription, which also makes RHF resolve validity up
+  // front, so a bill that loads complete is submittable immediately.
+  const { isValid } = useFormState({ control: form.control });
+
+  // The resolver says "valid FORM"; the submit needs "COMPLETE bill" — the
+  // schema deliberately admits draft blanks (unmatched vendor, no invoice
+  // number), so the primary action gates on the same section-completeness
+  // rules the amber/green pills read, recomputed live from the watched slice.
+  const [vendorId, invoiceNumber, invoiceDate, dueDate, lineItems] = useWatch({
+    control: form.control,
+    name: ['vendor_id', 'invoice_number', 'invoice_date', 'due_date', 'line_items'],
+  });
+  const canSubmit =
+    isValid &&
+    billSubmitReady({
+      vendor_id: vendorId,
+      invoice_number: invoiceNumber ?? '',
+      invoice_date: invoiceDate,
+      due_date: dueDate,
+      line_items: lineItems ?? [],
+    });
+
+  // WHY-is-it-invalid console trail: RHF's silent validity check doesn't
+  // populate `formState.errors` until a field blurs or a submit fires, so an
+  // invalid-on-load bill would show a disabled button with no explanation.
+  // Re-run the same zod schema over the current values and log the issues —
+  // read-only (no trigger()), so no inline errors light up uninvited.
+  useEffect(() => {
+    if (isValid) return;
+    const result = BillEditFormSchema.safeParse(form.getValues());
+    if (!result.success) {
+      console.warn(
+        '[bill-details] form invalid:',
+        result.error.issues.map(({ path, code, message }) => ({
+          field: path.join('.'),
+          code,
+          message,
+        })),
+      );
+    }
+  }, [isValid, form]);
 
   const onSubmit = (values: BillEditFormType) => {
     // Persistence is out of scope for this pass — surface the validated payload.
@@ -60,7 +122,12 @@ export function BillDetailsForm() {
   const primaryLabel = PRIMARY_ACTION_BY_STATUS[bill.status];
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="gap-rui-4 flex h-full flex-col">
+    <form
+      onSubmit={form.handleSubmit(onSubmit, (errors) =>
+        console.warn('[bill-details] submit blocked by validation:', errors),
+      )}
+      className="gap-rui-4 flex h-full flex-col"
+    >
       {/* The compact identity row (avatar · Draft · title) pins to the pane's
           top while the form scrolls under it — frame 1's scrolled state. */}
       <BillDetailsHeader />
@@ -111,23 +178,35 @@ export function BillDetailsForm() {
           space between, not clustered. Fixed h-14 band (py-0 overrides the
           pane's default padding) so it levels with the rail's Prev/Next
           footer instead of towering over it. */}
-      <BillDetailsPane className="border-bone bg-white/80 backdrop-blur h-14 py-0 sticky bottom-[-1px] z-10 grid shrink-0 grid-flow-col items-center justify-between border-t">
+      <BillDetailsPane className="border-bone bg-white/80 backdrop-blur h-14 py-0 sticky -bottom-px z-10 grid shrink-0 grid-flow-col items-center justify-between border-t">
         <div className="gap-rui-3 flex items-center">
           <Button
             type="button"
             variant="underline"
             leadingIcon={<Save size={16} />}
-            onClick={() => void saveDraft()}
+            onClick={() => void onSaveDraft()}
             disabled={savingDraft}
           >
             {savingDraft ? 'Saving…' : 'Save draft'}
           </Button>
           <FieldError size="sm">{saveError}</FieldError>
         </div>
-        <Button type="submit" variant="primary" keys={['⌘', '↵']}>
+        {/* Un-submittable while the form is invalid OR the bill incomplete —
+            and the ⌘/Ctrl+↵ chips leave with the affordance: a disabled
+            action advertises no shortcut. */}
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={!canSubmit}
+          keys={canSubmit ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined}
+        >
           {primaryLabel}
         </Button>
       </BillDetailsPane>
+      {/* Direct child of the <form>, NOT the footer pane: the pane's
+          backdrop-blur is a containing block for fixed descendants, which
+          would pin the "viewport" toast to the footer band instead. */}
+      <BillDetailsSaveToast phase={saveToast} onDismiss={() => setSaveToast(null)} />
     </form>
   );
 }
