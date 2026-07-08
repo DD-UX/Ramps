@@ -1,7 +1,7 @@
 'use client';
 
 import type { ChangeEvent, FocusEvent, InputHTMLAttributes, Ref } from 'react';
-import { useId, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 
 import { cn } from '../../lib/cn';
 import { DISABLED_CONTROL } from '../../lib/disabled';
@@ -82,7 +82,23 @@ export function FieldInput({
   );
   const [focused, setFocused] = useState(false);
 
-  const current = value != null ? String(value) : internal;
+  // react-hook-form's `register` sets the value imperatively through the ref —
+  // it passes NEITHER a `value` NOR a `defaultValue` prop — so `internal` seeds
+  // empty and the field paints its own text transparent (label un-floated) until
+  // the first keystroke. Read the real DOM value once the input mounts so the
+  // floated/filled state reflects what the input actually holds. `useState` as a
+  // ref-callback store re-runs this synchronously on mount, before paint.
+  const [mountedValue, setMountedValue] = useState('');
+  const setRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      if (typeof ref === 'function') ref(node);
+      else if (ref) (ref as { current: HTMLInputElement | null }).current = node;
+      if (node) setMountedValue(node.value);
+    },
+    [ref],
+  );
+
+  const current = value != null ? String(value) : internal || mountedValue;
   const hasValue = current !== '';
   const selfPlaceholder = SELF_PLACEHOLDER_TYPES.has(type);
   // Native date/time inputs paint their own placeholder, so float on focus too.
@@ -140,7 +156,7 @@ export function FieldInput({
         </span>
 
         <input
-          ref={ref}
+          ref={setRef}
           id={id}
           type={type}
           value={value}
