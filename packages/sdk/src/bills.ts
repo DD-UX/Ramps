@@ -3,7 +3,10 @@ import {
   type BillDetailType,
   BillListItemSchema,
   type BillListItemType,
+  BillSaveSchema,
+  type BillSaveType,
   type BillStatusType,
+  canTransitionBill,
 } from '@ramps/schemas/bills';
 
 import { toSdkError, type ServerSupabase } from './server.js';
@@ -295,4 +298,146 @@ export async function countBillsByStatus(
     acc[row.status] = (acc[row.status] ?? 0) + 1;
     return acc;
   }, {});
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+ * WRITES — Save draft (the whole edit form) and Create bill (save + submit)
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/** A blank text field arrives as `''` from the form; store it as SQL NULL. */
+function emptyToNull(value: string): string | null {
+  return value.length > 0 ? value : null;
+}
+
+/**
+ * BillNotEditableError — the caller sent a save/submit for a bill whose status
+ * has locked its record (anything past `draft`/`missing_info`). The route maps
+ * this to a 409 so a stale client can't rewrite a frozen bill. A named class so
+ * the handler can branch on it without string-matching the message.
+ */
+export class BillNotEditableError extends Error {
+  constructor(status: BillStatusType) {
+    super(`This bill is no longer editable (status: ${status}).`);
+    this.name = 'BillNotEditableError';
+  }
+}
+
+/** Only pre-submit bills accept edits; the route + SDK both guard on this. */
+function isBillEditableStatus(status: BillStatusType): boolean {
+  return status === 'draft' || status === 'missing_info';
+}
+
+/**
+ * Persist the WHOLE edit form for a pre-submit bill — the single definition of
+ * "save this bill", shared by Save draft and (as its first half) Create bill.
+ *
+ * Two writes, in order:
+ *  1. UPDATE the bill's header columns from the form's flat fields (blank text
+ *     → NULL, so an emptied invoice number clears rather than stores `''`).
+ *  2. REPLACE-ALL the line items: delete every existing line for the bill, then
+ *     re-insert the form's array in order with `line_no = index + 1`. Same
+ *     pattern as `saveApprovalStages` — the grid always emits the full ordered
+ *     list, so a delete-then-insert is the simplest correct write. The form's
+ *     nullable line `id` isn't needed here: replace-all re-keys every row.
+ *
+ * Guarded: throws {@link BillNotEditableError} if the bill has moved past the
+ * editable states (the route turns that into a 409). NOT a single DB
+ * transaction (PostgREST has no multi-statement tx) — acceptable for this
+ * demo's single-author flow, same caveat as the approvals write. Returns the
+ * re-read bill so the caller reconciles against the server's own truth.
+ */
+export async function saveBill(
+  supabase: ServerSupabase,
+  billId: string,
+  input: BillSaveType,
+): Promise<BillDetailType> {
+  const form = BillSaveSchema.parse(input);
+
+  // Guard: refuse to write a bill whose status has frozen its record.
+  const existing = await getBill(supabase, billId);
+  if (!existing) throw toSdkError({ message: 'Bill not found', code: 'PGRST116' });
+  if (!isBillEditableStatus(existing.status)) {
+    throw new BillNotEditableError(existing.status);
+  }
+
+  // 1) Header columns. Blank strings become NULL; the nullable ids/dates pass
+  //    through as-is (the form already holds `null` for an empty picker).
+  const headerUpdate = await supabase
+    .from('bills')
+    .update({
+      vendor_id: form.vendor_id,
+      entity_id: form.entity_id,
+      invoice_number: emptyToNull(form.invoice_number),
+      invoice_date: form.invoice_date,
+      due_date: form.due_date,
+      accounting_date: form.accounting_date,
+      po_number: emptyToNull(form.po_number),
+      amount_cents: form.amount_cents,
+      currency: form.currency,
+      memo: emptyToNull(form.memo),
+    })
+    .eq('id', billId);
+  if (headerUpdate.error) throw toSdkError(headerUpdate.error);
+
+  // 2) Line items, replace-all in array order. Clear then re-insert.
+  const del = await supabase.from('bill_line_items').delete().eq('bill_id', billId);
+  if (del.error) throw toSdkError(del.error);
+
+  if (form.line_items.length > 0) {
+    const rows = form.line_items.map((line, index) => ({
+      bill_id: billId,
+      line_no: index + 1,
+      kind: line.kind,
+      description: line.description,
+      qty: line.qty,
+      unit_price_cents: line.unit_price_cents,
+      amount_cents: line.amount_cents,
+      gl_account_id: line.gl_account_id,
+      department_id: line.department_id,
+      class_id: line.class_id,
+      location_id: line.location_id,
+      tax_code_id: line.tax_code_id,
+      custom_dimension_id: line.custom_dimension_id,
+      billable: line.billable,
+    }));
+    const ins = await supabase.from('bill_line_items').insert(rows);
+    if (ins.error) throw toSdkError(ins.error);
+  }
+
+  // Re-read: the schema is the boundary guard and the client gets fresh ids.
+  const saved = await getBill(supabase, billId);
+  if (!saved) throw toSdkError({ message: 'Bill vanished after save', code: 'PGRST116' });
+  return saved;
+}
+
+/**
+ * Create bill — save the whole form, THEN submit it for approval. A strict
+ * superset of {@link saveBill}: same persistence, plus the one lifecycle move
+ * `draft`/`missing_info` → `awaiting_approval`, validated against the
+ * transition map (`canTransitionBill`) so an illegal move can't sneak through.
+ * Returns the re-read bill now carrying `awaiting_approval`.
+ */
+export async function submitBill(
+  supabase: ServerSupabase,
+  billId: string,
+  input: BillSaveType,
+): Promise<BillDetailType> {
+  // Persist first — `saveBill` also runs the editable-status guard for us.
+  const saved = await saveBill(supabase, billId, input);
+
+  // The one transition: authoring → awaiting approval. Guard against the map so
+  // this stays a legal move even if the states list grows.
+  if (!canTransitionBill(saved.status, 'awaiting_approval')) {
+    throw new BillNotEditableError(saved.status);
+  }
+
+  const move = await supabase
+    .from('bills')
+    .update({ status: 'awaiting_approval' })
+    .eq('id', billId);
+  if (move.error) throw toSdkError(move.error);
+
+  const submitted = await getBill(supabase, billId);
+  if (!submitted) throw toSdkError({ message: 'Bill vanished after submit', code: 'PGRST116' });
+  return submitted;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { BillEditFormSchema, type BillEditFormType } from '@ramps/schemas/bills';
+import { BillEditFormSchema } from '@ramps/schemas/bills';
 import { Button } from '@ramps/ui/Button';
 import { EmptyState } from '@ramps/ui/EmptyState';
 import { FieldError } from '@ramps/ui/FieldError';
@@ -23,6 +23,7 @@ import {
 import { useBillDetail } from '../context/BillDetail.context';
 import { billSubmitReady } from '../helpers/section-completeness.helpers';
 import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
+import { useSubmitBill } from '../hooks/useSubmitBill';
 import { BillDetailsApprovals } from './BillDetailsApprovals';
 import { BillDetailsHeader } from './BillDetailsHeader';
 import { BillDetailsInvoiceInfo } from './BillDetailsInvoiceInfo';
@@ -64,6 +65,10 @@ export function BillDetailsForm() {
   const { form, bill, editable, toggleEditable } = useBillDetail();
   const [tab, setTab] = useState<BillDetailsTab>(BILL_DETAILS_TAB.OVERVIEW);
   const { saveDraft, saving: savingDraft, error: saveError } = useSaveBillDraft();
+  // Create bill: persist the form + submit for approval + redirect. Only the
+  // pre-submit primary action ("Create bill") drives this; past that the label
+  // is Approve / Schedule payment, which are out of this pass's scope.
+  const { submit, submitting, error: submitError } = useSubmitBill();
   // The save toast's phase: 'saving' while the flow runs, 'saved' once it
   // resolves ok, null otherwise (a failure falls back to the inline error).
   const [saveToast, setSaveToast] = useState<SaveToastPhase | null>(null);
@@ -146,9 +151,11 @@ export function BillDetailsForm() {
     }
   }, [isValid, form]);
 
-  const onSubmit = (values: BillEditFormType) => {
-    // Persistence is out of scope for this pass — surface the validated payload.
-    console.info('[bill-details] validated form (save stubbed):', values);
+  const onSubmit = () => {
+    // Pre-submit bills CREATE (save + submit for approval + redirect). Past that
+    // the primary action is Approve / Schedule payment — not wired this pass, so
+    // a submit there is a no-op rather than a wrong write.
+    if (preSubmit) void submit();
   };
 
   const primaryLabel = PRIMARY_ACTION_BY_STATUS[bill.status];
@@ -234,17 +241,21 @@ export function BillDetailsForm() {
           </Button>
           <FieldError size="sm">{saveError}</FieldError>
         </div>
-        {/* Un-submittable while the form is invalid OR the bill incomplete —
-            and the ⌘/Ctrl+↵ chips leave with the affordance: a disabled
-            action advertises no shortcut. */}
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!canSubmit}
-          keys={canSubmit ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined}
-        >
-          {primaryLabel}
-        </Button>
+        {/* Un-submittable while the form is invalid OR the bill incomplete OR a
+            create is already in flight — and the ⌘/Ctrl+↵ chips leave with the
+            affordance: a disabled action advertises no shortcut. The create's
+            own error surfaces beside the primary, mirroring Save draft's line. */}
+        <div className="gap-rui-3 flex items-center">
+          <FieldError size="sm">{submitError}</FieldError>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={!canSubmit || submitting}
+            keys={canSubmit && !submitting ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined}
+          >
+            {submitting ? 'Creating…' : primaryLabel}
+          </Button>
+        </div>
       </BillDetailsPane>
       {/* Direct child of the <form>, NOT the footer pane: the pane's
           backdrop-blur is a containing block for fixed descendants, which

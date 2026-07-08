@@ -340,3 +340,25 @@ export const BillEditFormSchema = z.object({
   line_items: z.array(BillEditLineItemSchema),
 });
 export type BillEditFormType = z.infer<typeof BillEditFormSchema>;
+
+/**
+ * The wire contract for the detail page's WRITES — the full editable form the
+ * client PUTs on "Save draft" and posts on "Create bill". It IS the edit-form
+ * schema: the browser saves exactly what the form holds (header + line grid),
+ * so the write payload can't drift from what the user sees. The server owns
+ * ids, `line_no`, and `status` (moved only through the submit transition), so
+ * those aren't in the payload — a line's nullable `id` distinguishes an edit
+ * from an insert, but the server replace-all re-derives order regardless.
+ */
+export const BillSaveSchema = BillEditFormSchema;
+export type BillSaveType = z.infer<typeof BillSaveSchema>;
+
+/**
+ * The `/api/bills/:id` (PUT) and `/api/bills/:id/submit` (POST) response
+ * envelope — the persisted bill, re-read after the write so the client
+ * reconciles against the server's own truth (fresh ids, the new status).
+ */
+export const BillMutationResponseSchema = z.object({
+  bill: BillDetailSchema,
+});
+export type BillMutationResponseType = z.infer<typeof BillMutationResponseSchema>;

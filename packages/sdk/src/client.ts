@@ -3,7 +3,13 @@ import {
   type ApprovalStagesResponseType,
   type SaveApprovalStagesType,
 } from '@ramps/schemas/approvals';
-import { BillListResponseSchema, type BillListResponseType } from '@ramps/schemas/bills';
+import {
+  BillListResponseSchema,
+  type BillListResponseType,
+  BillMutationResponseSchema,
+  type BillMutationResponseType,
+  type BillSaveType,
+} from '@ramps/schemas/bills';
 import type { ZodType } from 'zod';
 
 /**
@@ -81,6 +87,42 @@ export function createRampsClient(options: RampsClientOptions) {
       return request(`/bills/${encodeURIComponent(billId)}/approval-stages`, {
         method: 'PUT',
         schema: ApprovalStagesResponseSchema,
+        body: input,
+        signal,
+      });
+    },
+
+    /**
+     * PUT /bills/:id — SAVE DRAFT. Persist the whole edit form (header fields +
+     * the line-items grid) for a pre-submit bill. Returns the re-read bill so
+     * the caller can reset the form to the server's own truth (fresh line ids).
+     */
+    save(
+      billId: string,
+      input: BillSaveType,
+      signal?: AbortSignal,
+    ): Promise<BillMutationResponseType> {
+      return request(`/bills/${encodeURIComponent(billId)}`, {
+        method: 'PUT',
+        schema: BillMutationResponseSchema,
+        body: input,
+        signal,
+      });
+    },
+
+    /**
+     * POST /bills/:id/submit — CREATE BILL. A superset of {@link save}: it saves
+     * the same form, then moves the bill `draft`/`missing_info` →
+     * `awaiting_approval`. Returns the re-read bill now in the approval queue.
+     */
+    submit(
+      billId: string,
+      input: BillSaveType,
+      signal?: AbortSignal,
+    ): Promise<BillMutationResponseType> {
+      return request(`/bills/${encodeURIComponent(billId)}/submit`, {
+        method: 'POST',
+        schema: BillMutationResponseSchema,
         body: input,
         signal,
       });
