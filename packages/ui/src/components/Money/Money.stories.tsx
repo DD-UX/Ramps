@@ -18,6 +18,9 @@ export const Large: Story = { args: { cents: 1429312454 } };
 export const Muted: Story = { args: { cents: -8250, muted: true } };
 export const Euro: Story = { args: { cents: 26250, currency: 'EUR', locale: 'de-DE' } };
 
+/** The monospace variant used for coded amounts in the line-item grid (§07). */
+export const Mono: Story = { args: { cents: 26250, mono: true } };
+
 /**
  * The `locale` prop drives the `,`/`.` ORDER, not just the symbol: the same
  * 1,234,567 cents renders "$12,345.67" (en-US), "12.345,67 €" (de-DE) and

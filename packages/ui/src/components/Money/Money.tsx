@@ -24,6 +24,12 @@ export interface MoneyProps {
   align?: 'right' | 'left';
   /** Mute negative amounts / credits with the hushed tone. */
   muted?: boolean;
+  /**
+   * Render in the monospace face rather than the body sans. The coded amounts
+   * in the line-item grid read as a fixed-width column (does-ramp-live-up §07),
+   * so they carry the `--rui-font-mono` token; the default stays `font-body`.
+   */
+  mono?: boolean;
   className?: string;
 }
 
@@ -33,6 +39,7 @@ export function Money({
   locale = 'en-US',
   align = 'right',
   muted = false,
+  mono = false,
   className,
 }: MoneyProps) {
   const formatted = new Intl.NumberFormat(locale, {
@@ -43,7 +50,8 @@ export function Money({
   return (
     <span
       className={cn(
-        'font-body whitespace-nowrap tabular-nums',
+        'whitespace-nowrap tabular-nums',
+        mono ? 'font-mono' : 'font-body',
         align === 'right' ? 'text-right' : 'text-left',
         muted ? 'text-hushed' : 'text-ink',
         className,

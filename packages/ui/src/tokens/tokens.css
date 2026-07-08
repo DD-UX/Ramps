@@ -32,6 +32,12 @@
 
   /* Typography */
   --rui-font-sans: 'Inter', 'Lausanne', 'Roboto', Arial, sans-serif;
+  /* The monospace face for numeric/code cells — the line-item index, coded
+     amounts and GL codes read as a fixed-width column in the coding grid
+     (does-ramp-live-up §07: "01", "$262.50", "7250 - Website" all tabular).
+     A system mono stack so digits line up without shipping a font file. */
+  --rui-font-mono: 'Berkeley Mono', 'SF Mono', 'JetBrains Mono', ui-monospace, 'Roboto Mono',
+    monospace;
   --rui-font-weight-body: 300;
   --rui-font-weight-heading: 400;
   --rui-font-weight-bold: 700;

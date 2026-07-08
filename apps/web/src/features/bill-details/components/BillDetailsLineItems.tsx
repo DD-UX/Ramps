@@ -12,14 +12,16 @@ import {
 import { BillDetailsLineItemRow, EMPTY_LINE } from './BillDetailsLineItemRow';
 import { BillDetailsLineItemsTotal } from './BillDetailsLineItemsTotal';
 import { BillDetailsSection } from './BillDetailsSection';
+import { Card } from '@ramps/ui/Card';
 
 /**
- * Line items — the coding grid (snapshot 7). A `useFieldArray` owns the
- * add/remove; each row ({@link BillDetailsLineItemRow}) codes an amount to a GL
- * account plus the accounting dimensions. The section is `Incomplete` until
- * every line has a GL account and a non-zero amount, and the footer
- * ({@link BillDetailsLineItemsTotal}) reconciles the summed lines against the
- * bill total.
+ * Line items — the coding grid (does-ramp-live-up §07 at ~7:28). A `useFieldArray`
+ * owns the add/remove; each row ({@link BillDetailsLineItemRow}) codes an amount
+ * to a GL account plus the accounting dimensions. The section is `Incomplete`
+ * until every line has a GL account and a non-zero amount. The footer balances a
+ * "+ Add line item" affordance on the left against the invoice-total stack
+ * ({@link BillDetailsLineItemsTotal}) on the right, which reconciles the summed
+ * lines against the bill total.
  */
 export function BillDetailsLineItems() {
   const { control } = useBillDetail().form;
@@ -35,34 +37,38 @@ export function BillDetailsLineItems() {
   const linesTotal = lineItemsTotalCents(lines);
 
   return (
-    <BillDetailsSection
-      title="Line items"
-      completeness={completeness}
-      action={
-        <Button
-          variant="secondary"
-          size="sm"
-          type="button"
-          leadingIcon={<Plus size={14} />}
-          onClick={() => append(EMPTY_LINE)}
-        >
-          Add line item
-        </Button>
-      }
-    >
-      {fields.length === 0 ? (
-        <p className="text-sm font-body text-hushed">
-          No line items yet. Add one to start coding this bill.
-        </p>
-      ) : (
-        <div className="gap-rui-4 flex flex-col">
-          {fields.map((field, index) => (
-            <BillDetailsLineItemRow key={field.id} index={index} onRemove={() => remove(index)} />
-          ))}
-        </div>
-      )}
+    <BillDetailsSection title="Line items" completeness={completeness}>
+      <div>
+        {fields.length === 0 ? (
+          <p className="text-sm font-body text-hushed">
+            No line items yet. Add one to start coding this bill.
+          </p>
+        ) : (
+          <Card className="p-0">
+            {fields.map((field, index) => (
+              <BillDetailsLineItemRow key={field.id} index={index} onRemove={() => remove(index)} />
+            ))}
+          </Card>
+        )}
 
-      <BillDetailsLineItemsTotal linesTotal={linesTotal} amountCents={amountCents ?? 0} />
+        {/*
+         * Footer, per the Ramp coding grid (does-ramp-live-up §07 at ~7:28): a thin
+         * "+ Add line item" affordance on the left, balanced against the right-aligned
+         * invoice-total stack — the two anchor the grid's bottom edge together.
+         */}
+        <Card className="p-rui-3 border-t-0">
+          <Button
+            variant="secondary"
+            size="sm"
+            type="button"
+            leadingIcon={<Plus size={14} />}
+            onClick={() => append(EMPTY_LINE)}
+          >
+            Add line item
+          </Button>
+          <BillDetailsLineItemsTotal linesTotal={linesTotal} amountCents={amountCents ?? 0} />
+        </Card>
+      </div>
     </BillDetailsSection>
   );
 }

@@ -51,6 +51,7 @@
 
   /* Typography */
   --font-sans: var(--rui-font-sans);
+  --font-mono: var(--rui-font-mono);
   --font-weight-body: var(--rui-font-weight-body);
   --font-weight-heading: var(--rui-font-weight-heading);
   --font-weight-bold: var(--rui-font-weight-bold);
