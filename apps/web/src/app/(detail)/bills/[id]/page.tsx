@@ -57,7 +57,10 @@ export default async function BillDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <SWRConfig value={{ fallback: { [USERS_SWR_KEY]: users } }}>
-      <div className="min-h-0 grid h-full flex-1 grid-cols-[16rem_minmax(0,1fr)]">
+      {/* The single row is EXPLICITLY minmax(0,1fr): an implicit row would be
+          auto-sized and grow past h-full when a pane's content is tall, making
+          the whole (detail) surface scroll. Bounded, each column scrolls itself. */}
+      <div className="min-h-0 grid h-full flex-1 grid-cols-[16rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">
         <BillDetailsRail bills={railBills} statuses={railStatuses} activeId={bill.id} />
         <div className="min-h-0 min-w-0 flex flex-col">
           <BillDetailsContent bill={bill} refs={refs} documentUrl={documentUrl} />

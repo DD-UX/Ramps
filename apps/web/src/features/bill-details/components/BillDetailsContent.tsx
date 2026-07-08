@@ -62,7 +62,10 @@ function BillDetailsBody() {
   const { isDirty } = form.formState;
 
   return (
-    <div className="bg-white flex flex-1 flex-col">
+    // min-h-0 is load-bearing: as a flex item this div's default min-height is
+    // auto (its content), so the tall form/PDF would inflate it past the grid
+    // cell and scroll the page. Shrinkable, the panes scroll themselves instead.
+    <div className="bg-white min-h-0 flex flex-1 flex-col">
       <CommonUnsavedChangesGuard
         isDirty={() => isDirty || pendingApprovalStagesRef.current != null}
         onSave={saveDraft}
