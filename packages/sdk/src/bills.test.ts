@@ -362,9 +362,28 @@ describe('saveBill', () => {
     expect(ops.some((o) => o.table === 'bill_line_items' && o.op === 'insert')).toBe(false);
   });
 
-  it('refuses a bill past the editable states (BillNotEditableError)', async () => {
+  it('still saves an awaiting_approval bill — it is editable in the queue', async () => {
     const { supabase, ops } = makeWriteSupabase([
-      { data: makeDetailRow({ status: 'awaiting_approval' }) }, // guard read only
+      { data: makeDetailRow({ status: 'awaiting_approval' }) }, // guard read
+      { error: null }, // header update
+      { error: null }, // line delete
+      { data: makeDetailRow({ status: 'awaiting_approval' }) }, // re-read
+    ]);
+
+    const saved = await saveBill(
+      supabase,
+      'b0000000-0000-4000-8000-00000000d001',
+      makeSavePayload(),
+    );
+
+    expect(saved.status).toBe('awaiting_approval');
+    // The guard passed: the header UPDATE actually ran.
+    expect(ops.some((o) => o.table === 'bills' && o.op === 'update')).toBe(true);
+  });
+
+  it('refuses a LOCKED bill from approved onward (BillNotEditableError)', async () => {
+    const { supabase, ops } = makeWriteSupabase([
+      { data: makeDetailRow({ status: 'approved' }) }, // guard read only
     ]);
 
     await expect(

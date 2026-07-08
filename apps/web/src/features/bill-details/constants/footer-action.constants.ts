@@ -68,17 +68,32 @@ export const FOOTER_ACTION_STRATEGIES: Record<FooterAction, FooterActionStrategy
 };
 
 /**
- * Pick the footer's left action for the current lifecycle mode: pre-submit
- * bills always author drafts; past that, the edit toggle decides between
- * entering edit mode and saving out of it.
+ * Pick the footer's left action for the current lifecycle mode — or `null` when
+ * the bill has no left action at all.
+ *
+ * Three tiers, by status:
+ * - PRE-SUBMIT (`draft`/`missing_info`) → always `save_draft`, whatever the
+ *   edit toggle says (the authoring footer).
+ * - EDITABLE-but-submitted (`awaiting_approval`) → the Edit bill ⇄ Save bill
+ *   pair, the toggle deciding which.
+ * - LOCKED (`approved` onward — the payment pipeline + terminal states) → no
+ *   left action; its record is frozen, so there's nothing to save and no edit
+ *   to enter. The footer renders an empty left slot.
+ *
+ * `editableStatus` is "may this bill be edited at all" (see
+ * `editable-status.constants`); it gates the Edit/Save pair off for locked
+ * bills. Pre-submit implies editable, so the pre-submit branch wins first.
  */
 export function resolveFooterAction({
   preSubmit,
+  editableStatus,
   editable,
 }: {
   preSubmit: boolean;
+  editableStatus: boolean;
   editable: boolean;
-}): FooterAction {
+}): FooterAction | null {
   if (preSubmit) return FOOTER_ACTION.SAVE_DRAFT;
+  if (!editableStatus) return null; // locked record — no left action
   return editable ? FOOTER_ACTION.SAVE_BILL : FOOTER_ACTION.EDIT_BILL;
 }

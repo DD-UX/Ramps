@@ -12,6 +12,7 @@ import { useFormState, useWatch } from 'react-hook-form';
 import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
 import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 
+import { isBillEditable } from '../constants/editable-status.constants';
 import { FOOTER_ACTION_STRATEGIES, resolveFooterAction } from '../constants/footer-action.constants';
 import { isBillPreSubmit } from '../constants/pre-submit.constants';
 import { PRIMARY_ACTION_BY_STATUS } from '../constants/primary-action.constants';
@@ -74,9 +75,11 @@ export function BillDetailsForm() {
   const [saveToast, setSaveToast] = useState<SaveToastPhase | null>(null);
 
   // Pre-submit bills (draft / missing_info) keep the authoring footer: Save
-  // draft, always-editable fields. Past that, the Edit bill ⇄ Save bill pair
-  // owns the left slot and the fieldset lock tracks `editable`.
+  // draft, always-editable fields. `awaiting_approval` is still editable — the
+  // Edit bill ⇄ Save bill pair owns its left slot, the fieldset lock tracking
+  // `editable`. From `approved` on the record is LOCKED: no left action at all.
   const preSubmit = isBillPreSubmit(bill.status);
+  const editableStatus = isBillEditable(bill.status);
 
   /**
    * One save flow, two exits: the pre-submit "Save draft" keeps edit mode as
@@ -95,8 +98,10 @@ export function BillDetailsForm() {
   // off the strategy table — label, glyph and behavior travel together, so
   // this component never branches on WHICH action it's showing. Only saving
   // strategies advertise a busy label; Edit bill has none and never disables.
-  const footerAction = FOOTER_ACTION_STRATEGIES[resolveFooterAction({ preSubmit, editable })];
-  const footerBusy = savingDraft && footerAction.busyLabel !== null;
+  // A LOCKED bill (approved onward) resolves to null — the left slot stays empty.
+  const footerActionKey = resolveFooterAction({ preSubmit, editableStatus, editable });
+  const footerAction = footerActionKey ? FOOTER_ACTION_STRATEGIES[footerActionKey] : null;
+  const footerBusy = savingDraft && footerAction?.busyLabel != null;
   const footerActionDeps = {
     save: (opts: { exitEditMode: boolean }) => void onSave(opts),
     toggleEditable,
@@ -229,16 +234,19 @@ export function BillDetailsForm() {
         <div className="gap-rui-3 flex items-center">
           {/* The left slot renders whatever strategy the lifecycle resolves to
               (Save draft / Edit bill / Save bill) — the branching lives in the
-              strategy table, this stays one dumb Button. */}
-          <Button
-            type="button"
-            variant="underline"
-            leadingIcon={<footerAction.Icon size={16} />}
-            onClick={() => footerAction.run(footerActionDeps)}
-            disabled={footerBusy}
-          >
-            {footerBusy ? footerAction.busyLabel : footerAction.label}
-          </Button>
+              strategy table, this stays one dumb Button. A locked bill resolves
+              to no action, so the slot renders nothing at all. */}
+          {footerAction && (
+            <Button
+              type="button"
+              variant="underline"
+              leadingIcon={<footerAction.Icon size={16} />}
+              onClick={() => footerAction.run(footerActionDeps)}
+              disabled={footerBusy}
+            >
+              {footerBusy ? footerAction.busyLabel : footerAction.label}
+            </Button>
+          )}
           <FieldError size="sm">{saveError}</FieldError>
         </div>
         {/* Un-submittable while the form is invalid OR the bill incomplete OR a

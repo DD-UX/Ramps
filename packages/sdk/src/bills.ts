@@ -311,9 +311,10 @@ function emptyToNull(value: string): string | null {
 
 /**
  * BillNotEditableError — the caller sent a save/submit for a bill whose status
- * has locked its record (anything past `draft`/`missing_info`). The route maps
- * this to a 409 so a stale client can't rewrite a frozen bill. A named class so
- * the handler can branch on it without string-matching the message.
+ * has locked its record (anything outside {@link BILL_EDITABLE_STATUSES} — i.e.
+ * `approved` onward). The route maps this to a 409 so a stale client can't
+ * rewrite a frozen bill. A named class so the handler can branch on it without
+ * string-matching the message.
  */
 export class BillNotEditableError extends Error {
   constructor(status: BillStatusType) {
@@ -322,9 +323,24 @@ export class BillNotEditableError extends Error {
   }
 }
 
-/** Only pre-submit bills accept edits; the route + SDK both guard on this. */
-function isBillEditableStatus(status: BillStatusType): boolean {
-  return status === 'draft' || status === 'missing_info';
+/**
+ * The statuses whose record still accepts a `saveBill` write. Wider than the
+ * PRE-SUBMIT window (`draft`/`missing_info`): a bill in `awaiting_approval` is
+ * still being shaped, so its header + lines stay editable while it sits in the
+ * queue. Everything from `approved` onward — the payment pipeline and the
+ * terminal states — is a frozen record: `approved`, `scheduled`,
+ * `partially_paid`, `paid`, `rejected`, `archived`. This one set backs both the
+ * SDK guard here and the client's edit affordance, so the two can't drift.
+ */
+export const BILL_EDITABLE_STATUSES: readonly BillStatusType[] = [
+  'draft',
+  'missing_info',
+  'awaiting_approval',
+];
+
+/** True while the bill's record still accepts edits (see {@link BILL_EDITABLE_STATUSES}). */
+export function isBillEditableStatus(status: BillStatusType): boolean {
+  return BILL_EDITABLE_STATUSES.includes(status);
 }
 
 /**

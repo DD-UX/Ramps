@@ -16,21 +16,27 @@ function deps() {
 
 describe('resolveFooterAction', () => {
   it('pre-submit bills always author drafts, whatever the edit toggle says', () => {
-    expect(resolveFooterAction({ preSubmit: true, editable: true })).toBe(
+    expect(resolveFooterAction({ preSubmit: true, editableStatus: true, editable: true })).toBe(
       FOOTER_ACTION.SAVE_DRAFT,
     );
-    expect(resolveFooterAction({ preSubmit: true, editable: false })).toBe(
+    expect(resolveFooterAction({ preSubmit: true, editableStatus: true, editable: false })).toBe(
       FOOTER_ACTION.SAVE_DRAFT,
     );
   });
 
-  it('post-submit bills at rest offer Edit bill; mid-edit they offer Save bill', () => {
-    expect(resolveFooterAction({ preSubmit: false, editable: false })).toBe(
+  it('an editable-but-submitted bill at rest offers Edit bill; mid-edit it offers Save bill', () => {
+    // e.g. awaiting_approval: editableStatus true, not pre-submit.
+    expect(resolveFooterAction({ preSubmit: false, editableStatus: true, editable: false })).toBe(
       FOOTER_ACTION.EDIT_BILL,
     );
-    expect(resolveFooterAction({ preSubmit: false, editable: true })).toBe(
+    expect(resolveFooterAction({ preSubmit: false, editableStatus: true, editable: true })).toBe(
       FOOTER_ACTION.SAVE_BILL,
     );
+  });
+
+  it('a LOCKED bill (approved onward) has no left action, whatever the toggle says', () => {
+    expect(resolveFooterAction({ preSubmit: false, editableStatus: false, editable: false })).toBeNull();
+    expect(resolveFooterAction({ preSubmit: false, editableStatus: false, editable: true })).toBeNull();
   });
 });
 
