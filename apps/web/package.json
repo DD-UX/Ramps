@@ -20,6 +20,7 @@
     "@ramps/schemas": "workspace:*",
     "@ramps/sdk": "workspace:*",
     "@ramps/ui": "workspace:*",
+    "motion": "12.42.2",
     "next": "16.2.10",
     "react": "19.2.7",
     "react-dom": "19.2.7",
