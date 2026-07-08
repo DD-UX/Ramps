@@ -25,7 +25,8 @@ import { BillDetailsSection } from './BillDetailsSection';
  * lines against the bill total.
  */
 export function BillDetailsLineItems() {
-  const { control } = useBillDetail().form;
+  const { form, editable } = useBillDetail();
+  const { control } = form;
   const { fields, append, remove } = useFieldArray({ control, name: 'line_items' });
 
   // Watch the array + the bill total so completeness and the reconcile line
@@ -63,15 +64,17 @@ export function BillDetailsLineItems() {
             'border-t-0': fields.length > 0,
           })}
         >
-          <Button
-            variant="secondary"
-            size="sm"
-            type="button"
-            leadingIcon={<Plus size={14} />}
-            onClick={() => append(EMPTY_LINE)}
-          >
-            Add line item
-          </Button>
+          {editable && (
+            <Button
+              variant="secondary"
+              size="sm"
+              type="button"
+              leadingIcon={<Plus size={14} />}
+              onClick={() => append(EMPTY_LINE)}
+            >
+              Add line item
+            </Button>
+          )}
           <BillDetailsLineItemsTotal linesTotal={linesTotal} amountCents={amountCents ?? 0} />
         </Card>
       </div>

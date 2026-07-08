@@ -42,10 +42,10 @@ export function BillDetailsRail({ bills, statuses, activeId }: BillDetailsRailPr
   return (
     <aside
       aria-label="Bills in this category"
-      className="border-bone w-64 bg-white flex shrink-0 flex-col border-r"
+      className="border-bone gap-rui-4 w-64 bg-white flex shrink-0 flex-col border-r"
     >
       {/* h-12 like the header band next door — the rail's top row shares its line. */}
-      <div className="px-rui-4 h-12 flex shrink-0 items-center">
+      <div className="px-rui-4 border-stone flex h-[3.1rem] shrink-0 items-center border-b-2">
         <Link
           href="/bills"
           className="gap-rui-2 text-ink text-sm font-medium flex items-center hover:underline"
