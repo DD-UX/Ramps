@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { SaveApprovalStagesType } from '@ramps/schemas/approvals';
 import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
 import {
   type BillDetailType,
@@ -56,6 +57,14 @@ export interface BillDetailContextValue {
    * invoice preview. Null until the panel mounts.
    */
   leftPaneRef: RefObject<HTMLDivElement | null>;
+  /**
+   * The approvals section's UNSAVED route, staged for the footer's "Save draft"
+   * action. The chain editor stashes each edit here (already mapped to the save
+   * payload) instead of persisting it; Save draft reads it, PUTs it, and clears
+   * it on success. Null when the on-screen chain matches what's persisted. A
+   * ref, not state — nothing re-renders on staging; only the save action reads.
+   */
+  pendingApprovalStagesRef: RefObject<SaveApprovalStagesType | null>;
 }
 
 const BillDetailContext = createContext<BillDetailContextValue | null>(null);
@@ -85,8 +94,12 @@ export function BillDetailProvider({ bill, refs, documentUrl, children }: BillDe
   // the DraggablePanel. A stable ref object, so consumers read a live `.current`.
   const leftPaneRef = useRef<HTMLDivElement>(null);
 
+  // The approvals route staged-but-unsaved by the chain editor, awaiting the
+  // footer's "Save draft". Stable ref: staging an edit must not re-render.
+  const pendingApprovalStagesRef = useRef<SaveApprovalStagesType | null>(null);
+
   const value = useMemo<BillDetailContextValue>(
-    () => ({ form, bill, refs, documentUrl, leftPaneRef }),
+    () => ({ form, bill, refs, documentUrl, leftPaneRef, pendingApprovalStagesRef }),
     [form, bill, refs, documentUrl],
   );
 

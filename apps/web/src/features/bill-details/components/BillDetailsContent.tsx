@@ -4,7 +4,10 @@ import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
 import type { BillDetailType } from '@ramps/schemas/bills';
 import { DraggablePanel } from '@ramps/ui/DraggablePanel';
 
+import { CommonUnsavedChangesGuard } from '@/features/common/components/CommonUnsavedChangesGuard';
+
 import { BillDetailProvider, useBillDetail } from '../context/BillDetail.context';
+import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
 import { BillDetailsDocument } from './BillDetailsDocument';
 import { BillDetailsForm } from './BillDetailsForm';
 
@@ -42,12 +45,28 @@ export function BillDetailsContent({ bill, refs, documentUrl }: BillDetailsConte
  * so their cards stay inside the left pane instead of spilling into the preview.
  * The two panes read whatever they need off the context, so this frame drills
  * nothing through.
+ *
+ * It also mounts the {@link CommonUnsavedChangesGuard} — outside the `<form>`
+ * (its buttons must never look like submits) but inside the provider, because
+ * dirtiness on this screen is TWO sources: the form's own `formState.isDirty`
+ * (read during render — RHF's proxy only subscribes to what render touches)
+ * and the staged-but-unsaved approvals route on `pendingApprovalStagesRef`
+ * (a ref, so the guard's click-time callback reads it fresh). Saving from the
+ * modal is the same {@link useSaveBillDraft} flow as the footer button.
  */
 function BillDetailsBody() {
-  const { leftPaneRef } = useBillDetail();
+  const { form, leftPaneRef, pendingApprovalStagesRef } = useBillDetail();
+  const { saveDraft } = useSaveBillDraft();
+  // Destructure during render: RHF's formState is a lazy proxy — touching
+  // `isDirty` here is what subscribes this component to dirtiness changes.
+  const { isDirty } = form.formState;
 
   return (
     <div className="bg-white flex flex-1 flex-col">
+      <CommonUnsavedChangesGuard
+        isDirty={() => isDirty || pendingApprovalStagesRef.current != null}
+        onSave={saveDraft}
+      />
       <div className="gap-rui-4 min-h-0 flex flex-1 flex-col">
         <DraggablePanel
           className="min-h-0 flex-1"

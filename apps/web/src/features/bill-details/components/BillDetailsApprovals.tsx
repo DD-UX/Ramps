@@ -1,10 +1,8 @@
 'use client';
 
 import { type ApprovalsStage, ApprovalsWorkflow } from '@ramps/ui/ApprovalsWorkflow';
-import { FieldError } from '@ramps/ui/FieldError';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { apiClient } from '@/features/common/helpers/api-client.helpers';
 import { useApproverCandidateUsers } from '@/features/common/hooks/useApproverCandidateUsers';
 
 import { isApprovalRouteEditable } from '../constants/approval-editable.constants';
@@ -24,12 +22,15 @@ import { BillDetailsSection } from './BillDetailsSection';
  *
  * This file is only the domain seam: it feeds the domain-free component its
  * approver **catalog** (every role as an "Any …" group + the people directory)
- * and the bill's persisted route as `initialStages`, then persists each edit
- * back through the typed API client. The people directory comes from the shared
- * {@link useApproverCandidateUsers} cache — seeded by the route, not drilled — so
- * this section reads it directly instead of off the bill context. The mappers in
- * `approvals-workflow.helpers` translate between our role-enum / user-UUID model
- * and the component's opaque string ids, so neither side leaks into the other.
+ * and the bill's persisted route as `initialStages`, then STAGES each edit onto
+ * the context's `pendingApprovalStagesRef` — nothing is written here. The
+ * footer's "Save draft" action owns the persist, so route edits ride the same
+ * explicit save as the rest of the form instead of firing a PUT per change. The
+ * people directory comes from the shared {@link useApproverCandidateUsers} cache
+ * — seeded by the route, not drilled — so this section reads it directly instead
+ * of off the bill context. The mappers in `approvals-workflow.helpers` translate
+ * between our role-enum / user-UUID model and the component's opaque string ids,
+ * so neither side leaks into the other.
  *
  * The chain is editable only while the bill is pre-submit (`draft` /
  * `missing_info`); past that the same component renders `readOnly` — a static
@@ -37,7 +38,7 @@ import { BillDetailsSection } from './BillDetailsSection';
  * lock is one rule shared by client and server.
  */
 export function BillDetailsApprovals() {
-  const { bill, leftPaneRef } = useBillDetail();
+  const { bill, leftPaneRef, pendingApprovalStagesRef } = useBillDetail();
   // The approver catalog comes from its own cache hook, not the context — seeded
   // by the route on first paint, then shared across every picker in the app.
   const { users } = useApproverCandidateUsers();
@@ -54,21 +55,14 @@ export function BillDetailsApprovals() {
     [bill.approval_stages],
   );
 
-  // Surfaced only on a failed persist — the write is otherwise silent (the
-  // component is the source of truth for the on-screen chain).
-  const [saveError, setSaveError] = useState<string | null>(null);
-
   const handleChange = useCallback(
     (stages: ApprovalsStage[]) => {
-      setSaveError(null);
-      // Replace-all PUT: map the DS chain back to our save payload (dropping any
-      // stale role ids / empty stages) and persist. Fire-and-forget — the
-      // component already reflects the change optimistically.
-      apiClient.bills.saveApprovalStages(bill.id, fromWorkflowStages(stages)).catch(() => {
-        setSaveError('Could not save the approval route. Your last change may not be persisted.');
-      });
+      // Stage, don't save: map the DS chain back to our save payload (dropping
+      // any stale role ids / empty stages) and park it for the footer's "Save
+      // draft" to PUT. The component already reflects the change on screen.
+      pendingApprovalStagesRef.current = fromWorkflowStages(stages);
     },
-    [bill.id],
+    [pendingApprovalStagesRef],
   );
 
   return (
@@ -85,7 +79,6 @@ export function BillDetailsApprovals() {
         // the DraggablePanel; it's null until that panel mounts.
         boundary={leftPaneRef}
       />
-      <FieldError size="sm">{saveError}</FieldError>
     </BillDetailsSection>
   );
 }
