@@ -18,7 +18,11 @@ export function BillDetailsMemo() {
         {...register('memo')}
         rows={3}
         placeholder="Add a note the vendor will see on the payment…"
-        className="bg-white text-sm font-body text-ink rounded-square border-control-border px-rui-3 py-rui-2 focus:ring-control-ring w-full border focus:ring-2 focus:outline-none"
+        // The disabled: trio mirrors the DS's shared inert treatment (stone
+        // surface, hushed text, not-allowed cursor) — this textarea is bare,
+        // so it must carry the contract itself when the read-only fieldset
+        // disables it.
+        className="bg-white text-sm font-body text-ink rounded-square border-control-border px-rui-3 py-rui-2 focus:ring-control-ring disabled:bg-stone disabled:text-hushed w-full border focus:ring-2 focus:outline-none disabled:cursor-not-allowed"
       />
     </BillDetailsSection>
   );

@@ -8,9 +8,19 @@ import {
   BillEditFormSchema,
   type BillEditFormType,
 } from '@ramps/schemas/bills';
-import { createContext, type ReactNode, type RefObject, useContext, useMemo, useRef } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { FormProvider, useForm, type UseFormReturn } from 'react-hook-form';
 
+import { isBillPreSubmit } from '../constants/pre-submit.constants';
 import { billToFormDefaults } from '../helpers/form-defaults.helpers';
 
 /**
@@ -65,6 +75,16 @@ export interface BillDetailContextValue {
    * ref, not state — nothing re-renders on staging; only the save action reads.
    */
   pendingApprovalStagesRef: RefObject<SaveApprovalStagesType | null>;
+  /**
+   * Whether the screen's fields accept input right now. Pre-submit bills
+   * (`draft` / `missing_info`) open editable and stay so; anything past that
+   * opens READ-ONLY and only becomes editable through the footer's "Edit bill"
+   * action. The form renders this as one `<fieldset disabled>` around the
+   * sections, so every input/select/button inside inherits the lock natively.
+   */
+  editable: boolean;
+  /** Flip the edit mode — "Edit bill" passes true, a successful save passes false. */
+  toggleEditable: (next: boolean) => void;
 }
 
 const BillDetailContext = createContext<BillDetailContextValue | null>(null);
@@ -98,9 +118,26 @@ export function BillDetailProvider({ bill, refs, documentUrl, children }: BillDe
   // footer's "Save draft". Stable ref: staging an edit must not re-render.
   const pendingApprovalStagesRef = useRef<SaveApprovalStagesType | null>(null);
 
+  // Edit mode: pre-submit bills are the author view and open editable;
+  // everything past that opens read-only until the footer's "Edit bill" flips
+  // it. Initializer-only state is safe here — the provider is keyed by
+  // bill.id upstream, so a rail hop remounts it and re-derives from the NEW
+  // bill's status rather than carrying the previous record's mode.
+  const [editable, setEditable] = useState(() => isBillPreSubmit(bill.status));
+  const toggleEditable = useCallback((next: boolean) => setEditable(next), []);
+
   const value = useMemo<BillDetailContextValue>(
-    () => ({ form, bill, refs, documentUrl, leftPaneRef, pendingApprovalStagesRef }),
-    [form, bill, refs, documentUrl],
+    () => ({
+      form,
+      bill,
+      refs,
+      documentUrl,
+      leftPaneRef,
+      pendingApprovalStagesRef,
+      editable,
+      toggleEditable,
+    }),
+    [form, bill, refs, documentUrl, editable, toggleEditable],
   );
 
   // Two providers, one form: `BillDetailContext` carries bill + refs (and the

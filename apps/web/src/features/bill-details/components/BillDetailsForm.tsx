@@ -4,7 +4,7 @@ import { BillEditFormSchema, type BillEditFormType } from '@ramps/schemas/bills'
 import { Button } from '@ramps/ui/Button';
 import { EmptyState } from '@ramps/ui/EmptyState';
 import { FieldError } from '@ramps/ui/FieldError';
-import { ActivityIcon, Save } from '@ramps/ui/icons';
+import { ActivityIcon } from '@ramps/ui/icons';
 import { Tabs } from '@ramps/ui/Tabs';
 import { Activity, useEffect, useState } from 'react';
 import { useFormState, useWatch } from 'react-hook-form';
@@ -12,6 +12,8 @@ import { useFormState, useWatch } from 'react-hook-form';
 import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
 import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 
+import { FOOTER_ACTION_STRATEGIES, resolveFooterAction } from '../constants/footer-action.constants';
+import { isBillPreSubmit } from '../constants/pre-submit.constants';
 import { PRIMARY_ACTION_BY_STATUS } from '../constants/primary-action.constants';
 import {
   BILL_DETAILS_TAB,
@@ -50,19 +52,49 @@ import { BillDetailsVendor } from './BillDetailsVendor';
  * The flow itself lives in {@link useSaveBillDraft} — shared with the
  * unsaved-changes guard's "Save draft" exit — this footer only renders its
  * own trigger + inline error.
+ *
+ * EDIT MODE (post-submit bills): anything past `draft`/`missing_info` opens
+ * READ-ONLY — one `<fieldset disabled>` around the sections inherits the lock
+ * to every input/select/button natively — and the footer's left slot swaps
+ * "Save draft" for "Edit bill". Edit bill flips the context's `editable` on
+ * and becomes "Save bill"; a successful save flips it back off, returning the
+ * screen to its frozen record state.
  */
 export function BillDetailsForm() {
-  const { form, bill } = useBillDetail();
+  const { form, bill, editable, toggleEditable } = useBillDetail();
   const [tab, setTab] = useState<BillDetailsTab>(BILL_DETAILS_TAB.OVERVIEW);
   const { saveDraft, saving: savingDraft, error: saveError } = useSaveBillDraft();
-  // The Save-draft toast's phase: 'saving' while the flow runs, 'saved' once
-  // it resolves ok, null otherwise (a failure falls back to the inline error).
+  // The save toast's phase: 'saving' while the flow runs, 'saved' once it
+  // resolves ok, null otherwise (a failure falls back to the inline error).
   const [saveToast, setSaveToast] = useState<SaveToastPhase | null>(null);
 
-  const onSaveDraft = async () => {
+  // Pre-submit bills (draft / missing_info) keep the authoring footer: Save
+  // draft, always-editable fields. Past that, the Edit bill ⇄ Save bill pair
+  // owns the left slot and the fieldset lock tracks `editable`.
+  const preSubmit = isBillPreSubmit(bill.status);
+
+  /**
+   * One save flow, two exits: the pre-submit "Save draft" keeps edit mode as
+   * is; the post-submit "Save bill" leaves edit mode on success, snapping the
+   * screen back to read-only. A failure keeps edit mode ON either way — the
+   * user's unsaved work stays reachable next to the inline error.
+   */
+  const onSave = async ({ exitEditMode }: { exitEditMode: boolean }) => {
     setSaveToast('saving');
     const ok = await saveDraft();
     setSaveToast(ok ? 'saved' : null);
+    if (ok && exitEditMode) toggleEditable(false);
+  };
+
+  // The footer's left action, resolved from the lifecycle mode and rendered
+  // off the strategy table — label, glyph and behavior travel together, so
+  // this component never branches on WHICH action it's showing. Only saving
+  // strategies advertise a busy label; Edit bill has none and never disables.
+  const footerAction = FOOTER_ACTION_STRATEGIES[resolveFooterAction({ preSubmit, editable })];
+  const footerBusy = savingDraft && footerAction.busyLabel !== null;
+  const footerActionDeps = {
+    save: (opts: { exitEditMode: boolean }) => void onSave(opts),
+    toggleEditable,
   };
   // The submit chip spells the OS's own modifier — ⌘ on Apple, Ctrl elsewhere —
   // via the same hydration-safe read the top bar's ⌘K keycap uses.
@@ -150,13 +182,21 @@ export function BillDetailsForm() {
         mode={tab === BILL_DETAILS_TAB.OVERVIEW ? ACTIVITY_MODE.VISIBLE : ACTIVITY_MODE.HIDDEN}
       >
         <BillDetailsPane>
-          <BillDetailsVendor />
-          <BillDetailsInvoiceInfo />
-          <BillDetailsPurchaseOrder />
-          <BillDetailsLineItems />
-          <BillDetailsPayment />
-          <BillDetailsMemo />
-          <BillDetailsApprovals />
+          {/* The read-only lock, applied ONCE: a disabled fieldset disables
+              every nested input/select/textarea/button natively (the DS's
+              `disabled:` styling reacts to the same :disabled state), so no
+              section needs a threaded prop. `display: contents` keeps the
+              fieldset out of layout — the sections still stack directly in
+              the pane's flex rhythm. */}
+          <fieldset disabled={!editable} className="contents">
+            <BillDetailsVendor />
+            <BillDetailsInvoiceInfo />
+            <BillDetailsPurchaseOrder />
+            <BillDetailsLineItems />
+            <BillDetailsPayment />
+            <BillDetailsMemo />
+            <BillDetailsApprovals />
+          </fieldset>
         </BillDetailsPane>
       </Activity>
       {/* Activity — no audit trail yet, so the same empty-state treatment as
@@ -180,14 +220,17 @@ export function BillDetailsForm() {
           footer instead of towering over it. */}
       <BillDetailsPane className="border-bone bg-white/80 backdrop-blur h-14 py-0 sticky -bottom-px z-10 grid shrink-0 grid-flow-col items-center justify-between border-t">
         <div className="gap-rui-3 flex items-center">
+          {/* The left slot renders whatever strategy the lifecycle resolves to
+              (Save draft / Edit bill / Save bill) — the branching lives in the
+              strategy table, this stays one dumb Button. */}
           <Button
             type="button"
             variant="underline"
-            leadingIcon={<Save size={16} />}
-            onClick={() => void onSaveDraft()}
-            disabled={savingDraft}
+            leadingIcon={<footerAction.Icon size={16} />}
+            onClick={() => footerAction.run(footerActionDeps)}
+            disabled={footerBusy}
           >
-            {savingDraft ? 'Saving…' : 'Save draft'}
+            {footerBusy ? footerAction.busyLabel : footerAction.label}
           </Button>
           <FieldError size="sm">{saveError}</FieldError>
         </div>
@@ -206,7 +249,11 @@ export function BillDetailsForm() {
       {/* Direct child of the <form>, NOT the footer pane: the pane's
           backdrop-blur is a containing block for fixed descendants, which
           would pin the "viewport" toast to the footer band instead. */}
-      <BillDetailsSaveToast phase={saveToast} onDismiss={() => setSaveToast(null)} />
+      <BillDetailsSaveToast
+        phase={saveToast}
+        noun={preSubmit ? 'draft' : 'bill'}
+        onDismiss={() => setSaveToast(null)}
+      />
     </form>
   );
 }

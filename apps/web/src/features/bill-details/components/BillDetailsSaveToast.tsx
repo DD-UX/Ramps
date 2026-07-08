@@ -24,9 +24,14 @@ export interface BillDetailsSaveToastProps {
   phase: SaveToastPhase | null;
   /** Clear the phase — the × button and the success auto-dismiss both land here. */
   onDismiss: () => void;
+  /**
+   * What the toast says was saved — 'draft' for the pre-submit "Save draft"
+   * flow, 'bill' for the read-only screen's Edit bill → Save bill round trip.
+   */
+  noun?: 'draft' | 'bill';
 }
 
-export function BillDetailsSaveToast({ phase, onDismiss }: BillDetailsSaveToastProps) {
+export function BillDetailsSaveToast({ phase, onDismiss, noun = 'draft' }: BillDetailsSaveToastProps) {
   // The success card excuses itself; the saving card stays until resolution.
   useEffect(() => {
     if (phase !== 'saved') return;
@@ -44,7 +49,13 @@ export function BillDetailsSaveToast({ phase, onDismiss }: BillDetailsSaveToastP
           transition={TOAST_VARIANTS.slideTopRight}
           loading={phase === 'saving'}
           tone={phase === 'saved' ? 'positive' : 'neutral'}
-          title={phase === 'saving' ? 'Saving draft…' : 'Draft saved'}
+          title={
+            phase === 'saving'
+              ? `Saving ${noun}…`
+              : noun === 'bill'
+                ? 'Bill saved'
+                : 'Draft saved'
+          }
           description={phase === 'saved' ? 'Your changes were saved correctly.' : undefined}
           onDismiss={onDismiss}
           // rui-6 (24px) off the corner so the card floats clear of the
