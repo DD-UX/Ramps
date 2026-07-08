@@ -4,6 +4,20 @@ A payables (accounts payable) product inspired by [Ramp Bill Pay](https://suppor
 built end-to-end as a take-home assignment — data models, backend, frontend, and a
 faithful reproduction of the Ramp design system.
 
+## Live demo
+
+- **App:** https://ramps-web.vercel.app/
+- **Design system (Storybook):** https://ramps-web.vercel.app/storybook/index.html
+
+The deployed app is **fully functional and needs zero setup** — it's the
+easiest way to try the whole flow (create a bill → approve → schedule → pay).
+
+Running **locally** additionally requires **Supabase environment variables**
+(the API URL and keys) so the app can reach the database — without them the web
+app can't start. Copy them into `apps/web/.env.local`, or spin up the local
+stack via the [Supabase setup runbook](docs/supabase-setup.md). If you just want
+to test the product, use the hosted app link above instead.
+
 > **Status:** planning & design research complete — implementation starting.
 > This README will grow into the full submission doc (setup, workflows, decisions).
 

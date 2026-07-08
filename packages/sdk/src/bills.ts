@@ -86,10 +86,13 @@ export interface ListBillsOptions {
    */
   statuses?: readonly BillStatusType[];
   /**
-   * Free-text match for the toolbar's "Search or filter…" field. Case-insensitive
-   * substring across the bill's own identifying columns — invoice number, PO
-   * number, and memo (`col ILIKE %q%`, OR-combined). Trimmed empty / omitted
-   * means no text filter. Typed off the entity so it can't drift from the row.
+   * Free-text match for the toolbar's search field. Case-insensitive substring
+   * across the bill's own identifying columns — invoice number, PO number, and
+   * memo (`col ILIKE %q%`, OR-combined) — PLUS the vendor's name. Vendor lives on
+   * an embedded table, and PostgREST can't OR a parent column with an embedded
+   * one in a single clause, so {@link listBills} first resolves matching vendor
+   * ids and folds them into the same OR as `vendor_id.in.(…)`. Trimmed empty /
+   * omitted means no text filter. Typed off the entity so it can't drift.
    */
   search?: BillListItemType['invoice_number'];
   /**
@@ -144,9 +147,28 @@ export async function listBills(
   // no-op, so an all-punctuation search doesn't collapse to "match all").
   const term = options.search ? sanitizeSearchTerm(options.search) : '';
   if (term) {
-    query = query.or(
-      `invoice_number.ilike.%${term}%,po_number.ilike.%${term}%,memo.ilike.%${term}%`,
-    );
+    // Vendor name lives on the embedded `vendors` table, which PostgREST won't
+    // let us OR against a parent column in one clause. So resolve matching
+    // vendor ids up front (tiny table) and fold them into the SAME OR as a
+    // `vendor_id.in.(…)` predicate — a bill matches on its own columns OR its
+    // vendor's name. No vendor match → the own-columns-only clause, unchanged.
+    const { data: vendorMatches, error: vendorError } = await supabase
+      .from('vendors')
+      .select('id')
+      .ilike('name', `%${term}%`);
+    if (vendorError) throw toSdkError(vendorError);
+
+    const conditions = [
+      `invoice_number.ilike.%${term}%`,
+      `po_number.ilike.%${term}%`,
+      `memo.ilike.%${term}%`,
+    ];
+    const vendorIds = (vendorMatches ?? []).map((v) => (v as { id: string }).id);
+    if (vendorIds.length > 0) {
+      conditions.push(`vendor_id.in.(${vendorIds.join(',')})`);
+    }
+
+    query = query.or(conditions.join(','));
   }
 
   // Window to the requested page. Only when a positive `pageSize` is given —

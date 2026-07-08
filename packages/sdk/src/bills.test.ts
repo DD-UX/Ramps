@@ -47,48 +47,69 @@ function makeRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** One awaited query's resolution — `{ data, error, count }`. */
+type QueryResult = { data?: unknown; error?: unknown; count?: number };
+
 /**
- * A chainable Supabase-query stub. `.select/.eq/.order` return `this` and the
- * builder is awaitable (a thenable) resolving to `{ data, error, count }` —
- * the exact surface the facade touches. `select` calls are recorded so we can
- * assert the status filter.
+ * A chainable Supabase-query stub. `.select/.eq/.in/.or/.ilike/.order` return
+ * `this` and the builder is awaitable (a thenable) resolving to
+ * `{ data, error, count }` — the exact surface the facade touches. `select`,
+ * `eq`, `in`, `or`, and `ilike` calls are recorded so we can assert the filters.
+ *
+ * `result` is the resolution for the MAIN `from('bills')` query. `vendorMatches`
+ * (optional) is the resolution for the vendor name→id pre-query
+ * (`from('vendors').select('id').ilike('name', …)`) that vendor search runs
+ * first; each `from(table)` gets its own recorded builder + result.
  */
-function makeSupabase(result: { data?: unknown; error?: unknown; count?: number }) {
+function makeSupabase(
+  result: QueryResult,
+  vendorMatches: QueryResult = { data: [] },
+) {
   const calls = {
     eq: [] as [string, unknown][],
     in: [] as [string, unknown[]][],
     or: [] as string[],
     select: [] as string[],
+    ilike: [] as [string, string][],
   };
-  const builder: Record<string, unknown> = {
-    select(sel: string) {
-      calls.select.push(sel);
-      return builder;
-    },
-    eq(col: string, val: unknown) {
-      calls.eq.push([col, val]);
-      return builder;
-    },
-    in(col: string, vals: unknown[]) {
-      calls.in.push([col, vals]);
-      return builder;
-    },
-    or(clause: string) {
-      calls.or.push(clause);
-      return builder;
-    },
-    order() {
-      return builder;
-    },
-    then(resolve: (v: unknown) => unknown) {
-      return Promise.resolve({
-        data: result.data ?? null,
-        error: result.error ?? null,
-        count: result.count,
-      }).then(resolve);
-    },
+  const makeBuilder = (resolution: QueryResult): Record<string, unknown> => {
+    const builder: Record<string, unknown> = {
+      select(sel: string) {
+        calls.select.push(sel);
+        return builder;
+      },
+      eq(col: string, val: unknown) {
+        calls.eq.push([col, val]);
+        return builder;
+      },
+      in(col: string, vals: unknown[]) {
+        calls.in.push([col, vals]);
+        return builder;
+      },
+      or(clause: string) {
+        calls.or.push(clause);
+        return builder;
+      },
+      ilike(col: string, pattern: string) {
+        calls.ilike.push([col, pattern]);
+        return builder;
+      },
+      order() {
+        return builder;
+      },
+      then(resolve: (v: unknown) => unknown) {
+        return Promise.resolve({
+          data: resolution.data ?? null,
+          error: resolution.error ?? null,
+          count: resolution.count,
+        }).then(resolve);
+      },
+    };
+    return builder;
   };
-  const from = vi.fn(() => builder);
+  const from = vi.fn((table: string) =>
+    makeBuilder(table === 'vendors' ? vendorMatches : result),
+  );
   return { supabase: { from } as unknown as ServerSupabase, calls, from };
 }
 
@@ -132,8 +153,9 @@ describe('listBills', () => {
   });
 
   it('applies the free-text search (col ILIKE …) only for a non-empty term', async () => {
-    // A real term OR-combines across the bill's own identifying columns.
-    const searched = makeSupabase({ data: [], count: 0 });
+    // A real term with NO vendor-name match OR-combines across the bill's own
+    // identifying columns only (the vendor pre-query returns nothing).
+    const searched = makeSupabase({ data: [], count: 0 }, { data: [] });
     await listBills(searched.supabase, { search: 'INV-42' });
     expect(searched.calls.or).toEqual([
       'invoice_number.ilike.%INV-42%,po_number.ilike.%INV-42%,memo.ilike.%INV-42%',
@@ -141,15 +163,46 @@ describe('listBills', () => {
 
     // The clause delimiters `(),` are stripped so a stray paren can't 400 the
     // query — here they collapse to a blank term, which is a no-op (not "match
-    // all"), so no `.or()` is issued.
+    // all"), so no `.or()` (and no vendor pre-query) is issued.
     const punctuation = makeSupabase({ data: [], count: 0 });
     await listBills(punctuation.supabase, { search: '(),' });
     expect(punctuation.calls.or).toHaveLength(0);
+    expect(punctuation.calls.ilike).toHaveLength(0);
 
     // Omitting search entirely issues no text filter.
     const omitted = makeSupabase({ data: [], count: 0 });
     await listBills(omitted.supabase);
     expect(omitted.calls.or).toHaveLength(0);
+  });
+
+  it('folds matching vendors into the OR so a bill matches on its vendor name', async () => {
+    // The term matches two vendors by name; their ids join the SAME OR clause as
+    // a `vendor_id.in.(…)` predicate, so a bill matches on its own columns OR
+    // because its vendor is named "Acme".
+    const vendorIdA = '22222222-2222-4222-8222-222222222222';
+    const vendorIdB = '44444444-4444-4444-8444-444444444444';
+    const searched = makeSupabase(
+      { data: [], count: 0 },
+      { data: [{ id: vendorIdA }, { id: vendorIdB }] },
+    );
+    await listBills(searched.supabase, { search: 'Acme' });
+
+    // The pre-query looks vendors up by name, case-insensitively.
+    expect(searched.calls.ilike).toContainEqual(['name', '%Acme%']);
+    // …and their ids ride along in the bills OR clause.
+    expect(searched.calls.or).toEqual([
+      `invoice_number.ilike.%Acme%,po_number.ilike.%Acme%,memo.ilike.%Acme%,vendor_id.in.(${vendorIdA},${vendorIdB})`,
+    ]);
+  });
+
+  it('propagates a normalized error when the vendor pre-query fails', async () => {
+    const searched = makeSupabase(
+      { data: [], count: 0 },
+      { error: { message: 'vendor lookup down', code: 'XX000' } },
+    );
+    await expect(listBills(searched.supabase, { search: 'Acme' })).rejects.toThrow(
+      '[XX000] vendor lookup down',
+    );
   });
 
   it('throws a normalized error when the query fails', async () => {

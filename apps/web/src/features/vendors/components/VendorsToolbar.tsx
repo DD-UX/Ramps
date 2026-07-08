@@ -49,7 +49,7 @@ export function VendorsToolbar({ initialSearch }: VendorsToolbarProps) {
 
   return (
     <div className="gap-rui-2 px-rui-6 py-rui-2 bg-stone-50 flex">
-      <div className="max-w-50">
+      <div>
         <Input
           rounded
           type="search"
@@ -58,7 +58,7 @@ export function VendorsToolbar({ initialSearch }: VendorsToolbarProps) {
           placeholder="Search or filter…"
           aria-label="Search vendors"
           leadingIcon={<Search size={16} />}
-          className="max-w-xs h-full grow-0"
+          className="h-full w-[20rem]"
         />
       </div>
 
