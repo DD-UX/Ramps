@@ -5,6 +5,8 @@ import './globals.css';
 import type { Metadata } from 'next';
 import type { PropsWithChildren } from 'react';
 
+import { SwrProvider } from '@/features/common/context/SwrProvider.context';
+
 export const metadata: Metadata = {
   title: 'Ramps — payables',
   description: 'Accounts payable, Ramp Bill Pay-inspired.',
@@ -20,7 +22,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en">
-      <body className="flex h-dvh min-h-dvh flex-row overflow-hidden">{children}</body>
+      <body className="flex h-dvh min-h-dvh flex-row overflow-hidden">
+        <SwrProvider>{children}</SwrProvider>
+      </body>
     </html>
   );
 }
