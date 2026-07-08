@@ -76,6 +76,8 @@ describe('BillsPageContent', () => {
       <BillsPageContent
         bills={[]}
         total={0}
+        page={1}
+        pageSize={10}
         tabs={TABS}
         activeCode="overview"
         countsByStatus={{}}
@@ -90,6 +92,8 @@ describe('BillsPageContent', () => {
       <BillsPageContent
         bills={[]}
         total={0}
+        page={1}
+        pageSize={10}
         tabs={TABS}
         activeCode="overview"
         countsByStatus={COUNTS}
@@ -107,6 +111,8 @@ describe('BillsPageContent', () => {
       <BillsPageContent
         bills={[makeBill({ vendor_name: 'Globex' })]}
         total={1}
+        page={1}
+        pageSize={10}
         tabs={TABS}
         activeCode="history"
         countsByStatus={COUNTS}
@@ -121,6 +127,8 @@ describe('BillsPageContent', () => {
       <BillsPageContent
         bills={[]}
         total={0}
+        page={1}
+        pageSize={10}
         tabs={TABS}
         activeCode="overview"
         countsByStatus={{}}
@@ -135,6 +143,8 @@ describe('BillsPageContent', () => {
       <BillsPageContent
         bills={[]}
         total={0}
+        page={1}
+        pageSize={10}
         tabs={TABS}
         activeCode="drafts"
         countsByStatus={COUNTS}

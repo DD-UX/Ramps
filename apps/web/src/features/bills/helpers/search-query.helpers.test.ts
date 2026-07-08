@@ -44,6 +44,18 @@ describe('buildSearchQuery', () => {
     expect(params.get('sort')).toBe('due');
     expect(params.get('q')).toBe('acme co');
   });
+
+  it('resets pagination — drops ?page= — when the term changes or clears', () => {
+    const set = new URLSearchParams(buildSearchQuery('tab=history&page=3', 'acme'));
+    expect(set.get('tab')).toBe('history');
+    expect(set.get('q')).toBe('acme');
+    expect(set.has('page')).toBe(false);
+
+    const cleared = new URLSearchParams(buildSearchQuery('tab=history&q=old&page=2', ''));
+    expect(cleared.get('tab')).toBe('history');
+    expect(cleared.has('q')).toBe(false);
+    expect(cleared.has('page')).toBe(false);
+  });
 });
 
 /**

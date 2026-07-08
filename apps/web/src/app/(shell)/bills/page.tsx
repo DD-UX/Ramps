@@ -1,9 +1,10 @@
-import { countBillsByStatus, listBills } from '@ramps/sdk/bills';
+import { BILLS_PAGE_SIZE, countBillsByStatus, listBills } from '@ramps/sdk/bills';
 import { createServerSupabase } from '@ramps/sdk/server';
 
 import { BillsPageContent } from '@/features/bills/components/BillsPageContent';
 import { getBillTabs } from '@/features/bills/data/bill-tabs.data';
 import { resolveTab, statusesForTab } from '@/features/bills/helpers/bill-tabs.helpers';
+import { normalizePageParam } from '@/features/bills/helpers/page-query.helpers';
 import { normalizeSearchParam } from '@/features/bills/helpers/search-query.helpers';
 
 /**
@@ -27,13 +28,20 @@ import { normalizeSearchParam } from '@/features/bills/helpers/search-query.help
  * The toolbar's search is the other URL-state control: `?q=` flows into
  * `listBills({ search })` (a `col ILIKE …` across the bill's own columns), so a
  * search is re-run server-side and stays shareable — same shape as the tabs.
+ *
+ * Pagination is the third: `?page=` (1-based, normalised) windows the query to
+ * one page of `BILLS_PAGE_SIZE` via the facade's `.range()`. The returned
+ * `total` stays the full filtered count, so the footer's "X–Y of N" and the
+ * page picker are correct. Switching tab or changing the search resets to
+ * page 1 (the tab href / search query drop `?page=`), so a stale page never
+ * points past the new result set.
  */
 export default async function BillsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; page?: string }>;
 }) {
-  const { tab: rawTab, q: rawSearch } = await searchParams;
+  const { tab: rawTab, q: rawSearch, page: rawPage } = await searchParams;
 
   const supabase = createServerSupabase();
 
@@ -43,15 +51,20 @@ export default async function BillsPage({
 
   const activeTab = resolveTab(tabs, rawTab);
   const search = normalizeSearchParam(rawSearch);
+  const page = normalizePageParam(rawPage);
   const { bills, total } = await listBills(supabase, {
     statuses: statusesForTab(activeTab),
     search,
+    page,
+    pageSize: BILLS_PAGE_SIZE,
   });
 
   return (
     <BillsPageContent
       bills={bills}
       total={total}
+      page={page}
+      pageSize={BILLS_PAGE_SIZE}
       tabs={tabs}
       activeCode={activeTab.code}
       countsByStatus={countsByStatus}

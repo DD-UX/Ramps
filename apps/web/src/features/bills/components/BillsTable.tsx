@@ -4,9 +4,11 @@ import type { BillFlagType, BillListItemType } from '@ramps/schemas/bills';
 import { Money } from '@ramps/ui/Money';
 import { StatusPill } from '@ramps/ui/StatusPill';
 import { Table, TableAnnotationLink, type TableColumn } from '@ramps/ui/Table';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback } from 'react';
 
 import { formatBillDate } from '../helpers/format-date.helpers';
+import { buildPageQuery } from '../helpers/page-query.helpers';
 
 /**
  * BillsTable — the Bill Pay list, the product's spine (findings §1).
@@ -18,12 +20,18 @@ import { formatBillDate } from '../helpers/format-date.helpers';
  *
  * Columns mirror the frames: Vendor (sticky-left), Invoice #, Due date,
  * Status pill, Amount (sticky-right, right-aligned tabular money). The footer is
- * the vetted pagination band with the aggregate total.
+ * the vetted pagination band: the server windows the query to `page`/`pageSize`,
+ * and the band's page picker navigates `?page=` (preserving the tab and search),
+ * re-running the Server Component for the next window.
  */
 export interface BillsTableProps {
   bills: BillListItemType[];
   /** Total rows for the active tab — the "of N" in the footer. */
   total: number;
+  /** The active 1-based page — the footer's range start and picker highlight. */
+  page: number;
+  /** Rows per page — with `total`, the footer derives the page count + range. */
+  pageSize: number;
 }
 
 /** One flag → its annotation line. Duplicates link to the original bill. */
@@ -84,9 +92,24 @@ const COLUMNS: TableColumn<BillListItemType>[] = [
   },
 ];
 
-export function BillsTable({ bills, total }: BillsTableProps) {
+export function BillsTable({ bills, total, page, pageSize }: BillsTableProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // Sum of the rows on THIS page — the footer shows the subtotal for the visible
+  // window ("1–10 of N · $… total"), alongside the range it belongs to.
   const totalCents = bills.reduce((sum, bill) => sum + bill.amount_cents, 0);
+
+  // Flip pages by navigating `?page=` (preserving `?tab=` / `?q=`), so the page
+  // is shareable URL state like the tab and search — the Server Component
+  // re-queries the window; page 1 drops the param. buildPageQuery owns the math.
+  const onPageChange = useCallback(
+    (next: number) => {
+      const query = buildPageQuery(searchParams.toString(), next);
+      router.push(query ? `${pathname}?${query}` : pathname);
+    },
+    [router, pathname, searchParams],
+  );
 
   return (
     <Table
@@ -102,11 +125,12 @@ export function BillsTable({ bills, total }: BillsTableProps) {
       }
       footer={{
         type: 'pagination',
-        page: 1,
-        pageSize: bills.length || 1,
+        page,
+        pageSize,
         totalCount: total,
         noun: 'bills',
         totalCents,
+        onPageChange,
       }}
       className="h-full"
     />

@@ -65,6 +65,13 @@ interface BillListRow {
   flags: unknown[];
 }
 
+/**
+ * Rows per page for the Bill Pay list. The list screen paginates 10-to-10; the
+ * SDK owns the default so the page loader and the footer read one constant
+ * rather than each hardcoding `10`.
+ */
+export const BILLS_PAGE_SIZE = 10;
+
 export interface ListBillsOptions {
   /**
    * Restrict to a set of lifecycle states — the active tab's status group (a
@@ -79,6 +86,18 @@ export interface ListBillsOptions {
    * means no text filter. Typed off the entity so it can't drift from the row.
    */
   search?: BillListItemType['invoice_number'];
+  /**
+   * 1-based page to return. Omitted (or `< 1`) means the first page. Combined
+   * with {@link ListBillsOptions.pageSize} it maps to a PostgREST `.range()`.
+   */
+  page?: number;
+  /**
+   * Rows per page. Omitted means no windowing at all (every matching row) —
+   * callers that want the paginated list pass {@link BILLS_PAGE_SIZE}. The
+   * returned `total` is always the FULL filtered count, not the page length,
+   * so the footer's "X–Y of N" stays correct.
+   */
+  pageSize?: number;
 }
 
 /**
@@ -122,6 +141,16 @@ export async function listBills(
     query = query.or(
       `invoice_number.ilike.%${term}%,po_number.ilike.%${term}%,memo.ilike.%${term}%`,
     );
+  }
+
+  // Window to the requested page. Only when a positive `pageSize` is given —
+  // omit it and the query returns every matching row (the pre-pagination
+  // behaviour). `count: 'exact'` above still reports the FULL filtered total, so
+  // `.range()` narrows the rows without touching the "of N" the footer shows.
+  if (options.pageSize && options.pageSize > 0) {
+    const page = options.page && options.page > 0 ? options.page : 1;
+    const from = (page - 1) * options.pageSize;
+    query = query.range(from, from + options.pageSize - 1);
   }
 
   const { data, error, count } = await query;

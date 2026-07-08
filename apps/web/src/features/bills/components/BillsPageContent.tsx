@@ -19,6 +19,10 @@ import { BillsToolbar } from './BillsToolbar';
 export interface BillsPageContentProps {
   bills: BillListItemType[];
   total: number;
+  /** The active 1-based page — drives the table footer's range + picker. */
+  page: number;
+  /** Rows per page (the window `total` is counted against). */
+  pageSize: number;
   /** The tab catalog from the `bill_tabs` lookup, in display order. */
   tabs: BillTabType[];
   /** The active tab's `code` ('overview' when unfiltered). */
@@ -32,6 +36,8 @@ export interface BillsPageContentProps {
 export function BillsPageContent({
   bills,
   total,
+  page,
+  pageSize,
   tabs,
   activeCode,
   countsByStatus,
@@ -47,7 +53,7 @@ export function BillsPageContent({
         <BillsTabs tabs={tabs} activeCode={activeCode} counts={tabCounts} />
       </div>
       <BillsToolbar initialSearch={search} />
-      <BillsTable bills={bills} total={total} />
+      <BillsTable bills={bills} total={total} page={page} pageSize={pageSize} />
     </div>
   );
 }
