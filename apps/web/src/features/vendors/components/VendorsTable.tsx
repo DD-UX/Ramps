@@ -5,10 +5,10 @@ import { IconButton } from '@ramps/ui/IconButton';
 import { MoreVertical } from '@ramps/ui/icons';
 import { Money } from '@ramps/ui/Money';
 import { Table, type TableColumn } from '@ramps/ui/Table';
-import { useRouter } from 'next/navigation';
 
 import { formatPaymentMethod } from '../helpers/format-payment-method.helpers';
 import { VendorsStatusPill } from './VendorsStatusPill';
+import { Avatar } from '@ramps/ui/Avatar';
 
 export interface VendorsTableProps {
   vendors: VendorListItemType[];
@@ -24,10 +24,15 @@ const COLUMNS: TableColumn<VendorListItemType>[] = [
     // Name over a hushed category subtitle — the design's two-line vendor cell
     // ("Anderson Legal" / "Legal Services"). Category is null-safe.
     cell: (vendor) => (
-      <div className="flex flex-col">
-        <span className="text-ink">{vendor.name}</span>
-        {vendor.category && <span className="text-xs text-hushed">{vendor.category}</span>}
-      </div>
+      <>
+        <div className="gap-rui-2 flex items-center">
+          <Avatar name={vendor.name} size="sm" />
+          <div className="gap-rui-1 flex flex-col">
+            <span className="text-ink">{vendor.name}</span>
+            {vendor.category && <span className="text-xs text-hushed">{vendor.category}</span>}
+          </div>
+        </div>
+      </>
     ),
   },
   {
@@ -78,15 +83,11 @@ const COLUMNS: TableColumn<VendorListItemType>[] = [
 ];
 
 export function VendorsTable({ vendors, total }: VendorsTableProps) {
-  const router = useRouter();
-
   return (
     <Table
       data={vendors}
       columns={COLUMNS}
       getRowId={(vendor) => vendor.id}
-      selectable
-      onRowClick={(vendor) => router.push(`/vendors/${vendor.id}`)}
       footer={{
         type: 'pagination',
         page: 1,
