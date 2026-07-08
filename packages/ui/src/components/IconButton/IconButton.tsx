@@ -1,7 +1,11 @@
+'use client';
+
+import { motion } from 'motion/react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 import { cn } from '../../lib/cn';
 import { DISABLED_CONTROL } from '../../lib/disabled';
+import { type MotionClashingHandlers, pressPreset } from '../motion/pressVariants';
 
 /**
  * IconButton — the square, label-free action used across Bill Pay's toolbars and
@@ -29,7 +33,10 @@ const SIZE_STYLE: Record<IconButtonSize, string> = {
   md: 'size-9',
 };
 
-export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+export interface IconButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  'children' | MotionClashingHandlers
+> {
   /** Accessible name — required (no visible text). */
   label: string;
   icon: ReactNode;
@@ -50,13 +57,18 @@ export function IconButton({
   rounded = false,
   className,
   type,
+  disabled,
   ...props
 }: IconButtonProps) {
   return (
-    <button
+    <motion.button
       type={type ?? 'button'}
       aria-label={label}
       title={label}
+      disabled={disabled}
+      // The SAME press recipe Button spreads — hover lift + pronounced squash —
+      // so the whole action set gives under the finger as one. Disabled → inert.
+      {...pressPreset(disabled)}
       className={cn(
         'inline-flex shrink-0 items-center justify-center transition-colors focus:outline-none',
         rounded ? 'rounded-pill' : 'rounded-square',
@@ -72,6 +84,6 @@ export function IconButton({
       {...props}
     >
       <span aria-hidden>{icon}</span>
-    </button>
+    </motion.button>
   );
 }

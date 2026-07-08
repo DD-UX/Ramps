@@ -1,8 +1,12 @@
+'use client';
+
+import { AnimatePresence, motion } from 'motion/react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 import { cn } from '../../lib/cn';
 import { DISABLED_CONTROL } from '../../lib/disabled';
 import { Kbd } from '../Kbd/Kbd';
+import { type MotionClashingHandlers, pressPreset } from '../motion/pressVariants';
 import { Spinner } from '../Spinner/Spinner';
 
 /**
@@ -25,12 +29,24 @@ import { Spinner } from '../Spinner/Spinner';
  * Every variant carries a *real* interactive affordance: pointer cursor when
  * enabled, dimmed + not-allowed when disabled — a disabled button must never
  * be pixel-identical to its enabled base.
+ *
+ * Motion (a `motion.button`): it spreads the shared {@link pressPreset} so it
+ * lifts a touch on hover and gives a pronounced tactile squash on press — the
+ * same recipe IconButton uses, so the whole action set feels tuned together (a
+ * disabled button gets the inert preset and never reacts). The loading spinner
+ * doesn't pop in place: it's clipped in the leading slot and RISES from
+ * underneath the label as loading starts, then drops back down the same way when
+ * it ends (`AnimatePresence`), so the transition reads as one motion, not a
+ * flicker.
  */
 export type ButtonVariant =
   'primary' | 'secondary' | 'subtle' | 'ink' | 'underline' | 'destructive';
 export type ButtonSize = 'sm' | 'md';
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  MotionClashingHandlers
+> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   /** Icon rendered before the label (e.g. a Lucide `<Save />`). */
@@ -117,10 +133,11 @@ export function Button({
 }: ButtonProps) {
   const isDisabled = disabled || loading;
   return (
-    <button
+    <motion.button
       type={type ?? 'button'}
       disabled={isDisabled}
       aria-busy={loading || undefined}
+      {...pressPreset(isDisabled)}
       className={cn(
         // Layout + shape: square corners (0px, per the frames) — except the
         // toolbar pills (snapshot 1) — heading weight, inline icon rows.
@@ -139,7 +156,35 @@ export function Button({
       )}
       {...props}
     >
-      {loading ? <Spinner size="sm" /> : leadingIcon}
+      {/* Leading slot. When loading, the spinner doesn't swap in place — it's
+          clipped to this slot and slides UP from underneath, and slides back
+          down on exit, so start/stop reads as one motion. `layout` lets the
+          label reflow smoothly as the slot's width appears/collapses. */}
+      <AnimatePresence initial={false} mode="wait">
+        {loading ? (
+          <motion.span
+            key="spinner"
+            className="inline-flex overflow-hidden"
+            initial={{ y: '120%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '120%', opacity: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+            <Spinner size="sm" />
+          </motion.span>
+        ) : leadingIcon ? (
+          <motion.span
+            key="leading-icon"
+            className="inline-flex overflow-hidden"
+            initial={{ y: '120%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '120%', opacity: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+            {leadingIcon}
+          </motion.span>
+        ) : null}
+      </AnimatePresence>
       {children}
       {trailingIcon}
       {keys && keys.length > 0 ? (
@@ -151,6 +196,6 @@ export function Button({
           ))}
         </span>
       ) : null}
-    </button>
+    </motion.button>
   );
 }

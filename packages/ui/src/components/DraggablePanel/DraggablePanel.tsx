@@ -1,6 +1,7 @@
 'use client';
 
 import { GripVertical } from 'lucide-react';
+import { motion } from 'motion/react';
 import { type ReactNode, type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 
 import { cn } from '../../lib/cn';
@@ -121,7 +122,11 @@ export function DraggablePanel({
           and keyboard-operable without fighting the a11y linter.
           The rail is a full-height sibling BETWEEN the two scroll containers, so
           the absolute-centered grip stays pinned to the panel's vertical center
-          and never scrolls out of view with either pane. */}
+          and never scrolls out of view with either pane.
+          Interaction: on HOVER the line darkens (bone → hushed) and the pad
+          grows; while DRAGGING the line goes electric blue and the pad presses
+          in (shrinks) and goes electric to match — so grabbing the divider reads
+          as a live, physical control. */}
       <button
         type="button"
         data-testid="drag-handle"
@@ -132,23 +137,34 @@ export function DraggablePanel({
         }}
         onKeyDown={onKeyDown}
         className={cn(
-          'group bg-bone p-0 relative flex w-px shrink-0 cursor-col-resize items-center justify-center',
-          'outline-none',
+          'group p-0 relative flex w-px shrink-0 cursor-col-resize items-center justify-center',
+          'transition-colors outline-none',
+          // The divider LINE: bone at rest, darkens to hushed on hover, and
+          // turns electric blue the whole time you're dragging it — the live
+          // "you're manipulating this" cue.
+          dragging ? 'bg-electric' : 'bg-bone group-hover:bg-hushed',
         )}
       >
-        <span
+        <motion.span
           data-testid="drag-grip"
+          // Hover GROWS the pad; dragging PRESSES it (shrinks past rest) so it
+          // feels pushed in. Snappy spring settle, no wobble.
+          animate={{ scale: dragging ? 0.9 : 1 }}
+          whileHover={dragging ? undefined : { scale: 1.15 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           className={cn(
             // Frame 7 at 10x + 1px sampling: a circular STONE chip, soft
             // shadow, ink dots — no border; a full step darker than the
             // panes so it keeps contrast on the limestone canvas too.
             'size-7 rounded-pill bg-stone text-ink absolute flex items-center justify-center',
-            'shadow-card group-hover:shadow-popover group-focus-visible:shadow-popover transition-shadow',
-            dragging && 'shadow-popover',
+            'shadow-card group-hover:shadow-popover group-focus-visible:shadow-popover transition-[box-shadow,background-color,color]',
+            // While dragging the pad reads as the active control: it goes
+            // electric to match the line and the dots flip to white.
+            dragging ? 'bg-electric text-white shadow-popover' : 'group-hover:bg-bone',
           )}
         >
           <GripVertical size={14} />
-        </span>
+        </motion.span>
       </button>
 
       {/* Right pane = the preview CANVAS. Frames 7/8/10 sample #f6f5f1–#fbfaf6
