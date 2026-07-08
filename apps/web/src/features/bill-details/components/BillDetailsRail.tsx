@@ -1,15 +1,11 @@
 import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
-import { Avatar } from '@ramps/ui/Avatar';
-import { cn } from '@ramps/ui/cn';
 import { ArrowLeft } from '@ramps/ui/icons';
-import { Money } from '@ramps/ui/Money';
 import Link from 'next/link';
 
-import { formatBillDate } from '@/features/bills/helpers/format-date.helpers';
-
 import { BILL_STATUS_LABEL } from '../constants/status-label.constants';
-import { billTitle } from '../helpers/bill-title.helpers';
+import { RailActiveProvider } from '../context/RailActive.context';
 import { adjacentBills, groupBillsByStatus } from '../helpers/rail.helpers';
+import { BillDetailsRailItem } from './BillDetailsRailItem';
 import { BillDetailsRailNav } from './BillDetailsRailNav';
 
 /**
@@ -19,11 +15,13 @@ import { BillDetailsRailNav } from './BillDetailsRailNav';
  * sectioned under plain status headings ("Missing info", "Ready for review"
  * in Ramp's frame), with the open bill highlighted, and a Prev/Next footer.
  *
- * A Server Component of plain `<Link>`s: navigation between bills is a real
- * server-side route change (each `/bills/:id` re-renders with its own rail),
- * and — because they're anchors — every hop passes through the unsaved-changes
- * guard's click capture, so a dirty form can interrupt rail navigation too.
- * Grouping and Prev/Next order come from `rail.helpers`; this file only draws.
+ * A Server Component: navigation between bills is a real server-side route
+ * change (each `/bills/:id` re-renders with its own rail), and — because the
+ * cards are anchors — every hop passes through the unsaved-changes guard's
+ * click capture, so a dirty form can interrupt rail navigation too. The card
+ * itself is the client leaf {@link BillDetailsRailItem} (it carries the DS
+ * press motion); grouping and Prev/Next order come from `rail.helpers`, so
+ * this file only frames.
  */
 export interface BillDetailsRailProps {
   /** The category's bills, due-date-ordered (the facade's order). */
@@ -54,46 +52,29 @@ export function BillDetailsRail({ bills, statuses, activeId }: BillDetailsRailPr
         </Link>
       </div>
 
-      <nav className="px-rui-2 pb-rui-3 gap-rui-4 min-h-0 flex flex-1 flex-col overflow-auto">
-        {groups.map((group) => (
-          <section key={group.status} className="gap-rui-1 flex flex-col">
-            <h3 className="px-rui-2 text-hushed text-xs font-medium">
-              {BILL_STATUS_LABEL[group.status]}
-            </h3>
-            <ul className="gap-rui-1 flex flex-col">
-              {group.bills.map((bill) => {
-                const active = bill.id === activeId;
-                return (
+      {/* The provider carries the OPTIMISTIC active id (which card holds the
+          floating limestone pill) — clicks/arrows move it instantly, the
+          server prop re-syncs it when the hop's page lands. */}
+      <RailActiveProvider initialActiveId={activeId}>
+        <nav className="px-rui-2 pb-rui-3 gap-rui-4 min-h-0 flex flex-1 flex-col overflow-auto">
+          {groups.map((group) => (
+            <section key={group.status} className="gap-rui-1 flex flex-col">
+              <h3 className="px-rui-2 text-hushed text-xs font-medium">
+                {BILL_STATUS_LABEL[group.status]}
+              </h3>
+              <ul className="gap-rui-1 flex flex-col">
+                {group.bills.map((bill) => (
                   <li key={bill.id}>
-                    <Link
-                      href={`/bills/${bill.id}`}
-                      aria-current={active ? 'page' : undefined}
-                      className={cn(
-                        'gap-rui-2 p-rui-2 rounded-lg flex items-center',
-                        active ? 'bg-limestone' : 'hover:bg-limestone/60',
-                      )}
-                    >
-                      <Avatar name={bill.vendor_name ?? 'Unmatched vendor'} size="sm" />
-                      <div className="min-w-0">
-                        <p className="text-ink text-sm truncate">{billTitle(bill)}</p>
-                        <p className="text-hushed text-xs truncate">
-                          <Money cents={bill.amount_cents} currency={bill.currency} />
-                          {bill.due_date && <> · Due {formatBillDate(bill.due_date)}</>}
-                        </p>
-                      </div>
-                    </Link>
+                    <BillDetailsRailItem bill={bill} />
                   </li>
-                );
-              })}
-            </ul>
-          </section>
-        ))}
-      </nav>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </nav>
 
-      <BillDetailsRailNav
-        prevHref={prev ? `/bills/${prev.id}` : null}
-        nextHref={next ? `/bills/${next.id}` : null}
-      />
+        <BillDetailsRailNav prevId={prev?.id ?? null} nextId={next?.id ?? null} />
+      </RailActiveProvider>
     </aside>
   );
 }
