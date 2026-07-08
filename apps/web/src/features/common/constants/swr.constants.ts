@@ -11,9 +11,12 @@ import type { SWRConfiguration } from 'swr';
  *   changed" signal, so refresh then.
  * - `revalidateOnFocus: false` — tab focus is noise for slow-moving catalogs;
  *   don't refetch on every window focus.
- * - `revalidateIfStale: false` — if the cache already holds a value (e.g. the
- *   server-seeded `fallbackData`), don't auto-refire on mount; only fetch when
- *   there's nothing cached or an explicit `mutate`.
+ * - `revalidateIfStale: true` — stale-while-revalidate. A server-seeded key
+ *   (`fallbackData`) paints instantly from the seed, then fires ONE background
+ *   revalidation on mount to freshen it — the user sees the seed with no
+ *   spinner, and the list silently catches up if the directory drifted. The
+ *   trade against `false` (never re-fire while cached) is a bit of network for
+ *   always-current reference data; `keepPreviousData` keeps the swap flicker-free.
  * - `keepPreviousData: true` — on a key change / revalidation, keep serving the
  *   last data until the newer data lands. Optimistic: no flash to `undefined`,
  *   no rehydration flicker mid-swap.
@@ -22,7 +25,7 @@ export const SWR_GLOBAL_CONFIG: SWRConfiguration = {
   dedupingInterval: 10 * 1000,
   revalidateOnReconnect: true,
   revalidateOnFocus: false,
-  revalidateIfStale: false,
+  revalidateIfStale: true,
   keepPreviousData: true,
 };
 

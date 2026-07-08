@@ -29,9 +29,10 @@ export interface UseApproverCandidateUsersResult {
  * config-free.
  *
  * When a route server-seeds the key via `fallbackData` (the bill-detail page
- * does), the first mount already has data and — with `revalidateIfStale: false`
- * — makes no network call; the list only refetches on reconnect or an explicit
- * `refresh()`.
+ * does), the first mount paints instantly from the seed — no spinner, no
+ * flicker — and then, under the app-wide `revalidateIfStale: true`, fires one
+ * background revalidation to freshen it. The seed is what you see; the freshen
+ * is silent (`keepPreviousData` holds the swap).
  */
 export function useApproverCandidateUsers(): UseApproverCandidateUsersResult {
   const { data, isLoading, mutate } = useSWR<UserType[]>(USERS_SWR_KEY, fetchUsers);

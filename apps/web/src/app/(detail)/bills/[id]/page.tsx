@@ -25,8 +25,8 @@ import { USERS_SWR_KEY } from '@/features/common/constants/swr.constants';
  * The approver directory is server-fetched here too, but instead of being
  * drilled it seeds the SWR cache: `<SWRConfig fallback>` pre-fills
  * {@link USERS_SWR_KEY} so `useApproverCandidateUsers()` in the approvals picker
- * paints from the seed with no client refetch (`revalidateIfStale: false`), while
- * still owning its own read afterwards.
+ * paints instantly from the seed, then freshens it with one silent background
+ * revalidation (`revalidateIfStale: true`) — while still owning its own read.
  */
 export default async function BillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
