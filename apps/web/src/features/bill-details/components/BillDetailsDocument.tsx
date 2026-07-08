@@ -5,49 +5,61 @@ import { FileText } from '@ramps/ui/icons';
 import { Tabs } from '@ramps/ui/Tabs';
 import { useState } from 'react';
 
-const DOCUMENT_TABS = [
-  { value: 'invoice', label: 'Invoice' },
-  { value: 'documents', label: 'Documents' },
-];
-
-export interface BillDetailsDocumentProps {
-  /** The resolved public URL of the invoice PDF, or null when none is attached. */
-  documentUrl: string | null;
-  invoiceNumber: string | null;
-}
+import {
+  BILL_DETAILS_DOCUMENT_TAB,
+  BILL_DETAILS_DOCUMENT_TABS,
+  type BillDetailsDocumentTab,
+} from '../constants/tabs.constants';
+import { useBillDetail } from '../context/BillDetail.context';
+import { BillDetailsPane } from './BillDetailsPane';
 
 /**
  * The right-hand document pane (snapshots 5–6): the source invoice PDF next to
  * the form, under Invoice / Documents tabs. Falls back to an `EmptyState` when a
- * bill has no attached document. The URL is resolved on the server (SUPABASE_URL
- * is server-only) and passed in, so this stays a dumb viewer.
+ * bill has no attached document. The document URL is resolved on the server
+ * (SUPABASE_URL is server-only) and shared on the context, so this reads it — and
+ * the invoice number, for the frame title — straight off `useBillDetail()` and
+ * stays a dumb viewer with no props of its own.
  */
-export function BillDetailsDocument({ documentUrl, invoiceNumber }: BillDetailsDocumentProps) {
-  const [tab, setTab] = useState('invoice');
+export function BillDetailsDocument() {
+  const {
+    documentUrl,
+    bill: { invoice_number: invoiceNumber },
+  } = useBillDetail();
+  const [tab, setTab] = useState<BillDetailsDocumentTab>(BILL_DETAILS_DOCUMENT_TAB.INVOICE);
+
+  const isInvoiceTab = tab === BILL_DETAILS_DOCUMENT_TAB.INVOICE;
 
   return (
     <div className="gap-rui-3 flex h-full flex-col">
-      <Tabs tabs={DOCUMENT_TABS} value={tab} onValueChange={setTab} />
-      <div className="rounded-square border-bone flex-1 overflow-hidden border">
-        {tab === 'invoice' && documentUrl ? (
-          <iframe
-            src={documentUrl}
-            title={invoiceNumber ? `Invoice ${invoiceNumber}` : 'Invoice document'}
-            className="h-full min-h-[32rem] w-full"
-          />
-        ) : (
-          <EmptyState
-            className="h-full min-h-[32rem]"
-            icon={<FileText size={28} />}
-            title={tab === 'invoice' ? 'No invoice attached' : 'No documents'}
-            description={
-              tab === 'invoice'
-                ? 'This bill has no source document to preview.'
-                : 'Supporting documents will appear here once attached.'
-            }
-          />
-        )}
-      </div>
+      <Tabs
+        className="px-rui-5"
+        tabs={[...BILL_DETAILS_DOCUMENT_TABS]}
+        value={tab}
+        onValueChange={(value) => setTab(value as BillDetailsDocumentTab)}
+      />
+      <BillDetailsPane className="h-full">
+        <div className="rounded-square border-bone flex-1 overflow-hidden border">
+          {isInvoiceTab && documentUrl ? (
+            <iframe
+              src={documentUrl}
+              title={invoiceNumber ? `Invoice ${invoiceNumber}` : 'Invoice document'}
+              className="h-full min-h-[32rem] w-full"
+            />
+          ) : (
+            <EmptyState
+              className="h-full min-h-[32rem]"
+              icon={<FileText size={28} />}
+              title={isInvoiceTab ? 'No invoice attached' : 'No documents'}
+              description={
+                isInvoiceTab
+                  ? 'This bill has no source document to preview.'
+                  : 'Supporting documents will appear here once attached.'
+              }
+            />
+          )}
+        </div>
+      </BillDetailsPane>
     </div>
   );
 }

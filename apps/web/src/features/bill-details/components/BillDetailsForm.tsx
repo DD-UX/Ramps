@@ -2,16 +2,28 @@
 
 import type { BillEditFormType } from '@ramps/schemas/bills';
 import { Button } from '@ramps/ui/Button';
-import { Save } from '@ramps/ui/icons';
+import { EmptyState } from '@ramps/ui/EmptyState';
+import { ActivityIcon, Save } from '@ramps/ui/icons';
+import { Tabs } from '@ramps/ui/Tabs';
+import { Activity, useState } from 'react';
+
+import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
 
 import { PRIMARY_ACTION_BY_STATUS } from '../constants/primary-action.constants';
+import {
+  BILL_DETAILS_TAB,
+  BILL_DETAILS_TABS,
+  type BillDetailsTab,
+} from '../constants/tabs.constants';
 import { useBillDetail } from '../context/BillDetail.context';
 import { BillDetailsApprovals } from './BillDetailsApprovals';
 import { BillDetailsInvoiceInfo } from './BillDetailsInvoiceInfo';
 import { BillDetailsLineItems } from './BillDetailsLineItems';
 import { BillDetailsMemo } from './BillDetailsMemo';
+import { BillDetailsPane } from './BillDetailsPane';
 import { BillDetailsPayment } from './BillDetailsPayment';
 import { BillDetailsPurchaseOrder } from './BillDetailsPurchaseOrder';
+import { BillDetailsTitle } from './BillDetailsTitle';
 import { BillDetailsVendor } from './BillDetailsVendor';
 
 /**
@@ -28,6 +40,7 @@ import { BillDetailsVendor } from './BillDetailsVendor';
  */
 export function BillDetailsForm() {
   const { form, bill } = useBillDetail();
+  const [tab, setTab] = useState<BillDetailsTab>(BILL_DETAILS_TAB.OVERVIEW);
 
   const onSubmit = (values: BillEditFormType) => {
     // Persistence is out of scope for this pass — surface the validated payload.
@@ -38,14 +51,46 @@ export function BillDetailsForm() {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="gap-rui-4 flex flex-col">
-      <BillDetailsVendor />
-      <BillDetailsInvoiceInfo />
-      <BillDetailsPurchaseOrder />
-      <BillDetailsLineItems />
-      <BillDetailsPayment />
-      <BillDetailsMemo />
-      <BillDetailsApprovals />
+      <BillDetailsPane>
+        <BillDetailsTitle />
+      </BillDetailsPane>
 
+      <Tabs
+        tabs={[...BILL_DETAILS_TABS]}
+        value={tab}
+        onValueChange={(value) => setTab(value as BillDetailsTab)}
+        className="px-5"
+      />
+      {/* Overview holds the resizable split: form on the white left pane,
+            invoice preview on the warm limestone right pane. The panel supplies
+            each pane's surface + framing, so children only bring padding. */}
+      <Activity
+        mode={tab === BILL_DETAILS_TAB.OVERVIEW ? ACTIVITY_MODE.VISIBLE : ACTIVITY_MODE.HIDDEN}
+      >
+        <BillDetailsPane>
+          <BillDetailsVendor />
+          <BillDetailsInvoiceInfo />
+          <BillDetailsPurchaseOrder />
+          <BillDetailsLineItems />
+          <BillDetailsPayment />
+          <BillDetailsMemo />
+          <BillDetailsApprovals />
+        </BillDetailsPane>
+      </Activity>
+      {/* Activity — no audit trail yet, so the same empty-state treatment as
+            the document pane's "No documents" tab. */}
+      <Activity
+        mode={tab === BILL_DETAILS_TAB.ACTIVITY ? ACTIVITY_MODE.VISIBLE : ACTIVITY_MODE.HIDDEN}
+      >
+        <BillDetailsPane>
+          <EmptyState
+            className="min-h-0 flex-1"
+            icon={<ActivityIcon size={28} />}
+            title="No activity yet"
+            description="Approvals, edits and payment events for this bill will appear here."
+          />
+        </BillDetailsPane>
+      </Activity>
       {/* Sticky action bar (snapshot 9): Save draft sits far LEFT with its
           floppy-disk glyph, the status-driven primary far RIGHT — split with
           space between, not clustered. */}

@@ -2,25 +2,16 @@
 
 import { Money } from '@ramps/ui/Money';
 import { StatusPill } from '@ramps/ui/StatusPill';
-import { Tabs } from '@ramps/ui/Tabs';
 
 import { useBillDetail } from '../context/BillDetail.context';
-import type { BillDetailsTab } from '../constants/tabs.constants';
-import { BILL_DETAILS_TABS } from '../constants/tabs.constants';
-
-export interface BillDetailsTitleProps {
-  /** The active header tab, owned by the surface so it can swap the body. */
-  tab: BillDetailsTab;
-  onTabChange: (tab: BillDetailsTab) => void;
-}
 
 /**
  * BillDetailsTitle — the header concern (snapshots 5–6): the status pill, the
- * invoice number as the page heading, the amount, and the Overview / Activity
- * tabs. The tab selection is owned by the surface ({@link BillDetailsContent})
- * so it can swap the body beneath, so this is a controlled consumer.
+ * vendor name as the page heading, the invoice number, and the amount. It's the
+ * first band in the left pane's {@link BillDetailsForm}, above the Overview /
+ * Activity tabs; the tabs and the body they swap live in the form, not here.
  */
-export function BillDetailsTitle({ tab, onTabChange }: BillDetailsTitleProps) {
+export function BillDetailsTitle() {
   const { bill } = useBillDetail();
 
   return (
@@ -37,11 +28,6 @@ export function BillDetailsTitle({ tab, onTabChange }: BillDetailsTitleProps) {
         </div>
         <Money cents={bill.amount_cents} currency={bill.currency} className="text-xl" />
       </div>
-      <Tabs
-        tabs={[...BILL_DETAILS_TABS]}
-        value={tab}
-        onValueChange={(value) => onTabChange(value as BillDetailsTab)}
-      />
     </div>
   );
 }

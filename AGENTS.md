@@ -275,9 +275,21 @@ return (await fetch(url)).json() as BillModel; // cast instead of runtime proof
 
 ### `apps/web` — the product
 
-Deep dive: [ANALYSIS §3 scope](docs/ANALYSIS.md#3-scope), [§6 simulation strategy](docs/ANALYSIS.md#6-simulation-strategy-make-the-fakes-feel-real)
+Deep dive: [ANALYSIS §3 scope](docs/ANALYSIS.md#3-scope), [§6 simulation strategy](docs/ANALYSIS.md#6-simulation-strategy-make-the-fakes-feel-real).
+Client-side React specifics (Activity mode, the `cn`/twMerge merge, value-maps
+over enums): [docs/react-client-patterns.md](docs/react-client-patterns.md).
 
 - Server Components by default; fetch data server-side for tables/pages.
+- **Server → client via the provider, not the drill.** Once a screen has a
+  context provider, any server-resolved data that shares that screen's concern is
+  passed _into the provider_ and read off the context by whichever descendant needs
+  it — never prop-drilled through intervening layout that only forwards it. Seed
+  the whole server payload on the provider (the entity, its reference catalogs, a
+  directory, a resolved URL); intervening frames stay ignorant of props they don't
+  use. **Exception:** a computation that needs a server-only secret cannot move
+  into a `"use client"` context — it must run in the RSC page and only its finished
+  result crosses over (e.g. a public document URL is resolved on the page because
+  `SUPABASE_URL` is server-only, then handed to the provider as a plain string).
 - All mutations go through zod-guarded server code (route handlers / server
   actions). **No client-side Supabase access, ever** — DB shape is not the contract.
 - Bill/payment status changes only via the transition helper — no direct status writes.
