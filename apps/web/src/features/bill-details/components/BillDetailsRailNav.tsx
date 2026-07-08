@@ -3,7 +3,6 @@
 import { cn } from '@ramps/ui/cn';
 import { Kbd } from '@ramps/ui/Kbd';
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
 
 import { useRailActive } from '../context/RailActive.context';
 
@@ -12,56 +11,29 @@ import { useRailActive } from '../context/RailActive.context';
  * card above/below the active bill in the rail's visual order.
  *
  * The shortcuts are the ARROWS — ↑ for Prev, ↓ for Next — because the rail
- * reads top-to-bottom: the key's direction is the hop's direction. Both steps
- * are real `<a href>` LINKS, not `router.push` calls, and the shortcuts fire
- * them by CLICKING the anchor (`ref.click()`) rather than routing directly:
- * a synthetic anchor click walks the same document-capture path as a pointer
- * click, so the unsaved-changes guard can veto a keyboard hop exactly like a
- * clicked one. Keys are ignored while the user is typing in a field or a
- * dialog is open (fields and dropdowns own their arrows). An end of the list
- * renders the label disabled (frame 1's muted "Prev") instead of dropping it.
+ * reads top-to-bottom: the key's direction is the hop's direction. The arrow
+ * KEYS are bound document-wide by {@link useUpDownNavigation} (via the
+ * provider), not here: they move the optimistic pill one card instantly and
+ * DEBOUNCE the actual route change — so tapping ↓↓↓ skims three cards and
+ * commits ONE navigation once the keys settle. This footer only renders the
+ * `↑`/`↓` HINTS and the clickable Prev/Next.
+ *
+ * The footer's own Prev/Next are real `<a href>` LINKS pointing at the ids the
+ * context derives around the CURRENT pill — so mid-skim they track the pill,
+ * not the page. Clicking one is a DIRECT hop (`setActiveId` cancels any queued
+ * skim). An end of the list renders the label disabled (frame 1's muted
+ * "Prev") instead of dropping it.
  */
-export interface BillDetailsRailNavProps {
-  /** The previous card's bill id, or null at the top of the list. */
-  prevId: string | null;
-  /** The next card's bill id, or null at the bottom. */
-  nextId: string | null;
-}
+export function BillDetailsRailNav() {
+  const { prevId, nextId, setActiveId } = useRailActive();
 
-/** True when the key belongs to something else: a field, or an open dialog. */
-function isCapturedElsewhere(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  if (target.closest('input, textarea, select, [contenteditable="true"]')) return true;
-  return document.querySelector('[role="dialog"]') !== null;
-}
-
-export function BillDetailsRailNav({ prevId, nextId }: BillDetailsRailNavProps) {
-  const prevRef = useRef<HTMLAnchorElement>(null);
-  const nextRef = useRef<HTMLAnchorElement>(null);
-  const { setActiveId } = useRailActive();
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-      if (isCapturedElsewhere(event.target)) return;
-      const anchor = event.key === 'ArrowDown' ? nextRef.current : prevRef.current;
-      if (!anchor) return;
-      event.preventDefault();
-      anchor.click(); // through the guard's capture listener, like any click
-    }
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, []);
-
-  const step = (label: string, id: string | null, key: string, ref: typeof prevRef) =>
+  const step = (label: string, id: string | null, key: string) =>
     id ? (
       <Link
-        ref={ref}
         href={`/bills/${id}`}
-        // Report the hop to the rail's optimistic active state, so the
-        // floating pill glides to the target card before the route lands.
-        // A guard-vetoed click never reaches here — the pill stays put.
+        // A direct footer click is its own navigation — point the pill and
+        // drop any pending keyboard skim. A guard-vetoed click never reaches
+        // here, so the pill stays put on a blocked hop.
         onClick={() => setActiveId(id)}
         className={cn('gap-rui-2 text-ink text-sm flex items-center', 'hover:underline')}
       >
@@ -77,8 +49,8 @@ export function BillDetailsRailNav({ prevId, nextId }: BillDetailsRailNavProps) 
   return (
     // h-14 matches the form footer's band across the border, one shared floor line.
     <div className="border-bone px-rui-4 h-14 flex shrink-0 items-center justify-between border-t">
-      {step('Prev', prevId, '↑', prevRef)}
-      {step('Next', nextId, '↓', nextRef)}
+      {step('Prev', prevId, '↑')}
+      {step('Next', nextId, '↓')}
     </div>
   );
 }

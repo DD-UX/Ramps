@@ -2,7 +2,13 @@ import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
 import { describe, expect, it } from 'vitest';
 
-import { adjacentBills, groupBillsByStatus, railStatusesFor } from './rail.helpers';
+import {
+  groupBillsByStatus,
+  railAnchorAttrs,
+  railAnchorId,
+  railOrderedIds,
+  railStatusesFor,
+} from './rail.helpers';
 
 /**
  * The rail helpers only read `id` + `status` off a row; the fixtures carry just
@@ -58,22 +64,24 @@ describe('groupBillsByStatus', () => {
   });
 });
 
-describe('adjacentBills', () => {
-  const groups = groupBillsByStatus(
-    [bill('a', 'missing_info'), bill('b', 'draft'), bill('c', 'draft')],
-    ['missing_info', 'draft'],
-  );
-
-  it('walks the grouped (visual) order across section boundaries', () => {
-    expect(adjacentBills(groups, 'b')).toEqual({
-      prev: bill('a', 'missing_info'),
-      next: bill('c', 'draft'),
-    });
+describe('railOrderedIds', () => {
+  it('flattens the grouped sections into the visual top-to-bottom order', () => {
+    const groups = groupBillsByStatus(
+      [bill('b', 'draft'), bill('a', 'missing_info'), bill('c', 'draft')],
+      ['missing_info', 'draft'],
+    );
+    // 'a' first (its section sorts first), then the drafts in row order.
+    expect(railOrderedIds(groups)).toEqual(['a', 'b', 'c']);
   });
+});
 
-  it('is null at the ends and for an active id not in the list', () => {
-    expect(adjacentBills(groups, 'a').prev).toBeNull();
-    expect(adjacentBills(groups, 'c').next).toBeNull();
-    expect(adjacentBills(groups, 'zz')).toEqual({ prev: null, next: null });
+describe('rail anchor tag', () => {
+  // The card stamps the attr and the provider queries it — one id, so the
+  // stamp and the selector must always agree on a given bill.
+  it('the stamped attribute matches its own selector', () => {
+    const id = 'b0000000-0000-0000-0000-00000000d001';
+    const attrs = railAnchorAttrs(id);
+    expect(attrs).toEqual({ 'data-rail-anchor': id });
+    expect(railAnchorId(id)).toBe(`data-rail-anchor="${id}"`);
   });
 });

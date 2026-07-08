@@ -13,6 +13,7 @@ import { PRESS_MOTION } from '../constants/press-motion.constants';
 import { RAIL_ACTIVE_LAYOUT_ID } from '../constants/rail-active.constants';
 import { useRailActive } from '../context/RailActive.context';
 import { billTitle } from '../helpers/bill-title.helpers';
+import { railAnchorAttrs } from '../helpers/rail.helpers';
 
 /**
  * One bill card in the detail screen's rail. Split out of the (server)
@@ -27,10 +28,10 @@ import { billTitle } from '../helpers/bill-title.helpers';
  * The active state is a FLOATING background: one shared-layout `motion.span`
  * ({@link RAIL_ACTIVE_LAYOUT_ID}) that only the active card mounts. Which
  * card that is comes from {@link useRailActive}'s optimistic id — a click
- * reports the card immediately, so the limestone pill glides from the old
- * record to the new one while the route is still loading. If the guard
- * swallows the click (dirty form), the click handler never runs and the pill
- * stays put.
+ * reports the card immediately (`setActiveId`), so the limestone pill glides
+ * from the old record to the new one while the route is still loading. If the
+ * guard swallows the click (dirty form), the click handler never runs and the
+ * pill stays put.
  */
 export interface BillDetailsRailItemProps {
   bill: BillListItemType;
@@ -49,6 +50,9 @@ export function BillDetailsRailItem({ bill }: BillDetailsRailItemProps) {
       href={`/bills/${bill.id}`}
       aria-current={active ? 'page' : undefined}
       onClick={() => setActiveId(bill.id)}
+      // Tags the anchor so the debounced ↑/↓ commit can find and click THIS
+      // card's own link — a soft hop that still passes the unsaved-changes guard.
+      {...railAnchorAttrs(bill.id)}
       {...PRESS_MOTION}
       // `isolate` forces a stacking context so the -z-10 highlight stays
       // INSIDE this card (above the rail's white, below the card's content)

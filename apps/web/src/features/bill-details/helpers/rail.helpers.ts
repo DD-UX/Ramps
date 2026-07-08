@@ -6,11 +6,15 @@ import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
  *
  * The detail screen's left rail (frame 1) lists the open bill's CATEGORY: the
  * same status group the Bill Pay tab bar files it under. These helpers answer
- * the three questions the rail asks — which statuses is that (`railStatusesFor`),
- * how do the fetched bills fold into the rail's status-labelled sections
- * (`groupBillsByStatus`), and where do Prev/Next go (`adjacentBills`) — as pure
- * functions over the rows the page already fetched, so the rail component stays
- * a dumb renderer and the answers are unit-testable without a DB.
+ * the rail's questions — which statuses is that (`railStatusesFor`), how do
+ * the fetched bills fold into the rail's status-labelled sections
+ * (`groupBillsByStatus`), and what is the rail's flat visual order
+ * (`railOrderedIds`) — as pure functions over the rows the page already
+ * fetched, so the components stay dumb renderers and the answers are
+ * unit-testable without a DB.
+ *
+ * Stepping that order (↑/↓ Prev/Next) lives in `useUpDownNavigation`, which
+ * takes `railOrderedIds` as its item list.
  */
 
 /**
@@ -59,18 +63,25 @@ export function groupBillsByStatus(
 }
 
 /**
- * Prev/Next targets for the rail's footer, walking the bills in the ORDER THE
- * RAIL SHOWS THEM (the grouped order, not the raw query order — Next must land
- * on the card visually below the active one). Ends are `null` (first bill has
- * no Prev); an active id that isn't in the list (just-archived, filtered out)
- * disables both rather than guessing.
+ * The rail's flat VISUAL order — the grouped sections read top to bottom, as
+ * ids. This is the one list ↑/↓ skimming and the Prev/Next footer both walk,
+ * computed once by the (server) rail and handed to the client provider.
  */
-export function adjacentBills(
-  groups: readonly RailGroup[],
-  activeId: BillListItemType['id'],
-): { prev: BillListItemType | null; next: BillListItemType | null } {
-  const ordered = groups.flatMap((group) => group.bills);
-  const index = ordered.findIndex((bill) => bill.id === activeId);
-  if (index === -1) return { prev: null, next: null };
-  return { prev: ordered[index - 1] ?? null, next: ordered[index + 1] ?? null };
+export function railOrderedIds(groups: readonly RailGroup[]): string[] {
+  return groups.flatMap((group) => group.bills.map((bill) => bill.id));
+}
+
+/**
+ * The `data-rail-anchor` marker a rail card stamps on its `<Link>`, so the
+ * debounced ↑/↓ commit can find and click that exact anchor. One name, two
+ * sites: {@link ../components/BillDetailsRailItem} spreads it as a prop, the
+ * provider queries `a[data-rail-anchor="<id>"]` — keeping the string honest.
+ */
+export function railAnchorAttrs(id: string): { 'data-rail-anchor': string } {
+  return { 'data-rail-anchor': id };
+}
+
+/** The CSS attribute selector body matching {@link railAnchorAttrs} for `id`. */
+export function railAnchorId(id: string): string {
+  return `data-rail-anchor="${id}"`;
 }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { BILL_STATUS_LABEL } from '../constants/status-label.constants';
 import { RailActiveProvider } from '../context/RailActive.context';
-import { adjacentBills, groupBillsByStatus } from '../helpers/rail.helpers';
+import { groupBillsByStatus, railOrderedIds } from '../helpers/rail.helpers';
 import { BillDetailsRailItem } from './BillDetailsRailItem';
 import { BillDetailsRailNav } from './BillDetailsRailNav';
 
@@ -34,7 +34,10 @@ export interface BillDetailsRailProps {
 
 export function BillDetailsRail({ bills, statuses, activeId }: BillDetailsRailProps) {
   const groups = groupBillsByStatus(bills, statuses);
-  const { prev, next } = adjacentBills(groups, activeId);
+  // The flat visual order — the one list ↑/↓ skimming and Prev/Next both walk.
+  // Handed to the client provider so a skim can step past the single hop the
+  // server would otherwise know about.
+  const orderedIds = railOrderedIds(groups);
 
   return (
     <aside
@@ -54,8 +57,9 @@ export function BillDetailsRail({ bills, statuses, activeId }: BillDetailsRailPr
 
       {/* The provider carries the OPTIMISTIC active id (which card holds the
           floating limestone pill) — clicks/arrows move it instantly, the
-          server prop re-syncs it when the hop's page lands. */}
-      <RailActiveProvider initialActiveId={activeId}>
+          server prop re-syncs it when the hop's page lands. It owns the
+          debounced ↑/↓ skim too, so it needs the rail's full visual order. */}
+      <RailActiveProvider initialActiveId={activeId} orderedIds={orderedIds}>
         <nav className="px-rui-2 pb-rui-3 gap-rui-4 min-h-0 flex flex-1 flex-col overflow-auto">
           {groups.map((group) => (
             <section key={group.status} className="gap-rui-1 flex flex-col">
@@ -73,7 +77,7 @@ export function BillDetailsRail({ bills, statuses, activeId }: BillDetailsRailPr
           ))}
         </nav>
 
-        <BillDetailsRailNav prevId={prev?.id ?? null} nextId={next?.id ?? null} />
+        <BillDetailsRailNav />
       </RailActiveProvider>
     </aside>
   );
