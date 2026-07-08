@@ -13,7 +13,7 @@ import type { PropsWithChildren } from 'react';
 export default function BillDetailLayout({ children }: PropsWithChildren) {
   return (
     <div className="grid h-full grid-rows-[52px_minmax(0,1fr)]">
-      <div className="gap-rui-3 px-rui-6 pt-rui-2 border-bone flex items-center border-b">
+      <div className="gap-rui-3 px-rui-6 border-bone flex items-center border-b">
         <Link href="/bills" aria-label="Back to Bill Pay">
           <IconButton
             label="Back to Bill Pay"
