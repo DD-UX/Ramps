@@ -1,5 +1,5 @@
-import type { BadgeProps } from '@ramps/ui/Badge';
 import type { BillApprovalStepType } from '@ramps/schemas/bills';
+import type { BadgeProps } from '@ramps/ui/Badge';
 
 /**
  * How each approval step's status renders in the approver chain (snapshot 10).

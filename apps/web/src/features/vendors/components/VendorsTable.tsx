@@ -69,13 +69,11 @@ const COLUMNS: TableColumn<VendorListItemType>[] = [
     align: 'center',
     sticky: 'right',
     // The trailing row-action menu from the design. Disabled placeholder — the
-    // per-vendor actions aren't wired yet. `stopPropagation` keeps a click here
-    // from also firing the row's navigate-to-detail.
-    cell: () => (
-      <div onClick={(event) => event.stopPropagation()}>
-        <IconButton label="Vendor actions" icon={<MoreVertical size={16} />} disabled />
-      </div>
-    ),
+    // per-vendor actions aren't wired yet. No click shield needed: the browser
+    // never dispatches click events from a disabled button, so a press here
+    // can't bubble into the row's navigate-to-detail. When the menu is wired,
+    // its own onClick must `stopPropagation` to keep that behavior.
+    cell: () => <IconButton label="Vendor actions" icon={<MoreVertical size={16} />} disabled />,
   },
 ];
 

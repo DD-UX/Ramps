@@ -2,7 +2,7 @@
 
 import type { BillEditFormType } from '@ramps/schemas/bills';
 import { FieldInput, type FieldInputProps } from '@ramps/ui/FieldInput';
-import { useFormContext, type FieldPath } from 'react-hook-form';
+import { type FieldPath, useFormContext } from 'react-hook-form';
 
 /**
  * A text/date field wired to a react-hook-form field by name, built on the design

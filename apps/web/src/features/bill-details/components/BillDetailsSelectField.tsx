@@ -2,7 +2,7 @@
 
 import type { BillEditFormType } from '@ramps/schemas/bills';
 import { Select, type SelectOption } from '@ramps/ui/Select';
-import { Controller, useFormContext, type FieldPath } from 'react-hook-form';
+import { Controller, type FieldPath, useFormContext } from 'react-hook-form';
 
 /**
  * A `Select` bound to a react-hook-form field by name. Like {@link BillDetailsTextField}

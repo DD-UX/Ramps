@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@ramps/ui/Button';
+import { Card } from '@ramps/ui/Card';
 import { Plus } from '@ramps/ui/icons';
 import { useFieldArray, useWatch } from 'react-hook-form';
 
@@ -12,7 +13,6 @@ import {
 import { BillDetailsLineItemRow, EMPTY_LINE } from './BillDetailsLineItemRow';
 import { BillDetailsLineItemsTotal } from './BillDetailsLineItemsTotal';
 import { BillDetailsSection } from './BillDetailsSection';
-import { Card } from '@ramps/ui/Card';
 
 /**
  * Line items — the coding grid (does-ramp-live-up §07 at ~7:28). A `useFieldArray`

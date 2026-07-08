@@ -1,5 +1,5 @@
-import { listVendors } from '@ramps/sdk/vendors';
 import { createServerSupabase } from '@ramps/sdk/server';
+import { listVendors } from '@ramps/sdk/vendors';
 
 import { VendorsPageContent } from '@/features/vendors/components/VendorsPageContent';
 import { VENDOR_TABS } from '@/features/vendors/constants/vendor-tabs.constants';
