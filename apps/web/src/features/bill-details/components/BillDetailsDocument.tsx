@@ -32,8 +32,11 @@ export function BillDetailsDocument() {
 
   return (
     <div className="gap-rui-3 flex h-full flex-col">
+      {/* h-12 levels this bar with the form pane's pinned header across the
+          divider; items-stretch makes the tab buttons fill the band so their
+          underline stays glued to the bar's border-b. */}
       <Tabs
-        className="px-rui-5"
+        className="px-rui-5 h-12 shrink-0 items-stretch"
         tabs={[...BILL_DETAILS_DOCUMENT_TABS]}
         value={tab}
         onValueChange={(value) => setTab(value as BillDetailsDocumentTab)}

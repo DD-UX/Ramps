@@ -43,7 +43,8 @@ export function BillDetailsRail({ bills, statuses, activeId }: BillDetailsRailPr
       aria-label="Bills in this category"
       className="border-bone w-64 bg-white flex shrink-0 flex-col border-r"
     >
-      <div className="px-rui-4 py-rui-4 shrink-0">
+      {/* h-12 like the header band next door — the rail's top row shares its line. */}
+      <div className="px-rui-4 h-12 flex shrink-0 items-center">
         <Link
           href="/bills"
           className="gap-rui-2 text-ink text-sm font-medium flex items-center hover:underline"

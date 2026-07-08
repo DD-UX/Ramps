@@ -66,7 +66,8 @@ export function BillDetailsRailNav({ prevHref, nextHref }: BillDetailsRailNavPro
     );
 
   return (
-    <div className="border-bone px-rui-4 h-12 flex shrink-0 items-center justify-between border-t">
+    // h-14 matches the form footer's band across the border, one shared floor line.
+    <div className="border-bone px-rui-4 h-14 flex shrink-0 items-center justify-between border-t">
       {step('Prev', prevHref, 'K', prevRef)}
       {step('Next', nextHref, 'J', nextRef)}
     </div>

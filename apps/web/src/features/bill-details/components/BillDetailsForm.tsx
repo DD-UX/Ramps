@@ -68,11 +68,13 @@ export function BillDetailsForm() {
         <BillDetailsTitle />
       </BillDetailsPane>
 
+      {/* Same h-12 band as the document pane's tab bar — the two Tabs rows share
+          one height; items-stretch keeps the underline on the border. */}
       <Tabs
         tabs={[...BILL_DETAILS_TABS]}
         value={tab}
         onValueChange={(value) => setTab(value as BillDetailsTab)}
-        className="px-5"
+        className="px-rui-5 h-12 shrink-0 items-stretch"
       />
       {/* Overview holds the resizable split: form on the white left pane,
             invoice preview on the warm limestone right pane. The panel supplies
@@ -106,8 +108,10 @@ export function BillDetailsForm() {
       </Activity>
       {/* Sticky action bar (snapshot 9): Save draft sits far LEFT with its
           floppy-disk glyph, the status-driven primary far RIGHT — split with
-          space between, not clustered. */}
-      <BillDetailsPane className="border-bone bg-white/80 bottom-0 backdrop-blur sticky z-10 grid grid-flow-col items-center justify-between border-t">
+          space between, not clustered. Fixed h-14 band (py-0 overrides the
+          pane's default padding) so it levels with the rail's Prev/Next
+          footer instead of towering over it. */}
+      <BillDetailsPane className="border-bone bg-white/80 backdrop-blur h-14 py-0 sticky bottom-[-1px] z-10 grid shrink-0 grid-flow-col items-center justify-between border-t">
         <div className="gap-rui-3 flex items-center">
           <Button
             type="button"
