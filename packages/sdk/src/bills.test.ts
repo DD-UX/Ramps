@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   BillNotEditableError,
   countBillsByStatus,
+  createDemoBill,
   listBills,
   saveBill,
   submitBill,
@@ -435,5 +436,224 @@ describe('submitBill', () => {
     await expect(
       submitBill(supabase, 'b0000000-0000-4000-8000-00000000d001', makeSavePayload()),
     ).rejects.toBeInstanceOf(BillNotEditableError);
+  });
+});
+
+/* ────────────────────────────────────────────────────────────────────────
+ * CREATE A BILL — createDemoBill (the demo generator)
+ *
+ * The generator does five things per call: load the catalog (vendors/entities/
+ * users/gl/departments in parallel), insert the header (`.select('id').single()`),
+ * insert the lines, render + upload a PDF to Storage, backfill document_url, and
+ * re-read via getBill. The stub below serves the catalog by table, hands the
+ * header insert a fresh id, records every write, and fakes `.storage`. We assert
+ * the demo contract: only draft/missing_info, a complete PDF is always uploaded,
+ * document_url is backfilled, missing_info blanks the row, and the PO coin flip
+ * lands both ways.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/** Catalog rows keyed by table for the parallel loadDemoCatalog reads. */
+const DEMO_CATALOG: Record<string, unknown[]> = {
+  vendors: [{ id: 'a0000000-0000-4000-8000-0000000000e1', name: 'W.B. Mason' }],
+  entities: [{ id: '22222222-2222-4222-8222-222222222201' }],
+  users: [{ id: '11111111-1111-4111-8111-111111111102' }],
+  gl_accounts: [{ id: '33333333-3333-4333-8333-333333333301' }],
+  departments: [{ id: '44444444-4444-4444-8444-444444444401' }],
+};
+
+const NEW_BILL_ID = 'b0000000-0000-4000-8000-00000000e999';
+
+interface DemoStubResult {
+  ops: { table: string; op: string; payload?: unknown }[];
+  uploads: { path: string; contentType?: string }[];
+  supabase: ServerSupabase;
+}
+
+/**
+ * A createDemoBill-aware Supabase stub. Catalog `select`s resolve per-table from
+ * DEMO_CATALOG; the header insert returns NEW_BILL_ID via `.select().single()`;
+ * getBill's `.maybeSingle()` returns a matching detail row. `.storage.from().upload()`
+ * is recorded and succeeds. `overrides` lets a test blank a catalog table (e.g.
+ * no users) or force an upload error.
+ */
+function makeDemoSupabase(
+  overrides: {
+    catalog?: Partial<Record<string, unknown[]>>;
+    uploadError?: unknown;
+    detailRow?: Record<string, unknown>;
+  } = {},
+): DemoStubResult {
+  const catalog = { ...DEMO_CATALOG, ...overrides.catalog };
+  const ops: DemoStubResult['ops'] = [];
+  const uploads: DemoStubResult['uploads'] = [];
+
+  const from = vi.fn((table: string) => {
+    const builder: Record<string, unknown> = {
+      select() {
+        return builder;
+      },
+      eq() {
+        return builder;
+      },
+      in() {
+        return builder;
+      },
+      order() {
+        return builder;
+      },
+      insert(payload: unknown) {
+        ops.push({ table, op: 'insert', payload });
+        return builder;
+      },
+      update(payload: unknown) {
+        ops.push({ table, op: 'update', payload });
+        return builder;
+      },
+      single() {
+        // Only the header insert calls .select('id').single().
+        return Promise.resolve({ data: { id: NEW_BILL_ID }, error: null });
+      },
+      maybeSingle() {
+        // getBill's re-read — a full detail row for the new bill.
+        return Promise.resolve({
+          data: overrides.detailRow ?? makeDetailRow({ id: NEW_BILL_ID, status: 'draft' }),
+          error: null,
+        });
+      },
+      then(resolve: (v: unknown) => unknown) {
+        // A bare-awaited builder is a catalog read (or a write result).
+        return Promise.resolve({ data: catalog[table] ?? [], error: null }).then(resolve);
+      },
+    };
+    return builder;
+  });
+
+  const storage = {
+    from: vi.fn(() => ({
+      upload: vi.fn((path: string, _bytes: unknown, opts: { contentType?: string }) => {
+        uploads.push({ path, contentType: opts?.contentType });
+        return Promise.resolve({ error: overrides.uploadError ?? null });
+      }),
+    })),
+  };
+
+  return { ops, uploads, supabase: { from, storage } as unknown as ServerSupabase };
+}
+
+describe('createDemoBill', () => {
+  it('mints a draft or missing_info bill, always uploads a PDF, and backfills document_url', async () => {
+    // Force the draft branch so the assertions are deterministic.
+    const rand = vi.spyOn(Math, 'random').mockReturnValue(0.1);
+    try {
+      const stub = makeDemoSupabase();
+      const bill = await createDemoBill(stub.supabase);
+
+      expect(['draft', 'missing_info']).toContain(bill.status);
+
+      // The header insert ran and carried a valid demo source.
+      const header = stub.ops.find((o) => o.table === 'bills' && o.op === 'insert');
+      expect(header).toBeDefined();
+      const headerPayload = header!.payload as Record<string, unknown>;
+      expect(headerPayload.currency).toBe('USD');
+      expect(headerPayload.amount_cents).toBeGreaterThan(0);
+
+      // A complete invoice PDF is ALWAYS uploaded, at <bill_id>.pdf.
+      expect(stub.uploads).toHaveLength(1);
+      expect(stub.uploads[0].path).toBe(`${NEW_BILL_ID}.pdf`);
+      expect(stub.uploads[0].contentType).toBe('application/pdf');
+
+      // document_url is backfilled to the uploaded object path.
+      const backfill = stub.ops
+        .filter((o) => o.table === 'bills' && o.op === 'update')
+        .at(-1);
+      expect((backfill!.payload as Record<string, unknown>).document_url).toBe(
+        `invoices/${NEW_BILL_ID}.pdf`,
+      );
+    } finally {
+      rand.mockRestore();
+    }
+  });
+
+  it('blanks the row for a missing_info bill but still uploads a complete PDF', async () => {
+    // Math.random() >= 0.5 on the first call picks missing_info.
+    const rand = vi.spyOn(Math, 'random').mockReturnValue(0.9);
+    try {
+      const stub = makeDemoSupabase({
+        detailRow: makeDetailRow({
+          id: NEW_BILL_ID,
+          status: 'missing_info',
+          vendor_id: null,
+          vendors: null,
+          invoice_number: null,
+          invoice_date: null,
+          due_date: null,
+        }),
+      });
+      const bill = await createDemoBill(stub.supabase);
+      expect(bill.status).toBe('missing_info');
+
+      const header = stub.ops.find((o) => o.table === 'bills' && o.op === 'insert');
+      const payload = header!.payload as Record<string, unknown>;
+      // The ROW is deliberately sparse for missing_info…
+      expect(payload.vendor_id).toBeNull();
+      expect(payload.invoice_number).toBeNull();
+      expect(payload.due_date).toBeNull();
+      // …but a complete PDF is still drawn and uploaded.
+      expect(stub.uploads).toHaveLength(1);
+    } finally {
+      rand.mockRestore();
+    }
+  });
+
+  it('includes a PO number when the coin flip lands heads (draft branch)', async () => {
+    // First random() (< 0.5) → draft; second (< 0.5) → withPo true.
+    const rand = vi.spyOn(Math, 'random').mockReturnValue(0.0);
+    try {
+      const stub = makeDemoSupabase();
+      await createDemoBill(stub.supabase);
+      const header = stub.ops.find((o) => o.table === 'bills' && o.op === 'insert');
+      expect((header!.payload as Record<string, unknown>).po_number).toMatch(/^PO-\d{4}$/);
+    } finally {
+      rand.mockRestore();
+    }
+  });
+
+  it('omits the PO number when the coin flip lands tails (draft branch)', async () => {
+    // draft (first < 0.5) but withPo false (second >= 0.5). Sequence the flips.
+    const seq = [0.1, 0.9];
+    let i = 0;
+    const rand = vi.spyOn(Math, 'random').mockImplementation(() => seq[i++] ?? 0.4);
+    try {
+      const stub = makeDemoSupabase();
+      await createDemoBill(stub.supabase);
+      const header = stub.ops.find((o) => o.table === 'bills' && o.op === 'insert');
+      expect((header!.payload as Record<string, unknown>).po_number).toBeNull();
+    } finally {
+      rand.mockRestore();
+    }
+  });
+
+  it('does not backfill document_url when the PDF upload fails (no orphaned error)', async () => {
+    const rand = vi.spyOn(Math, 'random').mockReturnValue(0.1);
+    try {
+      const stub = makeDemoSupabase({ uploadError: { message: 'storage down' } });
+      // The bill is still returned — a failed document must not fail the create.
+      const bill = await createDemoBill(stub.supabase);
+      expect(bill.id).toBe(NEW_BILL_ID);
+      const backfill = stub.ops.find(
+        (o) =>
+          o.table === 'bills' &&
+          o.op === 'update' &&
+          'document_url' in (o.payload as Record<string, unknown>),
+      );
+      expect(backfill).toBeUndefined();
+    } finally {
+      rand.mockRestore();
+    }
+  });
+
+  it('throws when there is no user to author the bill', async () => {
+    const stub = makeDemoSupabase({ catalog: { users: [] } });
+    await expect(createDemoBill(stub.supabase)).rejects.toThrow(/user/i);
   });
 });

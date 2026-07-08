@@ -75,6 +75,21 @@ export function createRampsClient(options: RampsClientOptions) {
     },
 
     /**
+     * POST /bills — CREATE A BILL (demo generator). No body: the server mints a
+     * brand-new, believable bill (a random `draft`/`missing_info`, a complete
+     * rendered invoice PDF, and — randomly — a PO number or not) so a tester can
+     * spin up another bill to play with. Returns the created bill so the caller
+     * can route straight into `/bills/:id`.
+     */
+    createDemo(signal?: AbortSignal): Promise<BillMutationResponseType> {
+      return request('/bills', {
+        method: 'POST',
+        schema: BillMutationResponseSchema,
+        signal,
+      });
+    },
+
+    /**
      * PUT /bills/:id/approval-stages — replace a bill's editable approval route
      * with `input`'s stages. Returns the persisted chain (server ids echoed) so
      * the caller can reconcile freshly-added stages against optimistic ones.

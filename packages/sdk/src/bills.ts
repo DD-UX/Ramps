@@ -9,6 +9,7 @@ import {
   canTransitionBill,
 } from '@ramps/schemas/bills';
 
+import { renderInvoicePdf } from './invoice-pdf.js';
 import { toSdkError, type ServerSupabase } from './server.js';
 
 /**
@@ -456,4 +457,236 @@ export async function submitBill(
   const submitted = await getBill(supabase, billId);
   if (!submitted) throw toSdkError({ message: 'Bill vanished after submit', code: 'PGRST116' });
   return submitted;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+ * CREATE A BILL — the demo "give me another bill to test with" generator
+ *
+ * The Bill Pay empty state offers "Create your first bill"; this is its always-
+ * available sibling for people kicking the tyres. One click mints a brand-new,
+ * believable bill so a tester never runs out of things to code, approve, and
+ * schedule. It is DEMO scaffolding, not a product write path — the real
+ * ingestion doors (email/upload/spreadsheet/manual) land bills the user's own
+ * way; this one fabricates a plausible one server-side so there's no data entry.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/** The Storage bucket the generated invoice PDF lands in (public, per the seed). */
+const INVOICE_BUCKET = 'invoices';
+
+/** Pick one element of a non-empty array at random. */
+function pickOne<T>(items: readonly T[]): T {
+  return items[Math.floor(Math.random() * items.length)] as T;
+}
+
+/** A random integer in [min, max]. */
+function randomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/** ISO `YYYY-MM-DD` for `today + offsetDays` (UTC). */
+function isoDay(offsetDays: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
+/** A believable invoice-number stem from a vendor name (letters, upper, >=3). */
+function vendorStem(name: string): string {
+  const letters = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
+  return (letters.slice(0, 4) || 'INV').padEnd(3, 'X');
+}
+
+/**
+ * The catalog rows `createDemoBill` draws from — the seeded vendors, entities,
+ * users, and a couple of coding dimensions. Fetched live (never hardcoded) so
+ * the generator follows whatever the DB actually holds.
+ */
+interface DemoCatalog {
+  vendors: { id: string; name: string }[];
+  entities: { id: string }[];
+  users: { id: string }[];
+  glAccounts: { id: string }[];
+  departments: { id: string }[];
+}
+
+async function loadDemoCatalog(supabase: ServerSupabase): Promise<DemoCatalog> {
+  const [vendors, entities, users, glAccounts, departments] = await Promise.all([
+    supabase.from('vendors').select('id, name').eq('status', 'active'),
+    supabase.from('entities').select('id'),
+    supabase.from('users').select('id').in('role', ['accounts_payable', 'admin']),
+    supabase.from('gl_accounts').select('id').eq('active', true),
+    supabase.from('departments').select('id').eq('active', true),
+  ]);
+
+  for (const res of [vendors, entities, users, glAccounts, departments]) {
+    if (res.error) throw toSdkError(res.error);
+  }
+
+  const catalog: DemoCatalog = {
+    vendors: (vendors.data ?? []) as DemoCatalog['vendors'],
+    entities: (entities.data ?? []) as DemoCatalog['entities'],
+    users: (users.data ?? []) as DemoCatalog['users'],
+    glAccounts: (glAccounts.data ?? []) as DemoCatalog['glAccounts'],
+    departments: (departments.data ?? []) as DemoCatalog['departments'],
+  };
+
+  // `created_by` is a NOT NULL FK — without at least one user we cannot mint a
+  // bill. The other lists degrade gracefully (a vendor-less missing_info draft
+  // is legal; lines can go uncoded), so only the user is a hard requirement.
+  if (catalog.users.length === 0) {
+    throw toSdkError({ message: 'No AP/admin user to author a demo bill', code: 'PGRST116' });
+  }
+  return catalog;
+}
+
+/** A couple of plausible expense descriptions for the generated line items. */
+const DEMO_LINE_DESCRIPTIONS = [
+  'Professional services',
+  'Software subscription',
+  'Office supplies',
+  'Marketing services',
+  'Consulting retainer',
+  'Equipment rental',
+] as const;
+
+const DEMO_MEMOS = [
+  'Monthly service invoice',
+  'Quarterly retainer',
+  'Project milestone billing',
+  'Recurring subscription',
+] as const;
+
+/**
+ * Generate ONE brand-new demo bill, complete with a rendered invoice document.
+ *
+ * What it fabricates:
+ *  - a random `draft` or `missing_info` status. The `missing_info` variant keeps
+ *    a deliberately SPARSE row (no vendor, no dates) — that incompleteness is
+ *    the state's whole point — while its PDF is still drawn complete, exactly
+ *    like the seed's overrides: a real vendor never mails a blank page.
+ *  - random real vendor / entity / author / coding pulled from the live catalog.
+ *  - 1-2 line items summing to the header amount.
+ *  - a PO number ~50% of the time and null otherwise — so a tester exercises the
+ *    optional field both ways without hunting for the right seed row.
+ *
+ * Then it draws the invoice PDF from the COMPLETE document (see
+ * {@link renderInvoicePdf}), uploads it to the public `invoices` bucket at
+ * `<bill_id>.pdf`, and backfills `bills.document_url` so `/bills/[id]` shows the
+ * document side-by-side with the form. Returns the re-read {@link BillDetailType}
+ * so the caller can route straight into the new bill.
+ */
+export async function createDemoBill(supabase: ServerSupabase): Promise<BillDetailType> {
+  const catalog = await loadDemoCatalog(supabase);
+
+  // Coin flips that shape the bill: which lifecycle state, and whether a PO
+  // rides along (the optional-field test). A missing_info draft is the email
+  // door's vendor-less arrival, so it hides the vendor + dates from the ROW.
+  const status: BillStatusType = Math.random() < 0.5 ? 'draft' : 'missing_info';
+  const isMissingInfo = status === 'missing_info';
+  const withPo = Math.random() < 0.5;
+
+  const vendor = catalog.vendors.length > 0 ? pickOne(catalog.vendors) : null;
+  const author = pickOne(catalog.users);
+  const stem = vendor ? vendorStem(vendor.name) : 'INV';
+  const invoiceNumber = `${stem}-${randomInt(1000, 9999)}`;
+  const poNumber = withPo ? `PO-${randomInt(1000, 9999)}` : null;
+  const memo = pickOne(DEMO_MEMOS);
+
+  // 1-2 line items whose amounts define the header total (money is cents).
+  const lineCount = randomInt(1, 2);
+  const lines = Array.from({ length: lineCount }, () => ({
+    description: pickOne(DEMO_LINE_DESCRIPTIONS),
+    amount_cents: randomInt(5, 500) * 1000, // $50-$5,000, whole dollars
+  }));
+  const amountCents = lines.reduce((sum, l) => sum + l.amount_cents, 0);
+
+  const invoiceDate = isoDay(-randomInt(1, 20));
+  const dueDate = isoDay(randomInt(14, 45));
+
+  // Header row. For missing_info we deliberately leave vendor + dates NULL so
+  // the ROW reads as an unmatched, email-ingested draft; the PDF below is still
+  // drawn from the complete values so the document itself never looks fake.
+  const insertHeader = await supabase
+    .from('bills')
+    .insert({
+      vendor_id: isMissingInfo ? null : (vendor?.id ?? null),
+      entity_id: isMissingInfo ? null : (catalog.entities[0]?.id ?? null),
+      created_by: author.id,
+      source: isMissingInfo ? 'email' : 'manual',
+      invoice_number: isMissingInfo ? null : invoiceNumber,
+      invoice_date: isMissingInfo ? null : invoiceDate,
+      due_date: isMissingInfo ? null : dueDate,
+      accounting_date: null,
+      po_number: isMissingInfo ? null : poNumber,
+      amount_cents: amountCents,
+      currency: 'USD',
+      memo,
+      document_url: null,
+      status,
+    })
+    .select('id')
+    .single();
+  if (insertHeader.error) throw toSdkError(insertHeader.error);
+
+  const billId = (insertHeader.data as { id: string }).id;
+
+  // Line items. A draft codes them against a real GL account + department; a
+  // missing_info row leaves them uncoded (the reviewer will code on match).
+  const glAccountId = catalog.glAccounts[0]?.id ?? null;
+  const departmentId = catalog.departments[0]?.id ?? null;
+  const lineRows = lines.map((line, index) => ({
+    bill_id: billId,
+    line_no: index + 1,
+    kind: 'expense' as const,
+    description: line.description,
+    qty: null,
+    unit_price_cents: null,
+    amount_cents: line.amount_cents,
+    gl_account_id: isMissingInfo ? null : glAccountId,
+    department_id: isMissingInfo ? null : departmentId,
+    class_id: null,
+    location_id: null,
+    tax_code_id: null,
+    custom_dimension_id: null,
+    billable: false,
+    coding_source: isMissingInfo ? null : ('user' as const),
+  }));
+  const insertLines = await supabase.from('bill_line_items').insert(lineRows);
+  if (insertLines.error) throw toSdkError(insertLines.error);
+
+  // Render the invoice PDF from the COMPLETE document (never the sparse row),
+  // upload it, and backfill document_url so /bills/[id] shows the document. A
+  // failed upload shouldn't orphan a valid bill, so we only backfill on success.
+  const pdfBytes = await renderInvoicePdf({
+    vendor_name: vendor?.name ?? 'Acme Supply Co.',
+    invoice_number: invoiceNumber,
+    invoice_date: invoiceDate,
+    due_date: dueDate,
+    po_number: poNumber,
+    amount_cents: amountCents,
+    currency: 'USD',
+    memo,
+    line_items: lines.map((line) => ({
+      description: line.description,
+      qty: null,
+      unit_price_cents: null,
+      amount_cents: line.amount_cents,
+    })),
+  });
+
+  const path = `${billId}.pdf`;
+  const upload = await supabase.storage
+    .from(INVOICE_BUCKET)
+    .upload(path, pdfBytes, { contentType: 'application/pdf', upsert: true });
+  if (!upload.error) {
+    const backfill = await supabase
+      .from('bills')
+      .update({ document_url: `${INVOICE_BUCKET}/${path}` })
+      .eq('id', billId);
+    if (backfill.error) throw toSdkError(backfill.error);
+  }
+
+  const created = await getBill(supabase, billId);
+  if (!created) throw toSdkError({ message: 'Bill vanished after create', code: 'PGRST116' });
+  return created;
 }

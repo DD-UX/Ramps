@@ -2,6 +2,7 @@ import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
 
 import { buildTabCounts } from '../helpers/bill-tabs.helpers';
+import { BillsCreateNewBillButton } from './BillsCreateNewBillButton';
 import { BillsTable } from './BillsTable';
 import { BillsTabs } from './BillsTabs';
 import { BillsToolbar } from './BillsToolbar';
@@ -49,7 +50,12 @@ export function BillsPageContent({
   return (
     <div className="bg-white flex flex-1 flex-col">
       <div className="pt-rui-6">
-        <h2 className="font-heading text-2xl text-ink px-rui-6">Bill Pay</h2>
+        <div className="px-rui-6 flex items-start justify-between">
+          <h2 className="font-heading text-2xl text-ink">Bill Pay</h2>
+          {/* Self-contained "Create demo bill" CTA — mints another demo bill to
+              test with, no props, owns its own loading + navigation. */}
+          <BillsCreateNewBillButton />
+        </div>
         <BillsTabs tabs={tabs} activeCode={activeCode} counts={tabCounts} />
       </div>
       <BillsToolbar initialSearch={search} />
