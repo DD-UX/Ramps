@@ -1,9 +1,9 @@
 import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
-import type { BillDetailType } from '@ramps/schemas/bills';
+import type { BillDetailType, BillListItemType, BillStatusType } from '@ramps/schemas/bills';
 import { IdSchema } from '@ramps/schemas/primitives';
 import type { UserType } from '@ramps/schemas/users';
 import { listBillRefs } from '@ramps/sdk/bill-refs';
-import { getBill } from '@ramps/sdk/bills';
+import { getBill, listBills } from '@ramps/sdk/bills';
 import { createServerSupabase } from '@ramps/sdk/server';
 import { listUsers } from '@ramps/sdk/users';
 import { cache } from 'react';
@@ -47,3 +47,17 @@ export const getUsers = cache(async (): Promise<UserType[]> => {
   const supabase = createServerSupabase();
   return listUsers(supabase);
 });
+
+/**
+ * The left rail's company: every bill in the open bill's status group (the same
+ * `status IN (…)` the Bill Pay tab uses), due-date-ordered by the facade. One
+ * call per request — `cache()` here is for parity with the loaders above more
+ * than dedup (the statuses array is a fresh reference per request anyway).
+ */
+export const getRailBills = cache(
+  async (statuses: readonly BillStatusType[]): Promise<BillListItemType[]> => {
+    const supabase = createServerSupabase();
+    const { bills } = await listBills(supabase, { statuses });
+    return bills;
+  },
+);

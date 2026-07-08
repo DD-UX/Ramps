@@ -3,6 +3,7 @@
 import type { BillEditFormType } from '@ramps/schemas/bills';
 import { Button } from '@ramps/ui/Button';
 import { EmptyState } from '@ramps/ui/EmptyState';
+import { FieldError } from '@ramps/ui/FieldError';
 import { ActivityIcon, Save } from '@ramps/ui/icons';
 import { Tabs } from '@ramps/ui/Tabs';
 import { Activity, useState } from 'react';
@@ -16,7 +17,9 @@ import {
   type BillDetailsTab,
 } from '../constants/tabs.constants';
 import { useBillDetail } from '../context/BillDetail.context';
+import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
 import { BillDetailsApprovals } from './BillDetailsApprovals';
+import { BillDetailsHeader } from './BillDetailsHeader';
 import { BillDetailsInvoiceInfo } from './BillDetailsInvoiceInfo';
 import { BillDetailsLineItems } from './BillDetailsLineItems';
 import { BillDetailsMemo } from './BillDetailsMemo';
@@ -37,10 +40,17 @@ import { BillDetailsVendor } from './BillDetailsVendor';
  * whole form against the zod resolver and logs the parsed values — no write yet.
  * The primary action's label tracks the bill's status (Create bill / Approve /
  * Schedule payment …).
+ *
+ * "Save draft" persists whatever the approvals section staged onto the
+ * context's `pendingApprovalStagesRef` (route edits no longer PUT per change).
+ * The flow itself lives in {@link useSaveBillDraft} — shared with the
+ * unsaved-changes guard's "Save draft" exit — this footer only renders its
+ * own trigger + inline error.
  */
 export function BillDetailsForm() {
   const { form, bill } = useBillDetail();
   const [tab, setTab] = useState<BillDetailsTab>(BILL_DETAILS_TAB.OVERVIEW);
+  const { saveDraft, saving: savingDraft, error: saveError } = useSaveBillDraft();
 
   const onSubmit = (values: BillEditFormType) => {
     // Persistence is out of scope for this pass — surface the validated payload.
@@ -51,7 +61,10 @@ export function BillDetailsForm() {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="gap-rui-4 flex h-full flex-col">
-      <BillDetailsPane>
+      {/* The compact identity row (avatar · Draft · title) pins to the pane's
+          top while the form scrolls under it — frame 1's scrolled state. */}
+      <BillDetailsHeader />
+      <BillDetailsPane className="py-0">
         <BillDetailsTitle />
       </BillDetailsPane>
 
@@ -94,10 +107,19 @@ export function BillDetailsForm() {
       {/* Sticky action bar (snapshot 9): Save draft sits far LEFT with its
           floppy-disk glyph, the status-driven primary far RIGHT — split with
           space between, not clustered. */}
-      <BillDetailsPane className="border-bone bg-white/80 py-rui-3 bottom-0 backdrop-blur sticky z-10 grid grid-flow-col items-center justify-between border-t">
-        <Button type="button" variant="underline" leadingIcon={<Save size={16} />}>
-          Save draft
-        </Button>
+      <BillDetailsPane className="border-bone bg-white/80 bottom-0 backdrop-blur sticky z-10 grid grid-flow-col items-center justify-between border-t">
+        <div className="gap-rui-3 flex items-center">
+          <Button
+            type="button"
+            variant="underline"
+            leadingIcon={<Save size={16} />}
+            onClick={() => void saveDraft()}
+            disabled={savingDraft}
+          >
+            {savingDraft ? 'Saving…' : 'Save draft'}
+          </Button>
+          <FieldError size="sm">{saveError}</FieldError>
+        </div>
         <Button type="submit" variant="primary" keys={['⌘', '↵']}>
           {primaryLabel}
         </Button>

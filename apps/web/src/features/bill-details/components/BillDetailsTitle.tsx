@@ -1,33 +1,17 @@
 'use client';
 
-import { Money } from '@ramps/ui/Money';
-import { StatusPill } from '@ramps/ui/StatusPill';
-
 import { useBillDetail } from '../context/BillDetail.context';
+import { billTitle } from '../helpers/bill-title.helpers';
 
 /**
- * BillDetailsTitle — the header concern (snapshots 5–6): the status pill, the
- * vendor name as the page heading, the invoice number, and the amount. It's the
- * first band in the left pane's {@link BillDetailsForm}, above the Overview /
- * Activity tabs; the tabs and the body they swap live in the form, not here.
+ * BillDetailsTitle — the big page title (frame 06): one heading, Ramp's exact
+ * words — "Clarity Online INV# 4072". Status and amount moved OUT of here: the
+ * lifecycle word lives in the pinned {@link BillDetailsHeader} row above, and
+ * the money belongs to the line items' Invoice total + the invoice preview —
+ * the frames show a bare title, so this is one.
  */
 export function BillDetailsTitle() {
   const { bill } = useBillDetail();
 
-  return (
-    <div className="gap-rui-3 flex flex-col">
-      <div className="gap-rui-3 flex items-center justify-between">
-        <div className="gap-rui-2 flex items-center">
-          <StatusPill status={bill.status} />
-          <h2 className="font-heading text-2xl text-ink">
-            {bill.vendor_name ?? 'Unmatched vendor'}
-          </h2>
-          {bill.invoice_number && (
-            <span className="text-sm font-body text-hushed">#{bill.invoice_number}</span>
-          )}
-        </div>
-        <Money cents={bill.amount_cents} currency={bill.currency} className="text-xl" />
-      </div>
-    </div>
-  );
+  return <h2 className="font-heading text-ink text-3xl">{billTitle(bill)}</h2>;
 }
