@@ -70,7 +70,7 @@ export type EntityType = z.infer<typeof EntitySchema>;
 
 /**
  * Risk flags — the red ↳ annotation rows under a bill in the table (findings
- * §2): "Ramp identified $5,660.00 of overbilling for this invoice", "possible
+ * §2): "Ramps identified $5,660.00 of overbilling for this invoice", "possible
  * duplicate of INV# 8960", fraud warnings. A flag optionally points at the
  * RELATED bill (the duplicate's original) — that reference is what the
  * `TableAnnotationLink` in the UI kit navigates to.

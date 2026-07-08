@@ -249,7 +249,7 @@ export interface TableProps<T, K extends string | number = string> {
    * Per-row annotation renderer: returns content to display as an indented
    * callout row beneath a parent row (flagged bills, fraud alerts, duplicate
    * warnings). The annotation row is not selectable and does not receive hover.
-   * Vetted from frames: "Ramp identified $5,660.00 of overbilling for this invoice"
+   * Vetted from frames: "Ramps identified $5,660.00 of overbilling for this invoice"
    * (full-line link), "This draft may be a duplicate of INV# 8960" (partial link).
    */
   getRowAnnotation?: (row: T) => ReactNode | null | undefined;

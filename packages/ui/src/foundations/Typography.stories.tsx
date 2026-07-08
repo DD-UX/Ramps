@@ -88,7 +88,7 @@ export const TextColors: Story = {
       </div>
       <div className="gap-rui-4 flex items-baseline">
         <Label>text-alert · flagged bills</Label>
-        <p className="text-sm font-body text-alert">Ramp identified $5,660.00 of overbilling.</p>
+        <p className="text-sm font-body text-alert">Ramps identified $5,660.00 of overbilling.</p>
       </div>
     </div>
   ),

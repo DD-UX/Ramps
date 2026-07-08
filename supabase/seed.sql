@@ -162,7 +162,7 @@ insert into bills (id, vendor_id, entity_id, created_by, source, invoice_number,
 -- ---------------------------------------------------------------------------
 insert into bill_flags (id, bill_id, type, message, related_bill_id, amount_cents, dismissed) values
   ('c0000000-0000-0000-0000-00000000f001'::uuid, 'b0000000-0000-0000-0000-00000000d010'::uuid, 'duplicate',   'Possible duplicate of INV# WBM-4471', 'b0000000-0000-0000-0000-00000000d001'::uuid, null,   false),
-  ('c0000000-0000-0000-0000-00000000f002'::uuid, 'b0000000-0000-0000-0000-00000000d008'::uuid, 'overbilling', 'Ramp identified $566.00 of overbilling for this invoice', null, 56600, false);
+  ('c0000000-0000-0000-0000-00000000f002'::uuid, 'b0000000-0000-0000-0000-00000000d008'::uuid, 'overbilling', 'Ramps identified $566.00 of overbilling for this invoice', null, 56600, false);
 
 -- ---------------------------------------------------------------------------
 -- Line items (bills.ts → BillLineItemSchema) — coding at the LINE level.

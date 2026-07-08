@@ -646,7 +646,7 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     await expect(ciscoRow).toBeVisible();
     const ciscoAnnotation = annotationRows.first();
     await expect(ciscoAnnotation).toBeVisible();
-    await expect(ciscoAnnotation).toContainText('Ramp identified $5,660.00 of overbilling');
+    await expect(ciscoAnnotation).toContainText('Ramps identified $5,660.00 of overbilling');
   });
 
   /**
@@ -744,7 +744,7 @@ test.describe('Table structure fidelity (frame 6 vs the rewrite)', () => {
     const ciscoDataRow = page
       .locator('#storybook-root tbody tr')
       .filter({ hasText: 'Cisco Systems' })
-      .filter({ hasNotText: 'Ramp identified' }); // Exclude the annotation row
+      .filter({ hasNotText: 'Ramps identified' }); // Exclude the annotation row
     await expect(ciscoDataRow).toBeVisible();
     await ciscoDataRow.click({ position: { x: 100, y: 10 } }); // Click in the middle
     await page.waitForTimeout(100);

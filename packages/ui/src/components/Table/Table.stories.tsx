@@ -646,7 +646,7 @@ export const PaginationPinnedToFloor: StoryObj = {
 /**
  * **Flagged bills with annotations** — per-row callout lines for fraud alerts,
  * duplicate warnings, and overbilling notices. Vetted from video frames:
- * - "Ramp identified $5,660.00 of overbilling for this invoice" (full-line link)
+ * - "Ramps identified $5,660.00 of overbilling for this invoice" (full-line link)
  * - "This draft may be a duplicate of INV# 8960. Make sure you're not paying twice."
  *   (only "INV# 8960" linked)
  *
@@ -711,7 +711,7 @@ export const FlaggedBills: StoryObj = {
               // Cisco Systems: full-line link
               return (
                 <TableAnnotationLink href="#overbilling">
-                  Ramp identified $5,660.00 of overbilling for this invoice
+                  Ramps identified $5,660.00 of overbilling for this invoice
                 </TableAnnotationLink>
               );
             }

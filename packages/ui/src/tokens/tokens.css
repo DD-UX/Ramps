@@ -118,7 +118,7 @@
 
   /* Alert — the ONE place the product really uses red: the ↳ annotation rows
      under flagged bills (product-overview §01 "This draft may be a duplicate
-     of INV# 8960", §02 "Ramp identified $5,660.00 of overbilling") and the
+     of INV# 8960", §02 "Ramps identified $5,660.00 of overbilling") and the
      red "Overdue" under due dates. RE-VETTED with a max-red-saturation scan
      over the whole text strip (single-pixel probes kept landing between the
      thin strokes): the densest glyph junctions read #8f171e (frame 01) and
