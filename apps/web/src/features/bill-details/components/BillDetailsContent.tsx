@@ -2,7 +2,6 @@
 
 import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
 import type { BillDetailType } from '@ramps/schemas/bills';
-import type { UserType } from '@ramps/schemas/users';
 import { DraggablePanel } from '@ramps/ui/DraggablePanel';
 
 import { BillDetailProvider, useBillDetail } from '../context/BillDetail.context';
@@ -12,8 +11,6 @@ import { BillDetailsForm } from './BillDetailsForm';
 export interface BillDetailsContentProps {
   bill: BillDetailType;
   refs: BillDetailRefsType;
-  /** The approver catalog for the ApprovalsWorkflow (by-role groups + picker). */
-  users: UserType[];
   /** Public URL of the invoice PDF, resolved on the server. */
   documentUrl: string | null;
 }
@@ -31,9 +28,9 @@ export interface BillDetailsContentProps {
  * live inside the left pane's {@link BillDetailsForm}; this surface just frames
  * the split.
  */
-export function BillDetailsContent({ bill, refs, users, documentUrl }: BillDetailsContentProps) {
+export function BillDetailsContent({ bill, refs, documentUrl }: BillDetailsContentProps) {
   return (
-    <BillDetailProvider bill={bill} refs={refs} users={users} documentUrl={documentUrl}>
+    <BillDetailProvider bill={bill} refs={refs} documentUrl={documentUrl}>
       <BillDetailsBody />
     </BillDetailProvider>
   );

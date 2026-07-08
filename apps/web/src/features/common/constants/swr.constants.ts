@@ -28,7 +28,7 @@ export const SWR_GLOBAL_CONFIG: SWRConfiguration = {
 
 /**
  * The shared cache key for the people directory (the approver catalog). Every
- * `useUsers()` caller keys off this, so they all read one cached list and one
- * in-flight request — and the server can seed it by name via `fallbackData`.
+ * `useApproverCandidateUsers()` caller keys off this, so they all read one cached
+ * list and one in-flight request — and the server can seed it via `fallbackData`.
  */
 export const USERS_SWR_KEY = 'USERS_SWR_KEY';

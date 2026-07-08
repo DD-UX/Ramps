@@ -11,7 +11,7 @@ import { listUsers } from '@ramps/sdk/users';
  * Supabase client and reuses the same {@link listUsers} SDK facade the page's
  * server loader uses, returning the already-`.parse()`d {@link UserType}s.
  *
- * This is the SWR fetcher behind {@link useUsers} — SWR dedupes and caches the
+ * This is the SWR fetcher behind {@link useApproverCandidateUsers} — SWR dedupes and caches the
  * result across every records' user dropdown (one read for the whole app,
  * revalidated in the background). Keeping the read a Server Action honours the
  * repo's "no client-side Supabase, ever" rule: the DB client and its secret

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { SWRConfig } from 'swr';
 
 import { BillDetailsContent } from '@/features/bill-details/components/BillDetailsContent';
 import {
@@ -7,6 +8,7 @@ import {
   getUsers,
 } from '@/features/bill-details/data/bill-detail.data';
 import { publicDocumentUrl } from '@/features/bill-details/helpers/document-url.helpers';
+import { USERS_SWR_KEY } from '@/features/common/constants/swr.constants';
 
 /**
  * /bills/[id] — the bill detail / draft-review screen.
@@ -19,6 +21,12 @@ import { publicDocumentUrl } from '@/features/bill-details/helpers/document-url.
  * yields `notFound()`. The invoice PDF's public URL is resolved here (the
  * storage base is a server-only secret) and passed down so the viewer stays a
  * dumb client leaf.
+ *
+ * The approver directory is server-fetched here too, but instead of being
+ * drilled it seeds the SWR cache: `<SWRConfig fallback>` pre-fills
+ * {@link USERS_SWR_KEY} so `useApproverCandidateUsers()` in the approvals picker
+ * paints from the seed with no client refetch (`revalidateIfStale: false`), while
+ * still owning its own read afterwards.
  */
 export default async function BillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,5 +36,9 @@ export default async function BillDetailPage({ params }: { params: Promise<{ id:
 
   const documentUrl = publicDocumentUrl(bill.document_url);
 
-  return <BillDetailsContent bill={bill} refs={refs} users={users} documentUrl={documentUrl} />;
+  return (
+    <SWRConfig value={{ fallback: { [USERS_SWR_KEY]: users } }}>
+      <BillDetailsContent bill={bill} refs={refs} documentUrl={documentUrl} />
+    </SWRConfig>
+  );
 }
