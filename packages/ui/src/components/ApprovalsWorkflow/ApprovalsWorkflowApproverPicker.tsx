@@ -1,10 +1,12 @@
 'use client';
 
 import { Plus } from 'lucide-react';
+import { motion } from 'motion/react';
 import { type ReactNode, type RefObject, useMemo, useState } from 'react';
 
 import { Button } from '../Button/Button';
 import { Checkbox } from '../Checkbox/Checkbox';
+import { PRESS } from '../motion/pressVariants';
 import { Popover } from '../Popover/Popover';
 import { UserAvatars } from '../UserAvatars/UserAvatars';
 import {
@@ -143,13 +145,22 @@ export function ApprovalsWorkflowApproverPicker({
           // the left, breaking the 1 → 2 → ＋ column. Structural rather than a
           // magic pad: it tracks the same tokens, so if the grip resizes the
           // Add row stays aligned.
-          <span className="gap-rui-3 rounded-square px-rui-3 py-rui-2 hover:bg-limestone flex w-full items-center transition-colors">
+          //
+          // A motion.span spreading the SAME `PRESS` preset Button spreads —
+          // NOT a nested `Button`: Popover.Trigger already renders the real
+          // `<button>` around this row, and a button inside a button is
+          // invalid markup. Spreading the shared preset gives the row the
+          // identical hover-lift + tactile squash, tuned from one place.
+          <motion.span
+            {...PRESS}
+            className="gap-rui-3 rounded-square px-rui-3 py-rui-2 hover:bg-limestone flex w-full items-center transition-colors"
+          >
             <span aria-hidden className="-ml-rui-1 size-6 shrink-0" />
             <span aria-hidden className={APPROVALS_CHIP_CLASS}>
               <Plus size={14} />
             </span>
             <span className="text-sm font-heading text-ink">Add approver</span>
-          </span>
+          </motion.span>
         )}
       </Popover.Trigger>
 
