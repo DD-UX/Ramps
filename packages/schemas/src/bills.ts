@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { ApprovalStageSchema } from './approvals.js';
+import { PaymentSchema } from './payments.js';
 import { CurrencyCodeSchema, IdSchema, IsoDateSchema, MoneyCentsSchema } from './primitives.js';
 
 /**
@@ -294,6 +295,13 @@ export const BillDetailSchema = BillWithLineItemsSchema.extend({
    * Empty until an author adds steps. (../approvals → ApprovalStageSchema.)
    */
   approval_stages: z.array(ApprovalStageSchema).default([]),
+  /**
+   * The bill's current payment — the row created when it was scheduled (§6).
+   * Null until a payment exists (every status up to and including `approved`).
+   * Hydrates the "View schedule" modal read-only for a `scheduled` bill; the
+   * detail read embeds the latest payment row. (../payments → PaymentSchema.)
+   */
+  payment: PaymentSchema.nullable().default(null),
 });
 export type BillDetailType = z.infer<typeof BillDetailSchema>;
 
@@ -362,3 +370,39 @@ export const BillMutationResponseSchema = z.object({
   bill: BillDetailSchema,
 });
 export type BillMutationResponseType = z.infer<typeof BillMutationResponseSchema>;
+
+/* ────────────────────────────────────────────────────────────────────────
+ * APPROVE + SCHEDULE — the payment side of the lifecycle
+ *
+ * Approve moves `awaiting_approval → approved` (payment details omitted) OR,
+ * when complete payment details ride along, straight to `scheduled` (a payment
+ * row is created). Schedule payment is the same money-movement write from an
+ * already-`approved` bill. Both share the SCHEDULE payload below — the pay-from
+ * account + the scheduled date; the rail is ACH-only and the amount derives
+ * from the bill, so neither crosses the wire.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The payment-scheduling payload — what "complete payment details" narrows to
+ * once the fixed bits (ACH rail, bill amount) are dropped: the pay-from account
+ * and the scheduled date. Sent as the Approve body (optional — omit to land on
+ * `approved`) and as the Schedule-payment body (required). The server derives
+ * the arrival date ("2 business days") and the amount from the bill.
+ */
+export const SchedulePaymentSchema = z.object({
+  account_id: IdSchema,
+  scheduled_date: IsoDateSchema,
+});
+export type SchedulePaymentType = z.infer<typeof SchedulePaymentSchema>;
+
+/**
+ * The Approve body: the SAME edit-form the save/submit routes take (Approve
+ * persists any last edits first, exactly like submit), plus an OPTIONAL
+ * `schedule`. With `schedule` present and complete, Approve skips straight to
+ * `scheduled` and books the payment; without it, the bill lands on `approved`
+ * and scheduling is a later, explicit step.
+ */
+export const ApproveBillSchema = BillSaveSchema.extend({
+  schedule: SchedulePaymentSchema.nullish(),
+});
+export type ApproveBillType = z.infer<typeof ApproveBillSchema>;

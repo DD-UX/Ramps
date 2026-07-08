@@ -1,8 +1,8 @@
 'use client';
 
 import { Select } from '@ramps/ui/Select';
-import { useState } from 'react';
 
+import { useBillDetail } from '../context/BillDetail.context';
 import { useRefOptions } from '../hooks/useRefOptions';
 import { BillDetailsFormField } from './BillDetailsFormField';
 
@@ -11,12 +11,13 @@ const PAYMENT_METHOD_OPTIONS = [{ value: 'ach', label: 'ACH' }];
 
 /**
  * The pay-from side of the payment section (snapshot 9): the rail (ACH only) and
- * the funding account. Account selection is local UI state — it isn't part of
- * the editable bill schema — so it lives here rather than in the form.
+ * the funding account. The account is SHARED state on the detail context (not
+ * the bill's edit form — a payment is separate from the obligation) so Approve
+ * can gate on it and the Schedule-payment modal edits the same value.
  */
 export function BillDetailsPaymentAccount() {
   const { paymentAccounts } = useRefOptions();
-  const [account, setAccount] = useState('');
+  const { payment, setPayment } = useBillDetail();
 
   return (
     <div className="gap-rui-4 grid grid-cols-2">
@@ -27,8 +28,8 @@ export function BillDetailsPaymentAccount() {
         <Select
           options={paymentAccounts}
           placeholder="Select an account"
-          value={account}
-          onValueChange={setAccount}
+          value={payment.accountId}
+          onValueChange={(accountId) => setPayment({ accountId })}
         />
       </BillDetailsFormField>
     </div>

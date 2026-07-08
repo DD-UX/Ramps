@@ -7,8 +7,10 @@ import {
   type BillSaveType,
   type BillStatusType,
   canTransitionBill,
+  type SchedulePaymentType,
 } from '@ramps/schemas/bills';
 
+import { addBusinessDays } from './arrival.js';
 import { renderInvoicePdf } from './invoice-pdf.js';
 import { toSdkError, type ServerSupabase } from './server.js';
 
@@ -199,7 +201,8 @@ const BILL_DETAIL_SELECT = `
   line_items:bill_line_items ( * ),
   flags:bill_flags!bill_flags_bill_id_fkey ( id, bill_id, type, message, related_bill_id, amount_cents, dismissed ),
   approvals ( id, approver_id, sequence, status, comment, approver:users!approvals_approver_id_fkey ( name ) ),
-  approval_stages ( id, bill_id, sequence, roles:approval_stage_roles ( role ), users:approval_stage_users ( user_id ) )
+  approval_stages ( id, bill_id, sequence, roles:approval_stage_roles ( role ), users:approval_stage_users ( user_id ) ),
+  payments ( id, bill_id, method, account_id, amount_cents, scheduled_date, arrival_date, batch_id, status, failure_reason )
 ` as const;
 
 /** The row shape PostgREST returns for {@link BILL_DETAIL_SELECT}. */
@@ -223,6 +226,8 @@ interface BillDetailRow {
     roles: { role: string }[];
     users: { user_id: string }[];
   }[];
+  /** The bill's payment rows — we keep the most recent as `payment` (§6). */
+  payments: unknown[];
   [key: string]: unknown;
 }
 
@@ -247,7 +252,16 @@ export async function getBill(
   if (!data) return null;
 
   const row = data as unknown as BillDetailRow;
-  const { vendors, entities, line_items, approvals, approval_stages, ...bill } = row;
+  const { vendors, entities, line_items, approvals, approval_stages, payments, ...bill } = row;
+
+  // The detail page shows ONE payment (the current schedule). A bill has at
+  // most one live payment in this flow, but a failed→rescheduled bill could
+  // have several rows — keep the latest by scheduled_date so "View schedule"
+  // reads the one in force. Null when the bill was never scheduled.
+  const latestPayment =
+    [...(payments as { scheduled_date: string }[])].sort((a, b) =>
+      a.scheduled_date < b.scheduled_date ? 1 : -1,
+    )[0] ?? null;
 
   // Flatten the joined labels, sort the lines by number, and lift the approver
   // name out of its embed — then let the schema guard the whole shape.
@@ -277,6 +291,7 @@ export async function getBill(
         roles: stage.roles.map((r) => r.role),
         user_ids: stage.users.map((u) => u.user_id),
       })),
+    payment: latestPayment,
   });
 }
 
@@ -457,6 +472,113 @@ export async function submitBill(
   const submitted = await getBill(supabase, billId);
   if (!submitted) throw toSdkError({ message: 'Bill vanished after submit', code: 'PGRST116' });
   return submitted;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+ * APPROVE + SCHEDULE — the payment side of the lifecycle
+ *
+ * Approve advances a bill out of the approval queue. Schedule payment books the
+ * money movement. Both write a `payments` row (ACH, the bill's amount, arrival
+ * = scheduled + 2 business days) and move the bill to `scheduled`; Approve can
+ * ALSO land on `approved` when no schedule rides along. Every transition is
+ * guarded against the map, so an out-of-lifecycle move raises
+ * {@link BillNotEditableError} → 409, same as the save/submit writes.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Book a `payments` row for a bill: ACH rail, the bill's own amount, arrival
+ * derived from the scheduled date ("2 business days"), status `scheduled`. The
+ * shared write behind both Approve-with-schedule and Schedule payment — neither
+ * caller repeats the arrival math or the ACH/amount defaults.
+ */
+async function insertScheduledPayment(
+  supabase: ServerSupabase,
+  bill: BillDetailType,
+  schedule: SchedulePaymentType,
+): Promise<void> {
+  const payment = await supabase.from('payments').insert({
+    bill_id: bill.id,
+    method: 'ach',
+    account_id: schedule.account_id,
+    amount_cents: bill.amount_cents,
+    scheduled_date: schedule.scheduled_date,
+    arrival_date: addBusinessDays(schedule.scheduled_date),
+    status: 'scheduled',
+  });
+  if (payment.error) throw toSdkError(payment.error);
+}
+
+/**
+ * Approve bill — persist any last edits (Approve is offered while the bill is
+ * still `awaiting_approval`, which is editable), then advance it. Two exits,
+ * per whether COMPLETE payment details rode along:
+ *  - `schedule` present → book the payment and move `→ scheduled` in one step.
+ *  - `schedule` omitted → move `→ approved`; scheduling is a later step.
+ *
+ * Guarded: `saveBill` runs the editable-status guard, and the target move is
+ * checked against `canTransitionBill`, so a bill already past the queue raises
+ * {@link BillNotEditableError} (→ 409). Returns the re-read bill in its new state.
+ */
+export async function approveBill(
+  supabase: ServerSupabase,
+  billId: string,
+  input: BillSaveType,
+  schedule?: SchedulePaymentType | null,
+): Promise<BillDetailType> {
+  // Persist the form first — same as submit. This also runs the editable guard.
+  const saved = await saveBill(supabase, billId, input);
+
+  // With complete payment details, approval books the payment and jumps to
+  // `scheduled`; otherwise it stops at `approved`. Guard the chosen edge.
+  const target: BillStatusType = schedule ? 'scheduled' : 'approved';
+
+  // `scheduled` isn't a direct successor of `awaiting_approval` (the map routes
+  // it through `approved`), so a schedule-at-approve moves in two guarded hops.
+  if (!canTransitionBill(saved.status, 'approved')) {
+    throw new BillNotEditableError(saved.status);
+  }
+
+  const approve = await supabase.from('bills').update({ status: 'approved' }).eq('id', billId);
+  if (approve.error) throw toSdkError(approve.error);
+
+  if (schedule) {
+    await insertScheduledPayment(supabase, saved, schedule);
+    const move = await supabase.from('bills').update({ status: target }).eq('id', billId);
+    if (move.error) throw toSdkError(move.error);
+  }
+
+  const approved = await getBill(supabase, billId);
+  if (!approved) throw toSdkError({ message: 'Bill vanished after approve', code: 'PGRST116' });
+  return approved;
+}
+
+/**
+ * Schedule payment — book the money movement for an already-`approved` bill.
+ * Inserts the `payments` row and moves `approved → scheduled`. Guarded against
+ * the transition map: a bill not sitting on `approved` raises
+ * {@link BillNotEditableError} (→ 409). Returns the re-read `scheduled` bill,
+ * now carrying its `payment` for the read-only "View schedule" modal.
+ */
+export async function schedulePayment(
+  supabase: ServerSupabase,
+  billId: string,
+  schedule: SchedulePaymentType,
+): Promise<BillDetailType> {
+  const existing = await getBill(supabase, billId);
+  if (!existing) throw toSdkError({ message: 'Bill not found', code: 'PGRST116' });
+
+  if (!canTransitionBill(existing.status, 'scheduled')) {
+    throw new BillNotEditableError(existing.status);
+  }
+
+  await insertScheduledPayment(supabase, existing, schedule);
+
+  const move = await supabase.from('bills').update({ status: 'scheduled' }).eq('id', billId);
+  if (move.error) throw toSdkError(move.error);
+
+  const scheduled = await getBill(supabase, billId);
+  if (!scheduled) throw toSdkError({ message: 'Bill vanished after schedule', code: 'PGRST116' });
+  return scheduled;
 }
 
 /* ────────────────────────────────────────────────────────────────────────

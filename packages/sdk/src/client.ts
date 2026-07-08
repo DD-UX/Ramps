@@ -4,11 +4,13 @@ import {
   type SaveApprovalStagesType,
 } from '@ramps/schemas/approvals';
 import {
+  type ApproveBillType,
   BillListResponseSchema,
   type BillListResponseType,
   BillMutationResponseSchema,
   type BillMutationResponseType,
   type BillSaveType,
+  type SchedulePaymentType,
 } from '@ramps/schemas/bills';
 import type { ZodType } from 'zod';
 
@@ -136,6 +138,44 @@ export function createRampsClient(options: RampsClientOptions) {
       signal?: AbortSignal,
     ): Promise<BillMutationResponseType> {
       return request(`/bills/${encodeURIComponent(billId)}/submit`, {
+        method: 'POST',
+        schema: BillMutationResponseSchema,
+        body: input,
+        signal,
+      });
+    },
+
+    /**
+     * POST /bills/:id/approve — APPROVE. Persists the edit form (Approve is
+     * offered while the bill is still editable), then advances it out of the
+     * queue: with a `schedule` in the body it books the payment and lands on
+     * `scheduled`; without, on `approved`. Returns the re-read bill.
+     */
+    approve(
+      billId: string,
+      input: ApproveBillType,
+      signal?: AbortSignal,
+    ): Promise<BillMutationResponseType> {
+      return request(`/bills/${encodeURIComponent(billId)}/approve`, {
+        method: 'POST',
+        schema: BillMutationResponseSchema,
+        body: input,
+        signal,
+      });
+    },
+
+    /**
+     * POST /bills/:id/schedule — SCHEDULE PAYMENT. Books the money movement for
+     * an already-`approved` bill (pay-from account + scheduled date; ACH rail
+     * and the bill's amount are the server's). Moves `approved → scheduled` and
+     * returns the re-read bill now carrying its `payment`.
+     */
+    schedulePayment(
+      billId: string,
+      input: SchedulePaymentType,
+      signal?: AbortSignal,
+    ): Promise<BillMutationResponseType> {
+      return request(`/bills/${encodeURIComponent(billId)}/schedule`, {
         method: 'POST',
         schema: BillMutationResponseSchema,
         body: input,

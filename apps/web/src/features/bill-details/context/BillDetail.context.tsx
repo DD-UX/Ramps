@@ -22,6 +22,7 @@ import { FormProvider, useForm, type UseFormReturn } from 'react-hook-form';
 
 import { isBillPreSubmit } from '../constants/pre-submit.constants';
 import { billToFormDefaults } from '../helpers/form-defaults.helpers';
+import { type PaymentDraft, paymentDraftFor } from '../helpers/payment-completeness.helpers';
 
 /**
  * The one client-side source of truth for the whole `/bills/:id` screen.
@@ -85,6 +86,17 @@ export interface BillDetailContextValue {
   editable: boolean;
   /** Flip the edit mode — "Edit bill" passes true, a successful save passes false. */
   toggleEditable: (next: boolean) => void;
+  /**
+   * The payment slice — pay-from account + the "now/later" schedule choice.
+   * SHARED (not local to the Payment section) so two things can read it: the
+   * footer's Approve, which gates its "→ scheduled" branch on payment
+   * completeness, and the Schedule-payment modal, which edits the same values.
+   * Seeded from the bill's persisted payment when one exists (a `scheduled`
+   * bill), so "View schedule" reads the booked payment read-only.
+   */
+  payment: PaymentDraft;
+  /** Patch the payment slice — the Payment section fields and the modal set it. */
+  setPayment: (next: Partial<PaymentDraft>) => void;
 }
 
 const BillDetailContext = createContext<BillDetailContextValue | null>(null);
@@ -126,6 +138,17 @@ export function BillDetailProvider({ bill, refs, documentUrl, children }: BillDe
   const [editable, setEditable] = useState(() => isBillPreSubmit(bill.status));
   const toggleEditable = useCallback((next: boolean) => setEditable(next), []);
 
+  // The payment slice — seeded from the bill's persisted payment when it has
+  // one (a `scheduled` bill), so the Payment section and "View schedule" read
+  // the booked payment; a never-scheduled bill starts blank. Initializer-only,
+  // like `editable`: the provider is keyed by bill.id, so a rail hop remounts
+  // and re-seeds from the NEW bill rather than carrying the previous slice.
+  const [payment, setPaymentState] = useState<PaymentDraft>(() => paymentDraftFor(bill));
+  const setPayment = useCallback(
+    (next: Partial<PaymentDraft>) => setPaymentState((prev) => ({ ...prev, ...next })),
+    [],
+  );
+
   const value = useMemo<BillDetailContextValue>(
     () => ({
       form,
@@ -136,8 +159,10 @@ export function BillDetailProvider({ bill, refs, documentUrl, children }: BillDe
       pendingApprovalStagesRef,
       editable,
       toggleEditable,
+      payment,
+      setPayment,
     }),
-    [form, bill, refs, documentUrl, editable, toggleEditable],
+    [form, bill, refs, documentUrl, editable, toggleEditable, payment, setPayment],
   );
 
   // Two providers, one form: `BillDetailContext` carries bill + refs (and the

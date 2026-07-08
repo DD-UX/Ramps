@@ -226,6 +226,7 @@ function makeDetailRow(overrides: Record<string, unknown> = {}) {
     flags: [],
     approvals: [],
     approval_stages: [],
+    payments: [],
     ...overrides,
   };
 }

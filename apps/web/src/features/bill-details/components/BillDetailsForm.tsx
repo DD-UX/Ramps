@@ -15,7 +15,11 @@ import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 import { isBillEditable } from '../constants/editable-status.constants';
 import { FOOTER_ACTION_STRATEGIES, resolveFooterAction } from '../constants/footer-action.constants';
 import { isBillPreSubmit } from '../constants/pre-submit.constants';
-import { PRIMARY_ACTION_BY_STATUS } from '../constants/primary-action.constants';
+import {
+  PRIMARY_ACTION,
+  PRIMARY_ACTION_BY_STATUS,
+  resolvePrimaryAction,
+} from '../constants/primary-action.constants';
 import {
   BILL_DETAILS_TAB,
   BILL_DETAILS_TABS,
@@ -23,6 +27,7 @@ import {
 } from '../constants/tabs.constants';
 import { useBillDetail } from '../context/BillDetail.context';
 import { billSubmitReady } from '../helpers/section-completeness.helpers';
+import { useApproveBill } from '../hooks/useApproveBill';
 import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
 import { useSubmitBill } from '../hooks/useSubmitBill';
 import { BillDetailsApprovals } from './BillDetailsApprovals';
@@ -34,6 +39,7 @@ import { BillDetailsPane } from './BillDetailsPane';
 import { BillDetailsPayment } from './BillDetailsPayment';
 import { BillDetailsPurchaseOrder } from './BillDetailsPurchaseOrder';
 import { BillDetailsSaveToast, type SaveToastPhase } from './BillDetailsSaveToast';
+import { BillDetailsScheduleModal } from './BillDetailsScheduleModal';
 import { BillDetailsTitle } from './BillDetailsTitle';
 import { BillDetailsVendor } from './BillDetailsVendor';
 
@@ -66,10 +72,15 @@ export function BillDetailsForm() {
   const { form, bill, editable, toggleEditable } = useBillDetail();
   const [tab, setTab] = useState<BillDetailsTab>(BILL_DETAILS_TAB.OVERVIEW);
   const { saveDraft, saving: savingDraft, error: saveError } = useSaveBillDraft();
-  // Create bill: persist the form + submit for approval + redirect. Only the
-  // pre-submit primary action ("Create bill") drives this; past that the label
-  // is Approve / Schedule payment, which are out of this pass's scope.
+  // Create bill: persist the form + submit for approval + redirect. Drives the
+  // pre-submit primary action ("Create bill") only.
   const { submit, submitting, error: submitError } = useSubmitBill();
+  // Approve: persist the form + advance the bill (→ scheduled when the payment
+  // slice is complete, else → approved). Drives the `awaiting_approval` primary.
+  const { approve, submitting: approving, error: approveError } = useApproveBill();
+  // The schedule/view modal's open state — the `approved` primary opens it to
+  // book a payment, the `scheduled` primary opens it read-only ("View schedule").
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   // The save toast's phase: 'saving' while the flow runs, 'saved' once it
   // resolves ok, null otherwise (a failure falls back to the inline error).
   const [saveToast, setSaveToast] = useState<SaveToastPhase | null>(null);
@@ -156,14 +167,59 @@ export function BillDetailsForm() {
     }
   }, [isValid, form]);
 
+  // Only the pre-submit CREATE flow rides the form's native submit (so Enter /
+  // ⌘↵ works). The post-submit primaries (Approve / Schedule / View) are their
+  // own explicit handlers on a type="button", so a stray Enter can't fire them.
   const onSubmit = () => {
-    // Pre-submit bills CREATE (save + submit for approval + redirect). Past that
-    // the primary action is Approve / Schedule payment — not wired this pass, so
-    // a submit there is a no-op rather than a wrong write.
     if (preSubmit) void submit();
   };
 
+  // The primary CTA, resolved from status into one declarative kind → its label,
+  // click handler, busy state and gating. The footer JSX then renders one button
+  // off this record instead of branching on the status inline.
+  const primaryAction = resolvePrimaryAction(bill.status);
   const primaryLabel = PRIMARY_ACTION_BY_STATUS[bill.status];
+
+  // create is the only kind whose enablement is form-driven (valid + complete);
+  // the others gate on their own in-flight state. `none` (terminal states) is
+  // inert. Approve reads the shared payment slice inside its hook, so the button
+  // itself needn't gate on payment completeness — an incomplete slice simply
+  // lands the bill on `approved` rather than `scheduled`.
+  const primary: {
+    label: string;
+    onClick: () => void;
+    disabled: boolean;
+    /** Show the ⌘/Ctrl+↵ chip + native submit — create only. */
+    isSubmit: boolean;
+  } = (() => {
+    switch (primaryAction) {
+      case PRIMARY_ACTION.CREATE:
+        return {
+          label: submitting ? 'Creating…' : primaryLabel,
+          onClick: () => undefined, // native submit drives it
+          disabled: !canSubmit || submitting,
+          isSubmit: true,
+        };
+      case PRIMARY_ACTION.APPROVE:
+        return {
+          label: approving ? 'Approving…' : primaryLabel,
+          onClick: () => void approve(),
+          disabled: approving,
+          isSubmit: false,
+        };
+      case PRIMARY_ACTION.SCHEDULE:
+      case PRIMARY_ACTION.VIEW:
+        return {
+          label: primaryLabel,
+          onClick: () => setScheduleModalOpen(true),
+          disabled: false,
+          isSubmit: false,
+        };
+      default:
+        // Terminal / not-yet-wired states — the label reads but the button is inert.
+        return { label: primaryLabel, onClick: () => undefined, disabled: true, isSubmit: false };
+    }
+  })();
 
   return (
     <form
@@ -249,19 +305,21 @@ export function BillDetailsForm() {
           )}
           <FieldError size="sm">{saveError}</FieldError>
         </div>
-        {/* Un-submittable while the form is invalid OR the bill incomplete OR a
-            create is already in flight — and the ⌘/Ctrl+↵ chips leave with the
-            affordance: a disabled action advertises no shortcut. The create's
-            own error surfaces beside the primary, mirroring Save draft's line. */}
+        {/* The status-driven primary (Create / Approve / Schedule / View),
+            rendered off the resolved `primary` record. Create rides the form's
+            native submit and carries the ⌘/Ctrl+↵ chip (a disabled action
+            advertises no shortcut); the rest are explicit-handler buttons. The
+            flow's own error surfaces beside it, mirroring Save draft's line. */}
         <div className="gap-rui-3 flex items-center">
-          <FieldError size="sm">{submitError}</FieldError>
+          <FieldError size="sm">{submitError ?? approveError}</FieldError>
           <Button
-            type="submit"
+            type={primary.isSubmit ? 'submit' : 'button'}
             variant="primary"
-            disabled={!canSubmit || submitting}
-            keys={canSubmit && !submitting ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined}
+            disabled={primary.disabled}
+            onClick={primary.isSubmit ? undefined : primary.onClick}
+            keys={primary.isSubmit && !primary.disabled ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined}
           >
-            {submitting ? 'Creating…' : primaryLabel}
+            {primary.label}
           </Button>
         </div>
       </BillDetailsPane>
@@ -273,6 +331,17 @@ export function BillDetailsForm() {
         noun={preSubmit ? 'draft' : 'bill'}
         onDismiss={() => setSaveToast(null)}
       />
+      {/* The schedule-payment dialog — the money-movement step lifted out of the
+          inline (locked) form. `schedule` opens it editable to book a payment;
+          `view` (a `scheduled` bill) opens the same fields read-only. Both reuse
+          the Payment section's own components bound to the shared payment slice. */}
+      {(primaryAction === PRIMARY_ACTION.SCHEDULE || primaryAction === PRIMARY_ACTION.VIEW) && (
+        <BillDetailsScheduleModal
+          open={scheduleModalOpen}
+          onClose={() => setScheduleModalOpen(false)}
+          mode={primaryAction === PRIMARY_ACTION.VIEW ? 'view' : 'schedule'}
+        />
+      )}
     </form>
   );
 }
