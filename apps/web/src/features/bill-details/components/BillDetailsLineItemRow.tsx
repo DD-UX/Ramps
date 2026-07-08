@@ -61,7 +61,7 @@ export function BillDetailsLineItemRow({ index, onRemove }: BillDetailsLineItemR
        * line and the `↳` elbow marks where the subordinate coding block begins —
        * both gutter cues, so the 3-column grid to their right stays clean.
        */}
-      <div className="gap-rui-3 text-hushed flex flex-col">
+      <div className="gap-11 text-hushed flex flex-col">
         <span aria-hidden className="pt-3 font-mono text-sm tabular-nums select-none">
           {humanIndex}
         </span>

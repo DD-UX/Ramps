@@ -2,6 +2,7 @@
 
 import { Button } from '@ramps/ui/Button';
 import { Card } from '@ramps/ui/Card';
+import { cn } from '@ramps/ui/cn';
 import { Plus } from '@ramps/ui/icons';
 import { useFieldArray, useWatch } from 'react-hook-form';
 
@@ -56,7 +57,12 @@ export function BillDetailsLineItems() {
          * "+ Add line item" affordance on the left, balanced against the right-aligned
          * invoice-total stack — the two anchor the grid's bottom edge together.
          */}
-        <Card className="p-rui-3 border-t-0">
+        <Card
+          className={cn({
+            'p-rui-3': true,
+            'border-t-0': fields.length > 0,
+          })}
+        >
           <Button
             variant="secondary"
             size="sm"
