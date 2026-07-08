@@ -20,3 +20,6 @@ export const Checked: Story = {
 };
 export const NoLabel: Story = { args: { id: 'cb-3', 'aria-label': 'Select row' } };
 export const Disabled: Story = { args: { id: 'cb-4', label: 'Tax details (W-9)', disabled: true } };
+export const DisabledChecked: Story = {
+  args: { id: 'cb-5', label: 'Tax details (W-9)', disabled: true, checked: true },
+};

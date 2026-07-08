@@ -1,7 +1,13 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
-import { type ChangeEvent, type InputHTMLAttributes, useState } from 'react';
+import {
+  type ChangeEvent,
+  type InputHTMLAttributes,
+  type Ref,
+  useCallback,
+  useState,
+} from 'react';
 
 import { cn } from '../../lib/cn';
 import type { MotionClashingHandlers } from '../motion/pressVariants';
@@ -15,48 +21,62 @@ import type { MotionClashingHandlers } from '../motion/pressVariants';
  * fill with a white tick (no border, no rounding).
  *
  * Motion: the tick doesn't blink on — it DRAWS in. The real `<input>` stays the
- * source of truth for events + a11y (the Table's select-all and every form read
- * it directly); we mirror its checked state into React ONLY so the tick's
- * `pathLength` can animate (0 → 1) when it goes on and fade out when it goes off,
- * and so the box gives a small spring pop the instant it's checked. Works
- * controlled (`checked`, the Table) and uncontrolled (`defaultChecked`).
+ * source of truth for events + a11y; we mirror its checked state into React so
+ * the tick's `pathLength` can animate (0 → 1) on, fade out off, and the box
+ * gives a small spring pop the instant it's checked.
+ *
+ * Crucially the mirror tracks the **live DOM** `.checked`, not just props: this
+ * box is used controlled (`checked`, the Table's select-all), uncontrolled
+ * (`defaultChecked`), AND ref-driven — react-hook-form registers it with
+ * `{...register(name)}`, which sets `.checked` imperatively through the ref with
+ * NO React `onChange`. A prop-only mirror can't see that programmatic set and
+ * would leave a green box with no tick. So we read the node's real `.checked`
+ * via a callback ref (which also forwards RHF's ref) and re-read it on every
+ * change; the animation follows DOM truth in every mode.
  */
 export interface CheckboxProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
   'type' | MotionClashingHandlers
 > {
   label?: string;
+  ref?: Ref<HTMLInputElement>;
 }
 
 export function Checkbox({
   label,
   className,
   id,
-  checked,
-  defaultChecked,
   onChange,
+  ref,
   ...props
 }: CheckboxProps) {
-  // Mirror of the input's checked state, for the tick animation only. Seeded
-  // from whichever the caller supplied; kept in sync on change AND, when the
-  // component is controlled, from the incoming `checked` prop each render.
-  const [isChecked, setIsChecked] = useState(checked ?? defaultChecked ?? false);
-  if (checked !== undefined && checked !== isChecked) setIsChecked(checked);
+  // Mirror of the input's checked state, for the tick + box-pop animation only.
+  const [isChecked, setIsChecked] = useState(false);
+
+  // Callback ref: forward whatever ref the caller passed (react-hook-form's
+  // register() ref included), AND seed the mirror from the node's real, live
+  // `.checked` once it mounts — this is what catches RHF's imperative set and
+  // plain `defaultChecked`/`checked` alike, since all of them land on the DOM.
+  const attachRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+      if (node) setIsChecked(node.checked);
+    },
+    [ref],
+  );
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    // Uncontrolled: follow the DOM. Controlled: the parent owns the value, so we
-    // don't self-set — the prop-sync above reflects it back next render.
-    if (checked === undefined) setIsChecked(e.target.checked);
+    setIsChecked(e.target.checked);
     onChange?.(e);
   };
 
   const control = (
     <span className="size-4 relative inline-flex shrink-0">
       <motion.input
+        ref={attachRef}
         id={id}
         type="checkbox"
-        checked={checked}
-        defaultChecked={defaultChecked}
         onChange={handleChange}
         // A small spring pop the moment it's checked (0.9 → 1), so ticking a box
         // feels like a deliberate, physical confirm; the box rests at 1 when off.
@@ -71,14 +91,14 @@ export function Checkbox({
         )}
         {...props}
       />
-      {/* Tick — draws IN (pathLength 0 → 1) when checked, fades out when not,
-          instead of the old instant show/hide. Absolutely over the input. */}
+      {/* Tick — draws IN (pathLength 0 → 1) when checked, fades out when not.
+          Absolutely over the input, ignores pointer events. */}
       <svg
         aria-hidden
         viewBox="0 0 16 16"
         className="inset-0 size-4 text-white pointer-events-none absolute"
       >
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
           {isChecked && (
             <motion.path
               d="M4 8.5 7 11.5 12 5"
