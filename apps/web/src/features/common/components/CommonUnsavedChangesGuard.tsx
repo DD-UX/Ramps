@@ -106,14 +106,21 @@ export function CommonUnsavedChangesGuard({
     setSaveError(null);
   }, [saving]);
 
-  // Leave = discard: complete the parked navigation as-is.
+  // Leave = discard: complete the parked navigation as-is. Navigate FIRST, then
+  // drop the modal — the route change unmounts this guard, and ordering the push
+  // ahead of the `setPendingHref(null)` render keeps it out of the same commit.
   const leave = useCallback(() => {
     if (!pendingHref) return;
-    setPendingHref(null);
     router.push(pendingHref);
+    setPendingHref(null);
   }, [pendingHref, router]);
 
-  // Save draft = persist first; only navigate once the write lands.
+  // Save draft = persist first; only navigate once the write lands. `onSave`
+  // resets the form (clearing `isDirty`), so by the time we push, the guard's
+  // click listener won't re-veto. Push BEFORE clearing `pendingHref`: after an
+  // await we're in a fresh task, and interleaving the modal-close render with
+  // the router push let the navigation get dropped — pushing first, then
+  // tearing down, lands the route change reliably.
   const saveAndLeave = useCallback(async () => {
     if (!pendingHref) return;
     setSaving(true);
@@ -121,8 +128,8 @@ export function CommonUnsavedChangesGuard({
     try {
       const saved = await onSave();
       if (saved) {
-        setPendingHref(null);
         router.push(pendingHref);
+        setPendingHref(null);
       } else {
         setSaveError('Could not save. Resolve the issue, or leave without saving.');
       }

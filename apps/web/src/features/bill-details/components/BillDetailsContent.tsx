@@ -3,6 +3,7 @@
 import type { BillDetailRefsType } from '@ramps/schemas/bill-refs';
 import type { BillDetailType } from '@ramps/schemas/bills';
 import { DraggablePanel } from '@ramps/ui/DraggablePanel';
+import { useFormState } from 'react-hook-form';
 
 import { CommonUnsavedChangesGuard } from '@/features/common/components/CommonUnsavedChangesGuard';
 
@@ -48,18 +49,26 @@ export function BillDetailsContent({ bill, refs, documentUrl }: BillDetailsConte
  *
  * It also mounts the {@link CommonUnsavedChangesGuard} — outside the `<form>`
  * (its buttons must never look like submits) but inside the provider, because
- * dirtiness on this screen is TWO sources: the form's own `formState.isDirty`
- * (read during render — RHF's proxy only subscribes to what render touches)
- * and the staged-but-unsaved approvals route on `pendingApprovalStagesRef`
- * (a ref, so the guard's click-time callback reads it fresh). Saving from the
- * modal is the same {@link useSaveBillDraft} flow as the footer button.
+ * dirtiness on this screen is TWO sources: the form's own `isDirty` and the
+ * staged-but-unsaved approvals route on `pendingApprovalStagesRef` (a ref, so
+ * the guard's click-time callback reads it fresh). Saving from the modal is the
+ * same {@link useSaveBillDraft} flow as the footer button.
+ *
+ * `isDirty` comes from `useFormState({ control })`, NOT `form.formState`: the
+ * form is created in the provider, so its formState proxy subscribes to what
+ * the PROVIDER renders — reading `form.formState.isDirty` here (a context
+ * consumer that never called a form hook) opens no subscription, so this body
+ * wouldn't re-render when the form goes dirty and the guard would mirror a
+ * stale `false`. `useFormState` subscribes THIS component to the control, the
+ * same fix `BillDetailsForm` uses for `isValid`.
  */
 function BillDetailsBody() {
   const { form, leftPaneRef, pendingApprovalStagesRef } = useBillDetail();
   const { saveDraft } = useSaveBillDraft();
-  // Destructure during render: RHF's formState is a lazy proxy — touching
-  // `isDirty` here is what subscribes this component to dirtiness changes.
-  const { isDirty } = form.formState;
+  // Subscribe THIS component to dirtiness via the control (see note above);
+  // `form.formState.isDirty` would read stale because the proxy subscribes the
+  // provider, not this child.
+  const { isDirty } = useFormState({ control: form.control });
 
   return (
     // min-h-0 is load-bearing: as a flex item this div's default min-height is
