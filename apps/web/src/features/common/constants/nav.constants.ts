@@ -32,14 +32,14 @@ import type { NavSection } from '../helpers/nav.helpers';
  */
 export const NAV_SECTIONS: NavSection[] = [
   [
-    { label: 'Home', href: '/', icon: House, badge: 2 },
-    { label: 'Insights', href: '/insights', icon: LineChart },
+    { label: 'Home', href: '/', icon: House },
+    { label: 'Insights', href: '/insights', icon: LineChart, badge: 2 },
   ],
   [
     { label: 'Manage spend', href: '/manage-spend', icon: Wallet },
     { label: 'Expenses', href: '/expenses', icon: Receipt },
     { label: 'Travel', href: '/travel', icon: PlaneTakeoff },
-    { label: 'Bill Pay', href: '/bills', icon: ReceiptText, badge: 1 },
+    { label: 'Bill Pay', href: '/bills', icon: ReceiptText },
     { label: 'Financial accounts', href: '/financial-accounts', icon: Landmark },
   ],
   [

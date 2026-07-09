@@ -117,8 +117,10 @@ describe('NAV_SECTIONS (the shipped nav)', () => {
     expect(activeOnBills.map((item) => item.label)).toEqual(['Bill Pay']);
   });
 
-  it('carries the badge on Bill Pay (the frame\u2019s count)', () => {
+  it('carries the badge on Insights (the frame\u2019s count), not Bill Pay', () => {
+    const insights = items.find((item) => item.label === 'Insights');
+    expect(insights?.badge).toBe(2);
     const billPay = items.find((item) => item.label === 'Bill Pay');
-    expect(billPay?.badge).toBe(1);
+    expect(billPay?.badge).toBeUndefined();
   });
 });
