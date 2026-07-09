@@ -1,10 +1,16 @@
 import { createServerSupabase } from '@ramps/sdk/server';
 import { listVendors } from '@ramps/sdk/vendors';
+import type { Metadata } from 'next';
 
 import { VendorsPageContent } from '@/features/vendors/components/VendorsPageContent';
 import { VENDOR_TABS } from '@/features/vendors/constants/vendor-tabs.constants';
 import { normalizeSearchParam } from '@/features/vendors/helpers/vendor-search-query.helpers';
 import { resolveTab, reviewStatesForTab } from '@/features/vendors/helpers/vendor-tabs.helpers';
+
+// The tab title mirrors the SideMenu label for this route ("Vendors").
+export const metadata: Metadata = {
+  title: 'Vendors — Ramps',
+};
 
 /**
  * /vendors — the Vendors list, built as the sibling of /bills.

@@ -18,7 +18,7 @@ import {
  * starter chain as props — no backend.
  */
 export const metadata: Metadata = {
-  title: 'Approvals — ramps',
+  title: 'Approvals — Ramps',
   description: 'Compound an approval chain from roles and users.',
 };
 

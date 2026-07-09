@@ -9,7 +9,7 @@ import type { Metadata } from 'next';
  * advertises its own design system — one URL, no second deploy.
  */
 export const metadata: Metadata = {
-  title: 'Design system — ramps',
+  title: 'Design System — Ramps',
   description: 'The Ramp-inspired design system: tokens + primitives, live in Storybook.',
 };
 
