@@ -5,7 +5,20 @@ import {
   PRIMARY_ACTION,
   PRIMARY_ACTION_BY_STATUS,
   resolvePrimaryAction,
+  resolvePrimaryActionIcon,
 } from './primary-action.constants';
+
+const ALL_STATUSES: BillStatusType[] = [
+  'draft',
+  'missing_info',
+  'awaiting_approval',
+  'approved',
+  'scheduled',
+  'partially_paid',
+  'paid',
+  'rejected',
+  'archived',
+];
 
 /**
  * The primary CTA's status → {label, behaviour-kind} maps. The footer renders
@@ -45,5 +58,33 @@ describe('PRIMARY_ACTION_BY_STATUS labels', () => {
     expect(PRIMARY_ACTION_BY_STATUS.approved).toBe('Schedule payment');
     expect(PRIMARY_ACTION_BY_STATUS.scheduled).toBe('View schedule');
     expect(PRIMARY_ACTION_BY_STATUS.partially_paid).toBe('Complete payment');
+  });
+});
+
+/**
+ * Every footer primary carries a leading glyph — the icon map is keyed by
+ * STATUS (not kind) so the three terminal states that share the `none`
+ * behaviour-kind (paid / rejected / archived) still resolve DISTINCT icons.
+ */
+describe('resolvePrimaryActionIcon', () => {
+  it('gives every status a (defined) leading icon', () => {
+    for (const status of ALL_STATUSES) {
+      expect(resolvePrimaryActionIcon(status)).toBeTruthy();
+    }
+  });
+
+  it('resolves distinct icons across the `none`-kind terminal states', () => {
+    // paid → Eye (read-only view), rejected → RotateCcw (reopen), archived →
+    // ArchiveRestore (restore): all three share the `none` kind yet must differ.
+    const paid = resolvePrimaryActionIcon('paid');
+    const rejected = resolvePrimaryActionIcon('rejected');
+    const archived = resolvePrimaryActionIcon('archived');
+    expect(paid).not.toBe(rejected);
+    expect(rejected).not.toBe(archived);
+    expect(paid).not.toBe(archived);
+  });
+
+  it('shares the FilePlus glyph across the two pre-submit statuses', () => {
+    expect(resolvePrimaryActionIcon('draft')).toBe(resolvePrimaryActionIcon('missing_info'));
   });
 });

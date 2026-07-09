@@ -31,6 +31,10 @@ vi.mock('../hooks/useSubmitBill', () => ({
 vi.mock('../hooks/useSaveBillDraft', () => ({
   useSaveBillDraft: () => ({ saveDraft: vi.fn(), saving: false, error: null }),
 }));
+const cancelEdit = vi.fn();
+vi.mock('../hooks/useCancelBillEdit', () => ({
+  useCancelBillEdit: () => ({ cancelEdit }),
+}));
 
 vi.mock('@/features/common/hooks/useIsApplePlatform', () => ({
   useIsApplePlatform: () => true,
@@ -59,6 +63,9 @@ vi.mock('react-hook-form', () => ({
 
 // A complete bill so billSubmitReady passes for the `draft` case.
 let status: BillStatusType = 'awaiting_approval';
+// Edit mode is varied per case: the Cancel companion + the "Save bill" label
+// only show while editing a submitted bill, and Approve locks then.
+let editable = false;
 const form = {
   control: {},
   handleSubmit: (onValid: (v: unknown) => void) => (event?: { preventDefault?: () => void }) => {
@@ -71,7 +78,7 @@ vi.mock('../context/BillDetail.context', () => ({
   useBillDetail: () => ({
     form,
     bill: { status, ...completeValues } as unknown as BillDetailType,
-    editable: false,
+    editable,
     toggleEditable: vi.fn(),
   }),
 }));
@@ -105,17 +112,22 @@ vi.mock('./BillDetailsCompletePaymentButton', () => ({
   BillDetailsCompletePaymentButton: () => <div data-testid="complete-payment" />,
 }));
 
-// The shared overflow menu → a marker: it derives its own items from status and
-// owns its own router/api-client wiring, covered by BillsActionsMenu's own test.
-// Here we only need the footer to render without pulling in `next/navigation`.
+// The shared overflow menu → a marker echoing its `disabled` prop: it derives
+// its own items from status and owns its own router/api-client wiring (covered
+// by BillsActionsMenu's own test). Here we only assert the footer MOUNTS it and
+// passes the mid-edit lock — the panel's own inert behaviour is tested there.
 vi.mock('@/features/bills/components/BillsActionsMenu', () => ({
-  BillsActionsMenu: () => <div data-testid="bill-actions-menu" />,
+  BillsActionsMenu: ({ disabled }: { disabled?: boolean }) => (
+    <div data-testid="bill-actions-menu" data-disabled={disabled ? 'true' : 'false'} />
+  ),
 }));
 
 beforeEach(() => {
   approve.mockReset();
   submit.mockReset();
+  cancelEdit.mockReset();
   status = 'awaiting_approval';
+  editable = false;
 });
 
 describe('BillDetailsForm footer primary', () => {
@@ -203,5 +215,67 @@ describe('BillDetailsForm footer primary', () => {
     expect(screen.queryByTestId('schedule-modal')).not.toBeInTheDocument();
     // Complete payment is not offered on a fully-paid bill.
     expect(screen.queryByTestId('complete-payment')).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * The EDIT-MODE companion pair. Editing a submitted-but-still-editable bill
+ * (`awaiting_approval`) turns the left slot into [Cancel][Save bill], and locks
+ * the Approve primary until the edit is resolved — so Approve never fires over
+ * an unsaved form. At rest (not editing) the left slot is the "Edit bill" link
+ * and no Cancel shows.
+ */
+describe('BillDetailsForm footer — edit mode (Cancel / Save bill)', () => {
+  it('at rest: shows "Edit bill" with no Cancel, and Approve is enabled', () => {
+    status = 'awaiting_approval';
+    editable = false;
+    render(<BillDetailsForm />);
+
+    expect(screen.getByRole('button', { name: /edit bill/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^cancel$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^approve$/i })).toBeEnabled();
+  });
+
+  it('editing: pairs Cancel before "Save bill" and locks Approve', () => {
+    status = 'awaiting_approval';
+    editable = true;
+    render(<BillDetailsForm />);
+
+    expect(screen.getByRole('button', { name: /^cancel$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save bill/i })).toBeInTheDocument();
+    // Approve stays visible but is disabled until the edit is saved or cancelled.
+    expect(screen.getByRole('button', { name: /^approve$/i })).toBeDisabled();
+  });
+
+  it('editing: Cancel fires the restore-and-exit flow', async () => {
+    status = 'awaiting_approval';
+    editable = true;
+    const user = userEvent.setup();
+    render(<BillDetailsForm />);
+
+    await user.click(screen.getByRole('button', { name: /^cancel$/i }));
+
+    expect(cancelEdit).toHaveBeenCalledOnce();
+    expect(approve).not.toHaveBeenCalled();
+  });
+
+  it('at rest: the overflow kebab is enabled', () => {
+    status = 'awaiting_approval';
+    editable = false;
+    render(<BillDetailsForm />);
+
+    // The side-actions (Archive · Reject) are live while the record is frozen.
+    expect(screen.getByTestId('bill-actions-menu')).toHaveAttribute('data-disabled', 'false');
+  });
+
+  it('editing: the overflow kebab locks alongside the disabled Approve', () => {
+    status = 'awaiting_approval';
+    editable = true;
+    render(<BillDetailsForm />);
+
+    // Mid-edit the footer passes `disabled` to the kebab — the side-actions can't
+    // fire over an unsaved form, mirroring the locked Approve primary.
+    expect(screen.getByTestId('bill-actions-menu')).toHaveAttribute('data-disabled', 'true');
+    expect(screen.getByRole('button', { name: /^approve$/i })).toBeDisabled();
   });
 });

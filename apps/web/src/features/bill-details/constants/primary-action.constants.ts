@@ -1,5 +1,14 @@
 import type { BillStatusType } from '@ramps/schemas/bills';
-import { CalendarClock, Eye, type LucideIcon } from '@ramps/ui/icons';
+import {
+  ArchiveRestore,
+  CalendarClock,
+  Check,
+  CircleDollarSign,
+  Eye,
+  FilePlus,
+  type LucideIcon,
+  RotateCcw,
+} from '@ramps/ui/icons';
 
 /**
  * The primary CTA label per bill status — the status-specific action the footer
@@ -68,17 +77,30 @@ export function resolvePrimaryAction(status: BillStatusType): PrimaryAction {
 }
 
 /**
- * The leading glyph for the two payment-modal primaries — CalendarClock for
- * "Schedule payment" (a date being set) and Eye for the read-only "View
- * schedule". Only the SCHEDULE / VIEW kinds carry one; Create keeps its ⌘↵ chip
- * and Approve/None read as plain labels, so those map to null (no icon).
+ * The primary CTA's leading glyph per STATUS — one icon for every footer
+ * primary, mirroring the label above. Keyed by status (not kind) so the three
+ * terminal states that share the `none` kind still read distinctly:
+ *   • FilePlus       — Create bill (a new bill filed)         [draft/missing_info]
+ *   • Check          — Approve (the reviewer's tick)          [awaiting_approval]
+ *   • CalendarClock  — Schedule payment (a date being set)    [approved]
+ *   • Eye            — View schedule / View payment (read-only)[scheduled/paid]
+ *   • CircleDollarSign — Complete payment (money moving)       [partially_paid]
+ *   • RotateCcw      — Reopen bill (undo the reject)           [rejected]
+ *   • ArchiveRestore — Restore bill (pull it back from the archive) [archived]
  */
-const PRIMARY_ACTION_ICON: Partial<Record<PrimaryAction, LucideIcon>> = {
-  [PRIMARY_ACTION.SCHEDULE]: CalendarClock,
-  [PRIMARY_ACTION.VIEW]: Eye,
+const PRIMARY_ACTION_ICON_BY_STATUS: Record<BillStatusType, LucideIcon> = {
+  draft: FilePlus,
+  missing_info: FilePlus,
+  awaiting_approval: Check,
+  approved: CalendarClock,
+  scheduled: Eye,
+  partially_paid: CircleDollarSign,
+  paid: Eye,
+  rejected: RotateCcw,
+  archived: ArchiveRestore,
 };
 
-/** The leading icon for a primary-action kind, or null when it shows none. */
-export function resolvePrimaryActionIcon(action: PrimaryAction): LucideIcon | null {
-  return PRIMARY_ACTION_ICON[action] ?? null;
+/** The leading icon for the footer primary of the given bill status. */
+export function resolvePrimaryActionIcon(status: BillStatusType): LucideIcon {
+  return PRIMARY_ACTION_ICON_BY_STATUS[status];
 }

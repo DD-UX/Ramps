@@ -41,6 +41,12 @@ export interface BillsActionsMenuProps {
    * `top` so the panel rises out of the sticky action bar instead of clipping.
    */
   side?: 'top' | 'bottom';
+  /**
+   * Inert the whole menu — the kebab dims + stops opening. The bill-details
+   * footer passes `editable` here so mid-edit the side-actions lock alongside
+   * the disabled Approve primary (you Save/Cancel before archiving/rejecting).
+   */
+  disabled?: boolean;
 }
 
 /** The lucide glyph for each action — Archive filing, Ban for the reviewer's reject. */
@@ -49,7 +55,7 @@ const ACTION_ICON = {
   [BILL_ACTION.REJECT]: Ban,
 } as const;
 
-export function BillsActionsMenu({ bill, side = 'bottom' }: BillsActionsMenuProps) {
+export function BillsActionsMenu({ bill, side = 'bottom', disabled = false }: BillsActionsMenuProps) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -95,5 +101,5 @@ export function BillsActionsMenu({ bill, side = 'bottom' }: BillsActionsMenuProp
     };
   });
 
-  return <Menu items={items} label="Bill actions" side={side} />;
+  return <Menu items={items} label="Bill actions" side={side} disabled={disabled} />;
 }

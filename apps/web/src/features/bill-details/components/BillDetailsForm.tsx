@@ -9,13 +9,17 @@ import { Tabs } from '@ramps/ui/Tabs';
 import { Activity, useEffect, useState } from 'react';
 import { useFormState, useWatch } from 'react-hook-form';
 
-import { hasBillActions } from '@/features/bills/constants/bill-actions.constants';
 import { BillsActionsMenu } from '@/features/bills/components/BillsActionsMenu';
+import { hasBillActions } from '@/features/bills/constants/bill-actions.constants';
 import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
 import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 
 import { isBillEditable } from '../constants/editable-status.constants';
-import { FOOTER_ACTION_STRATEGIES, resolveFooterAction } from '../constants/footer-action.constants';
+import {
+  FOOTER_ACTION,
+  FOOTER_ACTION_STRATEGIES,
+  resolveFooterAction,
+} from '../constants/footer-action.constants';
 import { isBillPreSubmit } from '../constants/pre-submit.constants';
 import {
   PRIMARY_ACTION,
@@ -31,6 +35,7 @@ import {
 import { useBillDetail } from '../context/BillDetail.context';
 import { billSubmitReady } from '../helpers/section-completeness.helpers';
 import { useApproveBill } from '../hooks/useApproveBill';
+import { useCancelBillEdit } from '../hooks/useCancelBillEdit';
 import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
 import { useSubmitBill } from '../hooks/useSubmitBill';
 import { BillDetailsApprovals } from './BillDetailsApprovals';
@@ -82,6 +87,9 @@ export function BillDetailsForm() {
   // Approve: persist the form + advance the bill (→ scheduled when the payment
   // slice is complete, else → approved). Drives the `awaiting_approval` primary.
   const { approve, submitting: approving, error: approveError } = useApproveBill();
+  // Cancel edit: discard in-edit changes and snap back to the fetched record,
+  // then leave edit mode — the "Save bill" companion, no network write.
+  const { cancelEdit } = useCancelBillEdit();
   // The schedule/view modal's open state — the `approved` primary opens it to
   // book a payment, the `scheduled` primary opens it read-only ("View schedule").
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -183,10 +191,11 @@ export function BillDetailsForm() {
   // off this record instead of branching on the status inline.
   const primaryAction = resolvePrimaryAction(bill.status);
   const primaryLabel = PRIMARY_ACTION_BY_STATUS[bill.status];
-  // The primary's leading glyph, per kind: CalendarClock for Schedule, Eye for
-  // View schedule; Create/Approve/None carry none. Resolved to a component so
-  // the JSX renders `<PrimaryIcon />` only when one exists.
-  const PrimaryIcon = resolvePrimaryActionIcon(primaryAction);
+  // The primary's leading glyph, one per status (FilePlus create, Check approve,
+  // CalendarClock schedule, Eye view, CircleDollarSign complete, RotateCcw
+  // reopen, ArchiveRestore restore). Always present, so the JSX renders it
+  // unconditionally as the button's leadingIcon.
+  const PrimaryIcon = resolvePrimaryActionIcon(bill.status);
 
   // create is the only kind whose enablement is form-driven (valid + complete);
   // the others gate on their own in-flight state. `none` (terminal states) is
@@ -212,7 +221,9 @@ export function BillDetailsForm() {
         return {
           label: approving ? 'Approving…' : primaryLabel,
           onClick: () => void approve(),
-          disabled: approving,
+          // Locked while editing: the user must Save or Cancel their edits
+          // before approving, so Approve never fires over an unsaved form.
+          disabled: approving || editable,
           isSubmit: false,
         };
       case PRIMARY_ACTION.SCHEDULE:
@@ -300,6 +311,16 @@ export function BillDetailsForm() {
           footer instead of towering over it. */}
       <BillDetailsPane className="border-bone bg-white/80 backdrop-blur h-14 py-0 sticky -bottom-px z-10 grid shrink-0 grid-flow-col items-center justify-between border-t">
         <div className="gap-rui-3 flex items-center">
+          {/* Cancel — the "Save bill" companion, only while editing a submitted
+              bill (the save_bill mode). Discards the in-edit changes and snaps
+              the screen back to the fetched record, no write. Sits BEFORE Save
+              in the left cluster ([Cancel][Save bill]); disabled while a save is
+              mid-flight so it can't yank the form out from under it. */}
+          {footerActionKey === FOOTER_ACTION.SAVE_BILL && (
+            <Button type="button" variant="subtle" onClick={cancelEdit} disabled={footerBusy}>
+              Cancel
+            </Button>
+          )}
           {/* The left slot renders whatever strategy the lifecycle resolves to
               (Save draft / Edit bill / Save bill) — the branching lives in the
               strategy table, this stays one dumb Button. A locked bill resolves
@@ -329,8 +350,12 @@ export function BillDetailsForm() {
               Archive from any live state). Only mounted when the status has a
               move: a rejected/archived/mid-payment bill omits the kebab entirely.
               `top` so its panel rises out of the sticky bar instead of clipping
-              past the viewport floor. */}
-          {hasBillActions(bill.status) && <BillsActionsMenu bill={bill} side="top" />}
+              past the viewport floor. Disabled mid-edit (`editable`): the
+              side-actions lock alongside the Approve primary, so the user
+              resolves their edit (Save/Cancel) before archiving or rejecting. */}
+          {hasBillActions(bill.status) && (
+            <BillsActionsMenu bill={bill} side="top" disabled={editable} />
+          )}
           {/* A `scheduled` bill's primary reads "View schedule" (read-only) — the
               real money-movement action, "Complete payment", sits beside it as
               the SAME shared button the View-schedule modal uses (secondary here
@@ -345,7 +370,7 @@ export function BillDetailsForm() {
             <Button
               type={primary.isSubmit ? 'submit' : 'button'}
               variant="primary"
-              leadingIcon={PrimaryIcon ? <PrimaryIcon size={16} /> : undefined}
+              leadingIcon={<PrimaryIcon size={16} />}
               disabled={primary.disabled}
               onClick={primary.isSubmit ? undefined : primary.onClick}
               keys={

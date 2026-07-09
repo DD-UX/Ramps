@@ -97,4 +97,17 @@ describe('BillsActionsMenu', () => {
     expect(container).toBeEmptyDOMElement();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
+
+  it('disabled: the kebab is inert and does not open its panel', async () => {
+    const user = userEvent.setup();
+    render(<BillsActionsMenu bill={{ id: BILL_ID, status: 'awaiting_approval' }} disabled />);
+
+    // The trigger still renders (present-but-unavailable), but it's disabled and
+    // a click can't open the menu — the mid-edit lock the footer applies.
+    const trigger = screen.getByRole('button', { name: /bill actions/i });
+    expect(trigger).toBeDisabled();
+
+    await user.click(trigger);
+    expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+  });
 });

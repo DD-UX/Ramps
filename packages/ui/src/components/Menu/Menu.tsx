@@ -78,6 +78,12 @@ export interface MenuProps {
    * 8px padding is always inset from whichever boundary applies.
    */
   boundary?: RefObject<HTMLElement | null>;
+  /**
+   * Inert the whole menu — the trigger dims + stops opening (and a stray open
+   * panel closes). Used where a bill's side-actions must be locked mid-edit:
+   * the kebab reads as present-but-unavailable, matching the disabled primary.
+   */
+  disabled?: boolean;
   className?: string;
 }
 
@@ -97,6 +103,7 @@ export function Menu({
   align = 'end',
   side = 'bottom',
   boundary,
+  disabled = false,
   className,
 }: MenuProps) {
   const [open, setOpen] = useState(false);
@@ -111,8 +118,14 @@ export function Menu({
   const [shiftX, setShiftX] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
+  // The panel is open only when the trigger is open AND the menu isn't disabled —
+  // deriving it (rather than force-closing via an effect) means a disable while
+  // open snaps the panel shut with no cascading setState, and re-enabling
+  // restores the prior open state. All the open-scoped effects key off this.
+  const panelOpen = open && !disabled;
+
   useEffect(() => {
-    if (!open) return;
+    if (!panelOpen) return;
     const onPointer = (e: PointerEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     };
@@ -125,7 +138,7 @@ export function Menu({
       document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [panelOpen]);
 
   // Reframe the open panel into its boundary. The panel is CSS-anchored to the
   // trigger by `align`/`side` (its natural rect); from there we measure and:
@@ -139,7 +152,7 @@ export function Menu({
   // paint (a clipped panel never flashes in the wrong place) and re-runs on
   // resize/ancestor scroll while open.
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!panelOpen) return;
 
     const compute = () => {
       const panel = menuRef.current;
@@ -182,7 +195,7 @@ export function Menu({
       window.removeEventListener('resize', compute);
       window.removeEventListener('scroll', compute, true);
     };
-  }, [open, align, side, boundary]);
+  }, [panelOpen, align, side, boundary]);
 
   // Does the panel end up BELOW the trigger? `side` is the preference; `flipped`
   // inverts it. Drives the enter/exit slide direction and the scale origin so
@@ -194,13 +207,15 @@ export function Menu({
       {trigger ? (
         <span
           role="button"
-          tabIndex={0}
-          className="cursor-pointer"
+          tabIndex={disabled ? -1 : 0}
+          className={cn('cursor-pointer', disabled && DISABLED_CONTROL)}
           aria-haspopup="menu"
-          aria-expanded={open}
-          aria-controls={open ? menuId : undefined}
-          onClick={() => setOpen((v) => !v)}
+          aria-expanded={panelOpen}
+          aria-disabled={disabled || undefined}
+          aria-controls={panelOpen ? menuId : undefined}
+          onClick={() => !disabled && setOpen((v) => !v)}
           onKeyDown={(e) => {
+            if (disabled) return;
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               setOpen((v) => !v);
@@ -214,15 +229,16 @@ export function Menu({
           label={label}
           icon={DotsIcon}
           rounded={rounded}
+          disabled={disabled}
           aria-haspopup="menu"
-          aria-expanded={open}
-          aria-controls={open ? menuId : undefined}
+          aria-expanded={panelOpen}
+          aria-controls={panelOpen ? menuId : undefined}
           onClick={() => setOpen((v) => !v)}
         />
       )}
 
       <AnimatePresence>
-        {open && (
+        {panelOpen && (
           <motion.div
             ref={menuRef}
             id={menuId}
