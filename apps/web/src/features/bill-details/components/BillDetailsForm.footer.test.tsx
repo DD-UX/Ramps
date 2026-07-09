@@ -105,6 +105,13 @@ vi.mock('./BillDetailsCompletePaymentButton', () => ({
   BillDetailsCompletePaymentButton: () => <div data-testid="complete-payment" />,
 }));
 
+// The shared overflow menu → a marker: it derives its own items from status and
+// owns its own router/api-client wiring, covered by BillsActionsMenu's own test.
+// Here we only need the footer to render without pulling in `next/navigation`.
+vi.mock('@/features/bills/components/BillsActionsMenu', () => ({
+  BillsActionsMenu: () => <div data-testid="bill-actions-menu" />,
+}));
+
 beforeEach(() => {
   approve.mockReset();
   submit.mockReset();

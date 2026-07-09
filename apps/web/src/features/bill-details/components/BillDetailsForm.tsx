@@ -9,6 +9,8 @@ import { Tabs } from '@ramps/ui/Tabs';
 import { Activity, useEffect, useState } from 'react';
 import { useFormState, useWatch } from 'react-hook-form';
 
+import { hasBillActions } from '@/features/bills/constants/bill-actions.constants';
+import { BillsActionsMenu } from '@/features/bills/components/BillsActionsMenu';
 import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
 import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 
@@ -322,6 +324,13 @@ export function BillDetailsForm() {
             flow's own error surfaces beside it, mirroring Save draft's line. */}
         <div className="gap-rui-3 flex items-center">
           <FieldError size="sm">{submitError ?? approveError}</FieldError>
+          {/* The shared overflow menu — the SAME kebab the Bill Pay row carries —
+              for the lifecycle side-actions (Reject while awaiting approval,
+              Archive from any live state). Only mounted when the status has a
+              move: a rejected/archived/mid-payment bill omits the kebab entirely.
+              `top` so its panel rises out of the sticky bar instead of clipping
+              past the viewport floor. */}
+          {hasBillActions(bill.status) && <BillsActionsMenu bill={bill} side="top" />}
           {/* A `scheduled` bill's primary reads "View schedule" (read-only) — the
               real money-movement action, "Complete payment", sits beside it as
               the SAME shared button the View-schedule modal uses (secondary here

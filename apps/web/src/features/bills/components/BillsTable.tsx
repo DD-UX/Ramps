@@ -7,8 +7,10 @@ import { Table, TableAnnotationLink, type TableColumn } from '@ramps/ui/Table';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback } from 'react';
 
+import { hasBillActions } from '../constants/bill-actions.constants';
 import { formatBillDate } from '../helpers/format-date.helpers';
 import { buildPageQuery } from '../helpers/page-query.helpers';
+import { BillsActionsMenu } from './BillsActionsMenu';
 
 /**
  * BillsTable — the Bill Pay list, the product's spine (findings §1).
@@ -87,8 +89,30 @@ const COLUMNS: TableColumn<BillListItemType>[] = [
     header: 'Amount',
     width: '160px',
     align: 'right',
-    sticky: 'right',
     cell: (bill) => <Money cents={bill.amount_cents} currency={bill.currency} />,
+  },
+  {
+    id: 'actions',
+    // Header-less: the overflow column is an affordance gutter, not a data field
+    // — the frames leave it unlabelled.
+    header: '',
+    width: '64px',
+    align: 'right',
+    // NOT sticky: a per-cell `sticky` <td> forms its own stacking context, which
+    // trapped the open menu panel BEHIND lower rows' cells (a later-DOM sticky
+    // cell painted over an upper row's popover). The overflow gutter rides with
+    // the body scroll so the panel can layer cleanly above the rows.
+    // Only actionable rows carry the kebab — a `rejected`/`archived`/mid-payment
+    // bill has no move, so its cell stays blank rather than showing an inert
+    // three-dot. The wrapper swallows its own clicks so opening the menu (or
+    // firing an action) never triggers the row's navigate-to-detail — the same
+    // guard the checkbox cell uses.
+    cell: (bill) =>
+      hasBillActions(bill.status) ? (
+        <div onClick={(event) => event.stopPropagation()}>
+          <BillsActionsMenu bill={bill} />
+        </div>
+      ) : null,
   },
 ];
 

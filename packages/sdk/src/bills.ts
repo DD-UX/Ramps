@@ -647,6 +647,67 @@ export async function rollPaymentNow(
 }
 
 /* ────────────────────────────────────────────────────────────────────────
+ * ARCHIVE + REJECT — the overflow-menu lifecycle moves
+ *
+ * Both are pure, bodyless status advances behind the row/footer three-dot menu,
+ * and both guard the move against the transition map (an illegal move raises
+ * {@link BillNotEditableError} → 409). Archive is the near-universal "file this
+ * away" — legal from every non-archived state; Reject is the reviewer's "send it
+ * back", legal only from `awaiting_approval`. Neither touches the form or the
+ * payment rows; each just flips `status` and re-reads.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Archive a bill — take it out of the working set. Legal from every state but
+ * `archived` itself (the transition map lists `archived` as a successor of all
+ * others). Guarded against the map, so an already-archived bill raises
+ * {@link BillNotEditableError} (→ 409). Returns the re-read `archived` bill.
+ */
+export async function archiveBill(
+  supabase: ServerSupabase,
+  billId: string,
+): Promise<BillDetailType> {
+  const existing = await getBill(supabase, billId);
+  if (!existing) throw toSdkError({ message: 'Bill not found', code: 'PGRST116' });
+
+  if (!canTransitionBill(existing.status, 'archived')) {
+    throw new BillNotEditableError(existing.status);
+  }
+
+  const move = await supabase.from('bills').update({ status: 'archived' }).eq('id', billId);
+  if (move.error) throw toSdkError(move.error);
+
+  const archived = await getBill(supabase, billId);
+  if (!archived) throw toSdkError({ message: 'Bill vanished after archive', code: 'PGRST116' });
+  return archived;
+}
+
+/**
+ * Reject a bill — the reviewer's "send it back", moving it out of the approval
+ * queue. Legal ONLY from `awaiting_approval` (the one state the map lists
+ * `rejected` as a successor of); a bill anywhere else raises
+ * {@link BillNotEditableError} (→ 409). Returns the re-read `rejected` bill.
+ */
+export async function rejectBill(
+  supabase: ServerSupabase,
+  billId: string,
+): Promise<BillDetailType> {
+  const existing = await getBill(supabase, billId);
+  if (!existing) throw toSdkError({ message: 'Bill not found', code: 'PGRST116' });
+
+  if (!canTransitionBill(existing.status, 'rejected')) {
+    throw new BillNotEditableError(existing.status);
+  }
+
+  const move = await supabase.from('bills').update({ status: 'rejected' }).eq('id', billId);
+  if (move.error) throw toSdkError(move.error);
+
+  const rejected = await getBill(supabase, billId);
+  if (!rejected) throw toSdkError({ message: 'Bill vanished after reject', code: 'PGRST116' });
+  return rejected;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
  * CREATE A BILL — the demo "give me another bill to test with" generator
  *
  * The Bill Pay empty state offers "Create your first bill"; this is its always-

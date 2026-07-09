@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  archiveBill,
   BillNotEditableError,
   countBillsByStatus,
   createDemoBill,
   listBills,
+  rejectBill,
   rollPaymentNow,
   saveBill,
   submitBill,
@@ -596,6 +598,95 @@ describe('rollPaymentNow', () => {
 
     await expect(
       rollPaymentNow(supabase, 'b0000000-0000-4000-8000-00000000d001'),
+    ).rejects.toThrow();
+  });
+});
+
+describe('archiveBill', () => {
+  it('moves an approved bill to archived (a legal move from any non-archived state)', async () => {
+    const { supabase, ops } = makeWriteSupabase([
+      { data: makeDetailRow({ status: 'approved' }) }, // guard read
+      { error: null }, // bills status update
+      { data: makeDetailRow({ status: 'archived' }) }, // re-read
+    ]);
+
+    const archived = await archiveBill(supabase, 'b0000000-0000-4000-8000-00000000d001');
+
+    expect(archived.status).toBe('archived');
+    const move = ops.find((o) => o.table === 'bills' && o.op === 'update');
+    expect((move!.payload as Record<string, unknown>).status).toBe('archived');
+  });
+
+  it('archives a paid bill too (paid → archived is legal)', async () => {
+    const { supabase, ops } = makeWriteSupabase([
+      { data: makeDetailRow({ status: 'paid', payments: [makePaymentRow({ status: 'paid' })] }) },
+      { error: null },
+      { data: makeDetailRow({ status: 'archived' }) },
+    ]);
+
+    const archived = await archiveBill(supabase, 'b0000000-0000-4000-8000-00000000d001');
+    expect(archived.status).toBe('archived');
+    expect(ops.some((o) => o.table === 'bills' && o.op === 'update')).toBe(true);
+  });
+
+  it('refuses an already-archived bill (BillNotEditableError, no writes)', async () => {
+    const { supabase, ops } = makeWriteSupabase([{ data: makeDetailRow({ status: 'archived' }) }]);
+
+    await expect(
+      archiveBill(supabase, 'b0000000-0000-4000-8000-00000000d001'),
+    ).rejects.toBeInstanceOf(BillNotEditableError);
+
+    // The transition guard bites before any status write.
+    expect(ops).toHaveLength(0);
+  });
+
+  it('throws when the bill does not exist', async () => {
+    const { supabase } = makeWriteSupabase([{ data: null }]);
+    await expect(
+      archiveBill(supabase, 'b0000000-0000-4000-8000-00000000d001'),
+    ).rejects.toThrow();
+  });
+});
+
+describe('rejectBill', () => {
+  it('moves an awaiting_approval bill to rejected', async () => {
+    const { supabase, ops } = makeWriteSupabase([
+      { data: makeDetailRow({ status: 'awaiting_approval' }) }, // guard read
+      { error: null }, // bills status update
+      { data: makeDetailRow({ status: 'rejected' }) }, // re-read
+    ]);
+
+    const rejected = await rejectBill(supabase, 'b0000000-0000-4000-8000-00000000d001');
+
+    expect(rejected.status).toBe('rejected');
+    const move = ops.find((o) => o.table === 'bills' && o.op === 'update');
+    expect((move!.payload as Record<string, unknown>).status).toBe('rejected');
+  });
+
+  it('refuses to reject anything past the queue (approved → rejected is illegal, no writes)', async () => {
+    const { supabase, ops } = makeWriteSupabase([{ data: makeDetailRow({ status: 'approved' }) }]);
+
+    await expect(
+      rejectBill(supabase, 'b0000000-0000-4000-8000-00000000d001'),
+    ).rejects.toBeInstanceOf(BillNotEditableError);
+
+    expect(ops).toHaveLength(0);
+  });
+
+  it('refuses to reject a pre-submit draft (draft → rejected is illegal)', async () => {
+    const { supabase, ops } = makeWriteSupabase([{ data: makeDetailRow({ status: 'draft' }) }]);
+
+    await expect(
+      rejectBill(supabase, 'b0000000-0000-4000-8000-00000000d001'),
+    ).rejects.toBeInstanceOf(BillNotEditableError);
+
+    expect(ops).toHaveLength(0);
+  });
+
+  it('throws when the bill does not exist', async () => {
+    const { supabase } = makeWriteSupabase([{ data: null }]);
+    await expect(
+      rejectBill(supabase, 'b0000000-0000-4000-8000-00000000d001'),
     ).rejects.toThrow();
   });
 });

@@ -196,6 +196,30 @@ export function createRampsClient(options: RampsClientOptions) {
         signal,
       });
     },
+
+    /**
+     * POST /bills/:id/archive — ARCHIVE. Files the bill away (→ `archived`).
+     * Bodyless; legal from any non-archived state. Returns the re-read bill.
+     */
+    archive(billId: string, signal?: AbortSignal): Promise<BillMutationResponseType> {
+      return request(`/bills/${encodeURIComponent(billId)}/archive`, {
+        method: 'POST',
+        schema: BillMutationResponseSchema,
+        signal,
+      });
+    },
+
+    /**
+     * POST /bills/:id/reject — REJECT. The reviewer's "send it back", moving an
+     * `awaiting_approval` bill → `rejected`. Bodyless. Returns the re-read bill.
+     */
+    reject(billId: string, signal?: AbortSignal): Promise<BillMutationResponseType> {
+      return request(`/bills/${encodeURIComponent(billId)}/reject`, {
+        method: 'POST',
+        schema: BillMutationResponseSchema,
+        signal,
+      });
+    },
   };
 
   return { request, bills };
