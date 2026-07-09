@@ -57,6 +57,10 @@
   --font-weight-heading: var(--rui-font-weight-heading);
   --font-weight-bold: var(--rui-font-weight-bold);
 
+  /* Type scale — override Tailwind's default `text-3xl` (1.875rem) so the
+     page-title tier (BillDetailsTitle) reads at the larger display size. */
+  --text-3xl: 2.5rem;
+
   /* Radii — `square` (0px) is THE corner for every rectangle; `pill` for avatars. */
   --radius-square: var(--rui-radius-square);
   --radius-pill: var(--rui-radius-pill);

@@ -51,7 +51,7 @@ export function BillsPageContent({
     <div className="bg-white flex flex-1 flex-col">
       <div className="pt-rui-6">
         <div className="px-rui-6 flex items-start justify-between">
-          <h2 className="font-heading text-2xl text-ink">Bill Pay</h2>
+          <h2 className="font-heading text-3xl text-ink">Bill Pay</h2>
           {/* Self-contained "Create demo bill" CTA — mints another demo bill to
               test with, no props, owns its own loading + navigation. */}
           <BillsCreateNewBillButton />

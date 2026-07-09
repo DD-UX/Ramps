@@ -23,7 +23,7 @@ export function VendorsPageContent({
   return (
     <div className="bg-white flex flex-1 flex-col">
       <div className="pt-rui-6">
-        <h2 className="font-heading text-2xl text-ink px-rui-6">Vendors</h2>
+        <h2 className="font-heading text-3xl text-ink px-rui-6">Vendors</h2>
         <VendorsTabs tabs={tabs} activeCode={activeCode} />
       </div>
       <VendorsToolbar initialSearch={search} />

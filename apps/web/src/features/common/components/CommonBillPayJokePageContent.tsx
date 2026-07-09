@@ -20,7 +20,7 @@ export function CommonBillPayJokePageContent() {
         <ReceiptText width={64} height={64} strokeWidth={1.5} className="text-hushed" aria-hidden />
 
         {/* Heading */}
-        <h2 className="font-heading text-2xl text-ink">Are you looking for Bill Pay?</h2>
+        <h2 className="font-heading text-3xl text-ink">Are you looking for Bill Pay?</h2>
 
         {/* Sub-heading with emoji */}
         <p className="font-body text-hushed">Sure you are 😉</p>
