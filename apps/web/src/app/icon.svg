@@ -1,0 +1,14 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ramps">
+  <!-- Brand tile: lime accent square with the ink ramps lockup centered. The
+       32x16 (2:1) two-mark lockup is dropped 8px down to sit centered in the
+       32x32 field. Paths are verbatim from the shipped Logo (RAMP_BAR + swoosh). -->
+  <rect width="32" height="32" rx="6" fill="#e4f222" />
+  <g transform="translate(0 8)" fill="#1a1919">
+    <path d="M15.5 13.298v.056l-8.17.003v-.06a12.8 12.8 0 0 0 2.723-2.071h3.355z" />
+    <path d="M13.476 2.551 11.405.5h-.06s.035 3.823-3.442 7.3C4.5 11.205.5 11.212.5 11.212v.06l2.11 2.087s3.942.04 7.425-3.41c3.47-3.44 3.44-7.396 3.44-7.396" />
+    <g transform="translate(16 0)">
+      <path d="M15.5 13.298v.056l-8.17.003v-.06a12.8 12.8 0 0 0 2.723-2.071h3.355z" />
+      <path d="M13.476 2.551 11.405.5h-.06s.035 3.823-3.442 7.3C4.5 11.205.5 11.212.5 11.212v.06l2.11 2.087s3.942.04 7.425-3.41c3.47-3.44 3.44-7.396 3.44-7.396" />
+    </g>
+  </g>
+</svg>
