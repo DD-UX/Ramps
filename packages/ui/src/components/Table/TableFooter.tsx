@@ -52,6 +52,8 @@ export interface TableFooterGeometry<T, K extends string | number> {
   stickyRight: TableColumn<T, K> | undefined;
   checkboxWidth: number;
   checkboxCellStyle: CSSProperties;
+  /** Pin the selection column left (mirrors the head/body cells). */
+  stickyCheckboxes: boolean;
 }
 
 /** left/right sticky offset style for a footer cell (mirrors head/body cells). */
@@ -223,13 +225,17 @@ export interface TableSummaryFooterProps<T, K extends string | number> {
 export function TableSummaryFooter<T, K extends string | number>({
   geometry,
 }: TableSummaryFooterProps<T, K>) {
-  const { columns, selectable, stickyLeft, stickyRight, checkboxCellStyle } = geometry;
+  const { columns, selectable, stickyLeft, stickyRight, checkboxCellStyle, stickyCheckboxes } =
+    geometry;
 
   return (
     <tr>
       {selectable && (
         <td
-          className="left-0 border-limestone bg-white px-rui-3 py-rui-2 sticky z-10 border-t align-middle"
+          className={cn(
+            'border-limestone bg-white px-rui-3 py-rui-2 border-t align-middle',
+            stickyCheckboxes && 'left-0 sticky z-10',
+          )}
           style={checkboxCellStyle}
         />
       )}

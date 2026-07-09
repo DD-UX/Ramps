@@ -181,6 +181,16 @@ export interface TableProps<T, K extends string | number = string> {
    */
   selectable?: boolean;
   /**
+   * Pin the selection (checkbox) column to the left as the table scrolls
+   * horizontally. Default: `true` (the vetted behavior — the checkbox stays put
+   * next to the sticky first data column). Set `false` to let the checkbox
+   * column ride with the body scroll: a `position: sticky` cell forms its own
+   * stacking context that can CLIP an overflowing child (the Checkbox's Framer
+   * Motion tick draws slightly past the box), so a caller that sees the tick get
+   * cut off can opt the pin out.
+   */
+  stickyCheckboxes?: boolean;
+  /**
    * Called whenever selection changes (user checks/unchecks a row or clicks
    * select-all). The Map survives pagination — the caller owns the cross-page state.
    */
@@ -289,6 +299,7 @@ export function Table<T, K extends string | number = string>({
   columns,
   getRowId,
   selectable = false,
+  stickyCheckboxes = true,
   onSelectionChange,
   selectedRows: controlledSelection,
   virtualizeAfter = Infinity,
@@ -438,6 +449,12 @@ export function Table<T, K extends string | number = string>({
     maxWidth: checkboxWidth,
   } as const;
 
+  // The pin classes for the selection column — `left-0 sticky z-10` — applied
+  // only when stickyCheckboxes is on. Off, the checkbox cell is a plain cell
+  // that scrolls with the body, so its own stacking context can't clip the
+  // Checkbox's overflowing draw-in tick.
+  const checkboxStickyClass = stickyCheckboxes ? 'left-0 sticky z-10' : undefined;
+
   // Sticky-column geometry the footers need to line their cells up under the
   // pinned columns (extracted into TableFooter, so the switch lives there).
   const footerGeometry: TableFooterGeometry<T, K> = {
@@ -447,6 +464,7 @@ export function Table<T, K extends string | number = string>({
     stickyRight,
     checkboxWidth,
     checkboxCellStyle,
+    stickyCheckboxes,
   };
 
   return (
@@ -493,7 +511,10 @@ export function Table<T, K extends string | number = string>({
             <tr>
               {selectable && (
                 <th
-                  className="left-0 border-limestone bg-white px-rui-3 py-rui-2 sticky z-10 border-b align-middle"
+                  className={cn(
+                    'border-limestone bg-white px-rui-3 py-rui-2 border-b align-middle',
+                    checkboxStickyClass,
+                  )}
                   style={checkboxCellStyle}
                 >
                   {/* th centers inline content by default — the flex wrapper
@@ -571,7 +592,8 @@ export function Table<T, K extends string | number = string>({
                     {selectable && (
                       <td
                         className={cn(
-                          'left-0 border-limestone px-rui-3 py-rui-3 sticky z-10 border-b align-middle',
+                          'border-limestone px-rui-3 py-rui-3 border-b align-middle',
+                          checkboxStickyClass,
                           isSelected ? 'bg-tone-selected-surface' : 'bg-white',
                           isClickable &&
                             !isSelected &&

@@ -44,7 +44,11 @@ const columns: TableColumn<DemoRow, string>[] = [
   },
 ];
 
-/** The geometry Table computes and threads into every footer. */
+/**
+ * The geometry Table computes and threads into every footer. This base is the
+ * NON-selectable shape (no checkbox column), so `stickyCheckboxes` is off — the
+ * pin only means something when there IS a selection gutter to pin.
+ */
 const geometry: TableFooterGeometry<DemoRow, string> = {
   columns,
   selectable: false,
@@ -52,14 +56,20 @@ const geometry: TableFooterGeometry<DemoRow, string> = {
   stickyRight: undefined,
   checkboxWidth: 0,
   checkboxCellStyle: { width: '1%', minWidth: 0, maxWidth: 0 },
+  stickyCheckboxes: false,
 };
 
-/** Same geometry, but with a selection gutter so the footer reserves it. */
+/**
+ * Same geometry, but with a selection gutter so the footer reserves it — and
+ * with the checkbox column pinned left (`stickyCheckboxes: true`), the vetted
+ * default for a table that shows a selection column.
+ */
 const selectableGeometry: TableFooterGeometry<DemoRow, string> = {
   ...geometry,
   selectable: true,
   checkboxWidth: 56,
   checkboxCellStyle: { width: '1%', minWidth: 56, maxWidth: 56 },
+  stickyCheckboxes: true,
 };
 
 /**

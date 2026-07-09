@@ -47,27 +47,44 @@ export function Checkbox({
   className,
   id,
   onChange,
+  checked,
   ref,
   ...props
 }: CheckboxProps) {
-  // Mirror of the input's checked state, for the tick + box-pop animation only.
-  const [isChecked, setIsChecked] = useState(false);
+  // Mirror of the checked state, for the tick + box-pop animation only. Used
+  // ONLY in the uncontrolled / ref-driven modes, where React doesn't own the
+  // value — `defaultChecked`, or react-hook-form's imperative `.checked` set
+  // through the ref (no React onChange). In CONTROLLED mode we DON'T mirror:
+  // the `checked` prop is the single source of truth and drives the tick
+  // directly (see displayChecked). Seeded false; the callback ref corrects it
+  // from the live DOM on mount, and each user change keeps it in step.
+  const [mirrorChecked, setMirrorChecked] = useState(false);
+  const isControlled = checked !== undefined;
 
   // Callback ref: forward whatever ref the caller passed (react-hook-form's
   // register() ref included), AND seed the mirror from the node's real, live
   // `.checked` once it mounts — this is what catches RHF's imperative set and
-  // plain `defaultChecked`/`checked` alike, since all of them land on the DOM.
+  // plain `defaultChecked` alike, since both land on the DOM with no onChange.
   const attachRef = useCallback(
     (node: HTMLInputElement | null) => {
       if (typeof ref === 'function') ref(node);
       else if (ref) ref.current = node;
-      if (node) setIsChecked(node.checked);
+      if (node) setMirrorChecked(node.checked);
     },
     [ref],
   );
 
+  // The value the tick + pop animation follow. Controlled: read the prop
+  // DIRECTLY — no state copy to fall out of sync, so a remote flip (the AP
+  // table's select-all / clear-selection, which re-renders every row's box by
+  // prop with NO onChange) draws the tick immediately. Uncontrolled/ref-driven:
+  // fall back to the DOM-seeded mirror, since React doesn't own the value.
+  const displayChecked = isControlled ? checked : mirrorChecked;
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setIsChecked(e.target.checked);
+    // Only the uncontrolled mirror needs updating on a user change; controlled
+    // mode re-renders from the parent's new `checked` prop.
+    if (!isControlled) setMirrorChecked(e.target.checked);
     onChange?.(e);
   };
 
@@ -77,10 +94,11 @@ export function Checkbox({
         ref={attachRef}
         id={id}
         type="checkbox"
+        checked={checked}
         onChange={handleChange}
         // A small spring pop the moment it's checked (0.9 → 1), so ticking a box
         // feels like a deliberate, physical confirm; the box rests at 1 when off.
-        animate={{ scale: isChecked ? [0.9, 1] : 1 }}
+        animate={{ scale: displayChecked ? [0.9, 1] : 1 }}
         transition={{ type: 'spring', stiffness: 600, damping: 18 }}
         className={cn(
           'peer size-4 rounded-square border-control-border bg-white cursor-pointer appearance-none border',
@@ -99,7 +117,7 @@ export function Checkbox({
         className="inset-0 size-4 text-white pointer-events-none absolute"
       >
         <AnimatePresence initial={false}>
-          {isChecked && (
+          {displayChecked && (
             <motion.path
               d="M4 8.5 7 11.5 12 5"
               stroke="currentColor"
