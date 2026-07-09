@@ -73,4 +73,29 @@ describe('BillDetailsCompletePaymentButton', () => {
 
     expect(screen.getByRole('button', { name: /completing…/i })).toBeDisabled();
   });
+
+  it('drives a SHARED flow when one is passed instead of owning its own', async () => {
+    // The footer hands the button its own useRollPayment instance so the button
+    // click and the form's ⌘/Ctrl+↵ shortcut settle ONE payment. When a `flow`
+    // is supplied the button ignores its private instance and uses that one.
+    const sharedRoll = vi.fn().mockResolvedValue(true);
+    const sharedFlow = { roll: sharedRoll, submitting: false, error: null };
+    const user = userEvent.setup();
+    render(<BillDetailsCompletePaymentButton flow={sharedFlow} onDone={onDone} />);
+
+    await user.click(screen.getByRole('button', { name: /^complete payment$/i }));
+
+    await waitFor(() => expect(sharedRoll).toHaveBeenCalledOnce());
+    expect(roll).not.toHaveBeenCalled(); // the private instance stays untouched
+    await waitFor(() => expect(onDone).toHaveBeenCalledOnce());
+  });
+
+  it('reflects the SHARED flow\u2019s submitting state', () => {
+    // Busy state rides the shared flow: when the form's roll is in flight, the
+    // button reads that — not its own idle instance — and disables.
+    const sharedFlow = { roll: vi.fn(), submitting: true, error: null };
+    render(<BillDetailsCompletePaymentButton flow={sharedFlow} />);
+
+    expect(screen.getByRole('button', { name: /completing…/i })).toBeDisabled();
+  });
 });

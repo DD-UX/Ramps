@@ -6,12 +6,13 @@ import { EmptyState } from '@ramps/ui/EmptyState';
 import { FieldError } from '@ramps/ui/FieldError';
 import { ActivityIcon } from '@ramps/ui/icons';
 import { Tabs } from '@ramps/ui/Tabs';
-import { Activity, useEffect, useState } from 'react';
+import { Activity, useEffect, useRef, useState } from 'react';
 import { useFormState, useWatch } from 'react-hook-form';
 
 import { BillsActionsMenu } from '@/features/bills/components/BillsActionsMenu';
 import { hasBillActions } from '@/features/bills/constants/bill-actions.constants';
 import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
+import { useCommandPlusKey } from '@/features/common/hooks/useCommandPlusKey';
 import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 
 import { isBillEditable } from '../constants/editable-status.constants';
@@ -22,6 +23,7 @@ import {
 } from '../constants/footer-action.constants';
 import { isBillPreSubmit } from '../constants/pre-submit.constants';
 import {
+  hasPrimaryAction,
   PRIMARY_ACTION,
   PRIMARY_ACTION_BY_STATUS,
   resolvePrimaryAction,
@@ -36,6 +38,7 @@ import { useBillDetail } from '../context/BillDetail.context';
 import { billSubmitReady } from '../helpers/section-completeness.helpers';
 import { useApproveBill } from '../hooks/useApproveBill';
 import { useCancelBillEdit } from '../hooks/useCancelBillEdit';
+import { useRollPayment } from '../hooks/useRollPayment';
 import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
 import { useSubmitBill } from '../hooks/useSubmitBill';
 import { BillDetailsApprovals } from './BillDetailsApprovals';
@@ -90,12 +93,21 @@ export function BillDetailsForm() {
   // Cancel edit: discard in-edit changes and snap back to the fetched record,
   // then leave edit mode — the "Save bill" companion, no network write.
   const { cancelEdit } = useCancelBillEdit();
+  // Complete payment: release a scheduled/partially-paid bill's booked payment
+  // NOW. Owned HERE (not just inside BillDetailsCompletePaymentButton) so ONE
+  // roll instance backs both the button's click and the ⌘/Ctrl+↵ shortcut — the
+  // button reads this same flow's `submitting`/`error` when it's the primary.
+  const rollPayment = useRollPayment();
   // The schedule/view modal's open state — the `approved` primary opens it to
   // book a payment, the `scheduled` primary opens it read-only ("View schedule").
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   // The save toast's phase: 'saving' while the flow runs, 'saved' once it
   // resolves ok, null otherwise (a failure falls back to the inline error).
   const [saveToast, setSaveToast] = useState<SaveToastPhase | null>(null);
+  // The <form> element itself — the ⌘/Ctrl+↵ shortcut routes the create action
+  // through `requestSubmit()` on it, so the chord runs the SAME validated submit
+  // a click or Enter would (rather than a bespoke second submit path).
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Pre-submit bills (draft / missing_info) keep the authoring footer: Save
   // draft, always-editable fields. `awaiting_approval` is still editable — the
@@ -193,8 +205,8 @@ export function BillDetailsForm() {
   const primaryLabel = PRIMARY_ACTION_BY_STATUS[bill.status];
   // The primary's leading glyph, one per status (FilePlus create, Check approve,
   // CalendarClock schedule, Eye view, CircleDollarSign complete, RotateCcw
-  // reopen, ArchiveRestore restore). Always present, so the JSX renders it
-  // unconditionally as the button's leadingIcon.
+  // reopen). Read only when the status actually renders a primary — `archived`
+  // renders none (see `hasPrimaryAction`), so its resolved glyph is never used.
   const PrimaryIcon = resolvePrimaryActionIcon(bill.status);
 
   // create is the only kind whose enablement is form-driven (valid + complete);
@@ -202,25 +214,32 @@ export function BillDetailsForm() {
   // inert. Approve reads the shared payment slice inside its hook, so the button
   // itself needn't gate on payment completeness — an incomplete slice simply
   // lands the bill on `approved` rather than `scheduled`.
+  //
+  // `run` is the ONE effect a non-submit primary performs — the ⌘/Ctrl+↵ chord
+  // and the button click both call it, so they can never diverge. The CREATE
+  // kind is the exception: it rides the form's NATIVE submit (a `type="submit"`
+  // button), so its `run` is a no-op here and the chord routes through
+  // `requestSubmit()` in the shortcut handler below — same validated submit
+  // path a click/Enter would take, without reading the ref during render.
   const primary: {
     label: string;
-    onClick: () => void;
+    run: () => void;
     disabled: boolean;
-    /** Show the ⌘/Ctrl+↵ chip + native submit — create only. */
+    /** Native submit + a `type="submit"` button — create only. */
     isSubmit: boolean;
   } = (() => {
     switch (primaryAction) {
       case PRIMARY_ACTION.CREATE:
         return {
           label: submitting ? 'Creating…' : primaryLabel,
-          onClick: () => undefined, // native submit drives it
+          run: () => undefined, // native submit + the shortcut's requestSubmit()
           disabled: !canSubmit || submitting,
           isSubmit: true,
         };
       case PRIMARY_ACTION.APPROVE:
         return {
           label: approving ? 'Approving…' : primaryLabel,
-          onClick: () => void approve(),
+          run: () => void approve(),
           // Locked while editing: the user must Save or Cancel their edits
           // before approving, so Approve never fires over an unsaved form.
           disabled: approving || editable,
@@ -230,22 +249,52 @@ export function BillDetailsForm() {
       case PRIMARY_ACTION.VIEW:
         return {
           label: primaryLabel,
-          onClick: () => setScheduleModalOpen(true),
+          run: () => setScheduleModalOpen(true),
           disabled: false,
           isSubmit: false,
         };
       case PRIMARY_ACTION.COMPLETE:
-        // The shared Complete-payment button renders AS the primary (below) and
-        // owns its own flow — this record is never rendered for this kind.
-        return { label: primaryLabel, onClick: () => undefined, disabled: false, isSubmit: false };
+        // The shared Complete-payment button renders AS the primary (below); the
+        // chord shares the SAME roll flow this component owns, so ⌘/Ctrl+↵ and a
+        // click both settle exactly one payment (and can't while one's in flight).
+        return {
+          label: primaryLabel,
+          run: () => void rollPayment.roll(),
+          disabled: rollPayment.submitting,
+          isSubmit: false,
+        };
       default:
         // Terminal / not-yet-wired states — the label reads but the button is inert.
-        return { label: primaryLabel, onClick: () => undefined, disabled: true, isSubmit: false };
+        return { label: primaryLabel, run: () => undefined, disabled: true, isSubmit: false };
     }
   })();
 
+  // ⌘/Ctrl+↵ fires whatever the active footer primary does — gated on the
+  // primary being enabled. Held back while the schedule/view modal is open so
+  // the chord belongs to the dialog, and preventDefault stops a stray newline /
+  // browser default from the focused field. CREATE routes through the form's
+  // native submit (`requestSubmit()` — the ref is read here in the handler, not
+  // during render); every other kind calls its `run`. One form-level binding,
+  // so the chord works no matter which field has focus.
+  useCommandPlusKey(
+    'Enter',
+    (event) => {
+      event.preventDefault();
+      if (primary.isSubmit) formRef.current?.requestSubmit();
+      else primary.run();
+    },
+    !primary.disabled && !scheduleModalOpen,
+  );
+
+  // The ⌘/Ctrl+↵ chip, shown on the ACTIVE primary whenever the chord would
+  // fire it (enabled + no modal). ⌘ on Apple, Ctrl elsewhere. Undefined hides
+  // the chip — a disabled primary advertises no shortcut.
+  const shortcutKeys =
+    !primary.disabled && !scheduleModalOpen ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined;
+
   return (
     <form
+      ref={formRef}
       onSubmit={form.handleSubmit(onSubmit, (errors) =>
         console.warn('[bill-details] submit blocked by validation:', errors),
       )}
@@ -359,26 +408,39 @@ export function BillDetailsForm() {
           {/* A `scheduled` bill's primary reads "View schedule" (read-only) — the
               real money-movement action, "Complete payment", sits beside it as
               the SAME shared button the View-schedule modal uses (secondary here
-              so View stays the visual primary). It owns its own roll flow. */}
-          {bill.status === 'scheduled' && <BillDetailsCompletePaymentButton variant="secondary" />}
+              so View stays the visual primary). It runs the FORM's roll flow so
+              the chord (which fires View, not Complete, here) and its click stay
+              separate — the companion is a click-only affordance (no chip). */}
+          {bill.status === 'scheduled' && (
+            <BillDetailsCompletePaymentButton variant="secondary" flow={rollPayment} />
+          )}
           {primaryAction === PRIMARY_ACTION.COMPLETE ? (
             /* A `partially_paid` bill's primary IS "Complete payment" — the same
-               shared button, rendered as the primary (no separate inert CTA) so
-               the roll flow is wired identically to the `scheduled` companion. */
-            <BillDetailsCompletePaymentButton variant="primary" />
-          ) : (
-            <Button
-              type={primary.isSubmit ? 'submit' : 'button'}
+               shared button, rendered as the primary (no separate inert CTA) and
+               driven by the form's roll flow so ⌘/Ctrl+↵ and a click share it. It
+               carries the chord chip since it's THE active primary here. */
+            <BillDetailsCompletePaymentButton
               variant="primary"
-              leadingIcon={<PrimaryIcon size={16} />}
-              disabled={primary.disabled}
-              onClick={primary.isSubmit ? undefined : primary.onClick}
-              keys={
-                primary.isSubmit && !primary.disabled ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined
-              }
-            >
-              {primary.label}
-            </Button>
+              flow={rollPayment}
+              keys={shortcutKeys}
+            />
+          ) : (
+            /* The generic status primary — omitted entirely for statuses with no
+               primary (archived: there's no restore flow, so no button at all,
+               not an inert one). Terminal states that DO read (paid / rejected)
+               still render, disabled. */
+            hasPrimaryAction(bill.status) && (
+              <Button
+                type={primary.isSubmit ? 'submit' : 'button'}
+                variant="primary"
+                leadingIcon={<PrimaryIcon size={16} />}
+                disabled={primary.disabled}
+                onClick={primary.isSubmit ? undefined : primary.run}
+                keys={shortcutKeys}
+              >
+                {primary.label}
+              </Button>
+            )
           )}
         </div>
       </BillDetailsPane>

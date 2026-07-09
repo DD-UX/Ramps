@@ -1,13 +1,11 @@
 import type { BillStatusType } from '@ramps/schemas/bills';
 import {
-  ArchiveRestore,
   CalendarClock,
   Check,
   CircleDollarSign,
   Eye,
   FilePlus,
   type LucideIcon,
-  RotateCcw,
 } from '@ramps/ui/icons';
 
 /**
@@ -24,8 +22,12 @@ export const PRIMARY_ACTION_BY_STATUS: Record<BillStatusType, string> = {
   scheduled: 'View schedule',
   partially_paid: 'Complete payment',
   paid: 'View payment',
-  rejected: 'Reopen bill',
-  archived: 'Restore bill',
+  // `rejected` + `archived` render NO primary (see `hasPrimaryAction`) — there's
+  // no reopen/restore flow, so the footer omits the button rather than showing an
+  // inert one. The entries stay only to satisfy the exhaustive record; they're
+  // never displayed.
+  rejected: '',
+  archived: '',
 };
 
 /**
@@ -77,16 +79,30 @@ export function resolvePrimaryAction(status: BillStatusType): PrimaryAction {
 }
 
 /**
+ * Statuses whose footer renders NO primary at all — the slot stays empty rather
+ * than showing an inert CTA. `rejected` + `archived` are the cases: no reopen /
+ * restore flow is offered, so the footer omits the button entirely (no "Reopen
+ * bill" / "Restore bill" UI) instead of rendering it disabled.
+ */
+const STATUSES_WITHOUT_PRIMARY: ReadonlySet<BillStatusType> = new Set(['rejected', 'archived']);
+
+/** Whether the footer should render a primary button at all for this status. */
+export function hasPrimaryAction(status: BillStatusType): boolean {
+  return !STATUSES_WITHOUT_PRIMARY.has(status);
+}
+
+/**
  * The primary CTA's leading glyph per STATUS — one icon for every footer
- * primary, mirroring the label above. Keyed by status (not kind) so the three
- * terminal states that share the `none` kind still read distinctly:
+ * primary that renders, mirroring the label above:
  *   • FilePlus       — Create bill (a new bill filed)         [draft/missing_info]
  *   • Check          — Approve (the reviewer's tick)          [awaiting_approval]
  *   • CalendarClock  — Schedule payment (a date being set)    [approved]
  *   • Eye            — View schedule / View payment (read-only)[scheduled/paid]
  *   • CircleDollarSign — Complete payment (money moving)       [partially_paid]
- *   • RotateCcw      — Reopen bill (undo the reject)           [rejected]
- *   • ArchiveRestore — Restore bill (pull it back from the archive) [archived]
+ *
+ * `rejected` + `archived` have NO primary (see `hasPrimaryAction`) so they need
+ * no glyph; their entries map to a neutral placeholder purely to keep the record
+ * exhaustive — the footer never renders a button for them, so it's never shown.
  */
 const PRIMARY_ACTION_ICON_BY_STATUS: Record<BillStatusType, LucideIcon> = {
   draft: FilePlus,
@@ -96,8 +112,8 @@ const PRIMARY_ACTION_ICON_BY_STATUS: Record<BillStatusType, LucideIcon> = {
   scheduled: Eye,
   partially_paid: CircleDollarSign,
   paid: Eye,
-  rejected: RotateCcw,
-  archived: ArchiveRestore,
+  rejected: Eye, // unused — rejected renders no primary
+  archived: Eye, // unused — archived renders no primary
 };
 
 /** The leading icon for the footer primary of the given bill status. */

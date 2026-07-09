@@ -36,6 +36,14 @@ vi.mock('../hooks/useCancelBillEdit', () => ({
   useCancelBillEdit: () => ({ cancelEdit }),
 }));
 
+// The roll flow the footer now OWNS (one instance shared with the Complete
+// button). Stub it so no router/api-client is needed; its own settle behaviour
+// is covered by the roll hook + Complete-button tests.
+const roll = vi.fn();
+vi.mock('../hooks/useRollPayment', () => ({
+  useRollPayment: () => ({ roll, submitting: false, error: null }),
+}));
+
 vi.mock('@/features/common/hooks/useIsApplePlatform', () => ({
   useIsApplePlatform: () => true,
 }));
@@ -216,6 +224,26 @@ describe('BillDetailsForm footer primary', () => {
     // Complete payment is not offered on a fully-paid bill.
     expect(screen.queryByTestId('complete-payment')).not.toBeInTheDocument();
   });
+
+  it('rejected: renders NO primary at all (no "Reopen bill" UI)', () => {
+    status = 'rejected';
+    render(<BillDetailsForm />);
+
+    // There's no reopen flow, so the footer omits the primary entirely rather
+    // than showing an inert "Reopen bill" button.
+    expect(screen.queryByRole('button', { name: /reopen/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('complete-payment')).not.toBeInTheDocument();
+  });
+
+  it('archived: renders NO primary at all (no "Restore bill" UI)', () => {
+    status = 'archived';
+    render(<BillDetailsForm />);
+
+    // There's no restore flow, so the footer omits the primary entirely rather
+    // than showing an inert "Restore bill" button.
+    expect(screen.queryByRole('button', { name: /restore/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('complete-payment')).not.toBeInTheDocument();
+  });
 });
 
 /**
@@ -277,5 +305,59 @@ describe('BillDetailsForm footer — edit mode (Cancel / Save bill)', () => {
     // fire over an unsaved form, mirroring the locked Approve primary.
     expect(screen.getByTestId('bill-actions-menu')).toHaveAttribute('data-disabled', 'true');
     expect(screen.getByRole('button', { name: /^approve$/i })).toBeDisabled();
+  });
+});
+
+/**
+ * The ⌘/Ctrl+↵ shortcut: the chord fires whatever the ACTIVE footer primary
+ * does — the same effect a click routes through — gated on the primary being
+ * enabled. These prove the wiring per status (create submits, approve approves,
+ * schedule opens the modal) and that a disabled/locked primary swallows it.
+ */
+describe('BillDetailsForm footer — ⌘/Ctrl+↵ shortcut', () => {
+  it('draft: the chord submits the form (Create)', async () => {
+    status = 'draft';
+    const user = userEvent.setup();
+    render(<BillDetailsForm />);
+
+    await user.keyboard('{Meta>}{Enter}{/Meta}');
+
+    await waitFor(() => expect(submit).toHaveBeenCalledOnce());
+    expect(approve).not.toHaveBeenCalled();
+  });
+
+  it('awaiting_approval: the chord fires the approve flow', async () => {
+    status = 'awaiting_approval';
+    editable = false;
+    const user = userEvent.setup();
+    render(<BillDetailsForm />);
+
+    await user.keyboard('{Control>}{Enter}{/Control}');
+
+    await waitFor(() => expect(approve).toHaveBeenCalledOnce());
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('approved: the chord opens the schedule modal', async () => {
+    status = 'approved';
+    const user = userEvent.setup();
+    render(<BillDetailsForm />);
+
+    expect(screen.queryByTestId('schedule-modal')).not.toBeInTheDocument();
+    await user.keyboard('{Meta>}{Enter}{/Meta}');
+
+    expect(await screen.findByTestId('schedule-modal')).toHaveAttribute('data-mode', 'schedule');
+  });
+
+  it('editing awaiting_approval: the locked Approve swallows the chord', async () => {
+    status = 'awaiting_approval';
+    editable = true; // Approve is disabled mid-edit — the chord must be inert too.
+    const user = userEvent.setup();
+    render(<BillDetailsForm />);
+
+    await user.keyboard('{Meta>}{Enter}{/Meta}');
+
+    expect(approve).not.toHaveBeenCalled();
+    expect(submit).not.toHaveBeenCalled();
   });
 });

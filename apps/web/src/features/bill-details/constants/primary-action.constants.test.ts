@@ -2,6 +2,7 @@ import type { BillStatusType } from '@ramps/schemas/bills';
 import { describe, expect, it } from 'vitest';
 
 import {
+  hasPrimaryAction,
   PRIMARY_ACTION,
   PRIMARY_ACTION_BY_STATUS,
   resolvePrimaryAction,
@@ -45,9 +46,11 @@ describe('resolvePrimaryAction', () => {
 });
 
 describe('PRIMARY_ACTION_BY_STATUS labels', () => {
-  it('gives every status a non-empty label', () => {
-    for (const label of Object.values(PRIMARY_ACTION_BY_STATUS)) {
-      expect(label.length).toBeGreaterThan(0);
+  it('gives every status-WITH-a-primary a non-empty label', () => {
+    // `archived` renders no primary (see hasPrimaryAction) so it carries no
+    // label; every OTHER status must read something.
+    for (const status of ALL_STATUSES.filter(hasPrimaryAction)) {
+      expect(PRIMARY_ACTION_BY_STATUS[status].length).toBeGreaterThan(0);
     }
   });
 
@@ -62,26 +65,31 @@ describe('PRIMARY_ACTION_BY_STATUS labels', () => {
 });
 
 /**
- * Every footer primary carries a leading glyph — the icon map is keyed by
- * STATUS (not kind) so the three terminal states that share the `none`
- * behaviour-kind (paid / rejected / archived) still resolve DISTINCT icons.
+ * `hasPrimaryAction` gates whether the footer renders a primary at all.
+ * `rejected` + `archived` opt out — there's no reopen/restore flow, so the
+ * footer omits the button rather than showing an inert "Reopen bill" /
+ * "Restore bill". Every other status keeps one.
  */
-describe('resolvePrimaryActionIcon', () => {
-  it('gives every status a (defined) leading icon', () => {
+describe('hasPrimaryAction', () => {
+  const NO_PRIMARY: BillStatusType[] = ['rejected', 'archived'];
+
+  it('is false for rejected + archived and true for every other status', () => {
     for (const status of ALL_STATUSES) {
-      expect(resolvePrimaryActionIcon(status)).toBeTruthy();
+      expect(hasPrimaryAction(status)).toBe(!NO_PRIMARY.includes(status));
     }
   });
+});
 
-  it('resolves distinct icons across the `none`-kind terminal states', () => {
-    // paid → Eye (read-only view), rejected → RotateCcw (reopen), archived →
-    // ArchiveRestore (restore): all three share the `none` kind yet must differ.
-    const paid = resolvePrimaryActionIcon('paid');
-    const rejected = resolvePrimaryActionIcon('rejected');
-    const archived = resolvePrimaryActionIcon('archived');
-    expect(paid).not.toBe(rejected);
-    expect(rejected).not.toBe(archived);
-    expect(paid).not.toBe(archived);
+/**
+ * Every footer primary that DOES render carries a leading glyph. The two
+ * remaining rendered "read-only" primaries — scheduled + paid — both use Eye;
+ * the pre-submit pair shares FilePlus. (rejected/archived render no primary.)
+ */
+describe('resolvePrimaryActionIcon', () => {
+  it('gives every status-WITH-a-primary a (defined) leading icon', () => {
+    for (const status of ALL_STATUSES.filter(hasPrimaryAction)) {
+      expect(resolvePrimaryActionIcon(status)).toBeTruthy();
+    }
   });
 
   it('shares the FilePlus glyph across the two pre-submit statuses', () => {
