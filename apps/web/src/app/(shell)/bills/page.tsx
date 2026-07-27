@@ -6,7 +6,7 @@ import { BillsPageContent } from '@/features/bills/components/BillsPageContent';
 import { getBillTabs } from '@/features/bills/data/bill-tabs.data';
 import { resolveTab, statusesForTab } from '@/features/bills/helpers/bill-tabs.helpers';
 import { normalizePageParam } from '@/features/bills/helpers/page-query.helpers';
-import { normalizeSearchParam } from '@/features/bills/helpers/search-query.helpers';
+import { normalizeSearchParam } from '@/features/common/helpers/search-query.helpers';
 
 // The tab title mirrors the SideMenu label for this route ("Bill Pay").
 export const metadata: Metadata = {

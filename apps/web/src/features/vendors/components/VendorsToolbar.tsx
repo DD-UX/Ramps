@@ -5,47 +5,26 @@ import { Button } from '@ramps/ui/Button';
 import { IconButton } from '@ramps/ui/IconButton';
 import { ChevronDown, Download, Filter, Layout, Search } from '@ramps/ui/icons';
 import { Input } from '@ramps/ui/Input';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { buildSearchQuery } from '../helpers/vendor-search-query.helpers';
+import { useDebouncedSearchNavigation } from '@/features/common/hooks/useDebouncedSearchNavigation';
 
+/**
+ * VendorsToolbar — the control strip over the vendor table.
+ *
+ * The search shares Bill Pay's exact contract, and now literally shares its
+ * implementation: `useDebouncedSearchNavigation` owns the pause, the URL math
+ * and the shared transition. The rest of the strip is disabled fidelity, and is
+ * intentionally still its own copy — it stands in for vendor filters, which are
+ * not Bill Pay's filters.
+ */
 export interface VendorsToolbarProps {
   initialSearch: VendorListItemType['name'] | null;
 }
 
-const SEARCH_DEBOUNCE_MS = 300;
-
 export function VendorsToolbar({ initialSearch }: VendorsToolbarProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const [value, setValue] = useState(initialSearch ?? '');
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const { value, onChange } = useDebouncedSearchNavigation(initialSearch);
 
   const buttonClassName = 'h-full';
-
-  const commit = useCallback(
-    (next: string) => {
-      const query = buildSearchQuery(searchParams.toString(), next);
-      router.replace(query ? `${pathname}?${query}` : pathname);
-    },
-    [router, pathname, searchParams],
-  );
-
-  useEffect(() => {
-    return () => clearTimeout(timer.current);
-  }, []);
-
-  const onChange = useCallback(
-    (next: string) => {
-      setValue(next);
-      clearTimeout(timer.current);
-      timer.current = setTimeout(() => commit(next), SEARCH_DEBOUNCE_MS);
-    },
-    [commit],
-  );
 
   return (
     <div className="gap-rui-2 px-rui-6 py-rui-2 bg-stone-50 flex">

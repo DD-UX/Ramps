@@ -2,8 +2,9 @@
 
 import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import { Tabs } from '@ramps/ui/Tabs';
-import { usePathname, useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useOptimistic } from 'react';
+
+import { useUrlNavigation } from '@/features/common/context/UrlNavigation.context';
 
 import { tabHref } from '../helpers/bill-tabs.helpers';
 
@@ -18,6 +19,26 @@ import { tabHref } from '../helpers/bill-tabs.helpers';
  * tabs is a navigation, not a client fetch. This keeps the single Zod gate (the
  * facade parse) as the only validation boundary and the URL shareable.
  *
+ * ## Why the highlight is optimistic
+ *
+ * Deriving the active tab from the URL has one nasty consequence: Next does not
+ * commit the new URL until the server render RESOLVES, so a plain
+ * `router.push` leaves the clicked tab un-highlighted for the whole round trip.
+ * The bar looked frozen — the click appeared to do nothing.
+ *
+ * `useOptimistic` splits those two facts apart. The tab you clicked becomes
+ * active immediately (the underline glides on the same frame as the press),
+ * while `?tab=` remains the source of truth underneath. When the navigation
+ * commits, the optimistic value is dropped and the prop takes over — the value
+ * is identical, so nothing moves. If the navigation FAILS, React discards the
+ * optimistic value and the bar snaps back to the tab that is genuinely open,
+ * which is the honest outcome: we never leave a tab highlighted for a list that
+ * isn't showing.
+ *
+ * The setter must run inside a transition, which is why navigation goes through
+ * {@link useUrlNavigation} rather than `router.push` directly — the same
+ * transition also raises the activity rail beneath the toolbar.
+ *
  * `count` badges come from the server (per-status counts rolled up per tab) so
  * each tab shows how many bills sit in that category without a second round-trip.
  */
@@ -31,8 +52,11 @@ export interface BillsTabsProps {
 }
 
 export function BillsTabs({ tabs, activeCode, counts }: BillsTabsProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const { navigate, pathname } = useUrlNavigation();
+
+  // Seeded from the URL-derived prop; runs ahead of it only while a tab
+  // navigation is in flight.
+  const [optimisticCode, setOptimisticCode] = useOptimistic(activeCode);
 
   // The default tab is the first row (the catalog's own order) — no hardcoded
   // slug. Switching to it drops the param rather than writing ?tab=<default>.
@@ -40,9 +64,11 @@ export function BillsTabs({ tabs, activeCode, counts }: BillsTabsProps) {
 
   const onValueChange = useCallback(
     (next: string) => {
-      router.push(tabHref(pathname, next, defaultCode));
+      navigate(tabHref(pathname, next, defaultCode), {
+        optimistic: () => setOptimisticCode(next),
+      });
     },
-    [router, pathname, defaultCode],
+    [navigate, pathname, defaultCode, setOptimisticCode],
   );
 
   const tabItems = tabs.map((tab) => ({
@@ -52,6 +78,11 @@ export function BillsTabs({ tabs, activeCode, counts }: BillsTabsProps) {
   }));
 
   return (
-    <Tabs tabs={tabItems} value={activeCode} onValueChange={onValueChange} className="px-rui-6" />
+    <Tabs
+      tabs={tabItems}
+      value={optimisticCode}
+      onValueChange={onValueChange}
+      className="px-rui-6"
+    />
   );
 }

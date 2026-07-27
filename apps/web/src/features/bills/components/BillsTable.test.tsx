@@ -1,17 +1,24 @@
 import type { BillFlagType, BillListItemType } from '@ramps/schemas/bills';
 import { render, screen, within } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+
+import { UrlNavigationProvider } from '@/features/common/context/UrlNavigation.context';
 
 import { BillsTable } from './BillsTable';
 
-// The table reads the App Router hooks — `useRouter` for row-click + page
-// navigation, `usePathname`/`useSearchParams` to rebuild the `?page=` URL — so
-// stub all three to render outside an App Router context.
+// The table reads the App Router hooks — `useRouter` for the row click, and
+// (through UrlNavigationProvider) `usePathname`/`useSearchParams` to rebuild the
+// `?page=` URL — so stub all three to render outside an App Router context.
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/bills',
   useSearchParams: () => new URLSearchParams(),
 }));
+
+// The pager navigates through the shared transition, so the provider is part of
+// the component's environment — see UrlNavigation.context.
+const renderTable = (ui: ReactElement) => render(ui, { wrapper: UrlNavigationProvider });
 
 /**
  * BillsTable is a thin client wrapper over the kit Table: it owns the column
@@ -59,7 +66,7 @@ function makeBill(overrides: Partial<BillListItemType> = {}): BillListItemType {
 
 describe('BillsTable', () => {
   it('renders a vendor name, invoice #, formatted due date, status, and amount', () => {
-    render(<BillsTable bills={[makeBill()]} total={1} page={1} pageSize={10} />);
+    renderTable(<BillsTable bills={[makeBill()]} total={1} page={1} pageSize={10} />);
     const body = document.querySelector('tbody') as HTMLElement;
     expect(within(body).getByText('Acme Co')).toBeInTheDocument();
     expect(within(body).getByText('INV-100')).toBeInTheDocument();
@@ -70,14 +77,26 @@ describe('BillsTable', () => {
   });
 
   it('shows the "No vendor" placeholder for a vendor-less draft', () => {
-    render(
-      <BillsTable bills={[makeBill({ vendor_name: null, status: 'missing_info' })]} total={1} page={1} pageSize={10} />,
+    renderTable(
+      <BillsTable
+        bills={[makeBill({ vendor_name: null, status: 'missing_info' })]}
+        total={1}
+        page={1}
+        pageSize={10}
+      />,
     );
     expect(screen.getByText('No vendor')).toBeInTheDocument();
   });
 
   it('renders an em dash for a missing invoice number and due date', () => {
-    render(<BillsTable bills={[makeBill({ invoice_number: null, due_date: null })]} total={1} page={1} pageSize={10} />);
+    renderTable(
+      <BillsTable
+        bills={[makeBill({ invoice_number: null, due_date: null })]}
+        total={1}
+        page={1}
+        pageSize={10}
+      />,
+    );
     // Two em dashes: invoice # and due date.
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
   });
@@ -92,7 +111,7 @@ describe('BillsTable', () => {
         }),
       ],
     });
-    render(<BillsTable bills={[bill]} total={1} page={1} pageSize={10} />);
+    renderTable(<BillsTable bills={[bill]} total={1} page={1} pageSize={10} />);
     expect(screen.getByText(/possible duplicate/i)).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /view original/i });
     expect(link).toHaveAttribute('href', '/bills/bill-99');
@@ -100,13 +119,20 @@ describe('BillsTable', () => {
 
   it('renders a non-duplicate flag message without a link', () => {
     const bill = makeBill({ flags: [makeFlag({ message: 'Amount exceeds the PO' })] });
-    render(<BillsTable bills={[bill]} total={1} page={1} pageSize={10} />);
+    renderTable(<BillsTable bills={[bill]} total={1} page={1} pageSize={10} />);
     expect(screen.getByText('Amount exceeds the PO')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /view original/i })).not.toBeInTheDocument();
   });
 
   it('reports the total row count in the footer, independent of the page size', () => {
-    render(<BillsTable bills={[makeBill(), makeBill({ id: 'bill-2' })]} total={42} page={1} pageSize={10} />);
+    renderTable(
+      <BillsTable
+        bills={[makeBill(), makeBill({ id: 'bill-2' })]}
+        total={42}
+        page={1}
+        pageSize={10}
+      />,
+    );
     // The pagination band shows the aggregate "of N" total.
     expect(screen.getByText(/42/)).toBeInTheDocument();
   });
@@ -116,7 +142,7 @@ describe('BillsTable', () => {
       makeBill({ id: 'a', status: 'paid', vendor_name: 'A' }),
       makeBill({ id: 'b', status: 'draft', vendor_name: 'B' }),
     ];
-    render(<BillsTable bills={bills} total={2} page={1} pageSize={10} />);
+    renderTable(<BillsTable bills={bills} total={2} page={1} pageSize={10} />);
     expect(screen.getByText('Paid')).toBeInTheDocument();
     expect(screen.getByText('Draft')).toBeInTheDocument();
   });
@@ -126,7 +152,7 @@ describe('BillsTable', () => {
       makeBill({ id: 'a', amount_cents: 100_000, vendor_name: 'A' }),
       makeBill({ id: 'b', amount_cents: 50_000, vendor_name: 'B' }),
     ];
-    render(<BillsTable bills={bills} total={2} page={1} pageSize={10} />);
+    renderTable(<BillsTable bills={bills} total={2} page={1} pageSize={10} />);
     // $1,500.00 aggregate across the two rows lives in the pagination band —
     // a <div> pinned to the scroll floor (NOT a <tfoot>: a sticky tfoot can't
     // travel past the table's bottom to the page floor).

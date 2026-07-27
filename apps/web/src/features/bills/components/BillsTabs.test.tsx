@@ -1,7 +1,10 @@
 import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { UrlNavigationProvider } from '@/features/common/context/UrlNavigation.context';
 
 import { BillsTabs } from './BillsTabs';
 
@@ -12,13 +15,27 @@ import { BillsTabs } from './BillsTabs';
  * bill-tabs.helpers.test; here we prove the WIRING: the catalog renders, the
  * active tab is selected, counts show, and a click routes to the right URL.
  *
+ * Every render goes through `UrlNavigationProvider` because the component no
+ * longer touches the router directly — it navigates through the shared
+ * transition so the activity rail and the optimistic highlight see the same
+ * click. The provider is the component's real environment, so the tests mount
+ * it rather than stubbing the context.
+ *
  * The App Router hooks have no provider under vitest, so we mock them: a stub
- * router whose push we assert, and a fixed pathname.
+ * router whose push we assert, a fixed pathname, and empty search params (the
+ * provider reads all three).
+ *
+ * NOT tested here: that the clicked tab highlights BEFORE the server responds.
+ * `useOptimistic` holds its value only for the lifetime of the transition, and a
+ * transition wrapping a stubbed `push` completes in the same tick — there is no
+ * pending window to observe. That behaviour needs a real router; it is asserted
+ * in the browser, not in jsdom.
  */
 const push = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
   usePathname: () => '/bills',
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 const TABS: BillTabType[] = [
@@ -41,13 +58,16 @@ const TABS: BillTabType[] = [
   },
 ];
 
+/** The component's real environment: inside the shared navigation transition. */
+const renderTabs = (ui: ReactElement) => render(ui, { wrapper: UrlNavigationProvider });
+
 describe('BillsTabs', () => {
   beforeEach(() => {
     push.mockClear();
   });
 
   it('renders one tab per catalog row, in order', () => {
-    render(<BillsTabs tabs={TABS} activeCode="overview" />);
+    renderTabs(<BillsTabs tabs={TABS} activeCode="overview" />);
     const tabs = screen.getAllByRole('tab');
     expect(tabs.map((t) => t.textContent)).toEqual([
       'Overview',
@@ -57,7 +77,7 @@ describe('BillsTabs', () => {
   });
 
   it('marks the active tab as selected (and only it)', () => {
-    render(<BillsTabs tabs={TABS} activeCode="drafts" />);
+    renderTabs(<BillsTabs tabs={TABS} activeCode="drafts" />);
     const selected = screen
       .getAllByRole('tab')
       .filter((t) => t.getAttribute('aria-selected') === 'true');
@@ -66,7 +86,7 @@ describe('BillsTabs', () => {
   });
 
   it('renders the count badge for a tab', () => {
-    render(
+    renderTabs(
       <BillsTabs
         tabs={TABS}
         activeCode="overview"
@@ -79,14 +99,14 @@ describe('BillsTabs', () => {
 
   it('navigates with ?tab=<code> when a non-default tab is clicked', async () => {
     const user = userEvent.setup();
-    render(<BillsTabs tabs={TABS} activeCode="overview" />);
+    renderTabs(<BillsTabs tabs={TABS} activeCode="overview" />);
     await user.click(screen.getByRole('tab', { name: /drafts/i }));
     expect(push).toHaveBeenCalledExactlyOnceWith('/bills?tab=drafts');
   });
 
   it('drops the param when the default (first) tab is clicked', async () => {
     const user = userEvent.setup();
-    render(<BillsTabs tabs={TABS} activeCode="drafts" />);
+    renderTabs(<BillsTabs tabs={TABS} activeCode="drafts" />);
     await user.click(screen.getByRole('tab', { name: /overview/i }));
     expect(push).toHaveBeenCalledExactlyOnceWith('/bills');
   });

@@ -121,4 +121,21 @@ test.describe('token fidelity', () => {
     await expect(banner).not.toHaveCSS('background-color', 'rgb(255, 0, 0)');
     await expect(banner).toHaveCSS('border-top-left-radius', RUI['--rui-radius-square']);
   });
+
+  /**
+   * ProgressBar — the indeterminate activity rail. Its one colour decision is
+   * that the travelling segment is the ACCENT lime, the same token the primary
+   * button fills with, so "the product is working" reads in one hue everywhere.
+   * The obvious drift is someone reaching for a conventional progress blue.
+   */
+  test('ProgressBar sweep is the accent lime, never a generic progress blue', async ({ page }) => {
+    await page.goto(storyUrl('primitives-progressbar--active'));
+    const rail = page.getByRole('progressbar');
+    await expect(rail).toBeVisible();
+
+    const segment = rail.locator('span').first();
+    await expect(segment).toBeVisible();
+    await expect(segment).toHaveCSS('background-color', hexToRgb(RUI['--rui-accent']));
+    await expect(segment).not.toHaveCSS('background-color', 'rgb(0, 0, 255)');
+  });
 });

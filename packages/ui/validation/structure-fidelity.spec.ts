@@ -889,4 +889,42 @@ test.describe('structure fidelity (look & feel vs the Ramp frames)', () => {
     expect(box, 'logo has a box').not.toBeNull();
     expect(Math.abs(box!.width - box!.height * 2), 'the lockup is 2:1').toBeLessThanOrEqual(1);
   });
+
+  /**
+   * ProgressBar — the contract that justifies the primitive existing at all: the
+   * 2px track is in the layout whether or not it is loading, so starting a
+   * re-query never nudges the table below it down and back. A loading indicator
+   * that itself causes layout shift is a net loss, and this suite exists partly
+   * because that shift was the exact complaint the rail was built to answer.
+   *
+   * Indeterminate is asserted the ARIA way too: `role="progressbar"` carrying no
+   * `aria-valuenow`, with `aria-busy` — not presence — reporting the on/off
+   * state, so assistive tech isn't told "loading" while the rail is at rest.
+   */
+  test('ProgressBar reserves its 2px identically at rest and while active', async ({ page }) => {
+    await page.goto(storyUrl('primitives-progressbar--idle'));
+    const idle = page.getByRole('progressbar');
+    const idleBox = await idle.boundingBox();
+    expect(idleBox, 'the track is laid out even at rest').not.toBeNull();
+    expect(Math.abs(idleBox!.height - 2), 'idle track is 2px').toBeLessThanOrEqual(0.5);
+    // At rest: nothing painted, and nothing announced as busy.
+    await expect(idle.locator('span')).toHaveCount(0);
+    await expect(idle).toHaveAttribute('aria-busy', 'false');
+
+    await page.goto(storyUrl('primitives-progressbar--active'));
+    const active = page.getByRole('progressbar');
+    const activeBox = await active.boundingBox();
+    expect(activeBox, 'the track is laid out while active').not.toBeNull();
+    expect(
+      Math.abs(activeBox!.height - idleBox!.height),
+      'activating the rail changes nothing about the layout',
+    ).toBeLessThanOrEqual(0.5);
+
+    // Indeterminate: busy, but with no determinate value to report.
+    await expect(active).toHaveAttribute('aria-busy', 'true');
+    expect(
+      await active.getAttribute('aria-valuenow'),
+      'an indeterminate rail reports no value',
+    ).toBeNull();
+  });
 });

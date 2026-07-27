@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@ramps/ui/cn';
 import { LayoutPanelTop, Rocket } from '@ramps/ui/icons';
 import { Logo } from '@ramps/ui/Logo';
 import {
@@ -11,7 +12,9 @@ import {
   type SideMenuLinkComponent,
   SideMenuProgress,
 } from '@ramps/ui/SideMenu';
-import Link from 'next/link';
+import { Spinner } from '@ramps/ui/Spinner';
+import { useDelayedFlag } from '@ramps/ui/useDelayedFlag';
+import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Fragment } from 'react';
 
@@ -36,6 +39,42 @@ import { isNavItemActive, type NavItem } from '../helpers/nav.helpers';
  */
 
 /**
+ * The busy glyph for a nav destination whose page hasn't arrived yet.
+ *
+ * `useLinkStatus` reports the pending state of the ENCLOSING `<Link>`, so it can
+ * only be called from a descendant of one — which is exactly why this lives in
+ * the app and not in `SideMenuItem`. The primitive builds its own children
+ * (icon · label · badge) and has no slot the app could inject into, and even if
+ * it did, `@ramps/ui` carries no framework dependency: the hook is a `next/link`
+ * export. Rendering it as an extra child of the injected link is the one seam
+ * that satisfies both constraints.
+ *
+ * `useDelayedFlag` is the same anti-flash gate the ProgressBar rail uses. It
+ * matters more here than anywhere: nav routes are prefetched (see NavLink), so
+ * the overwhelmingly common case is a warm click that commits in a frame or two.
+ * Without the delay every sidebar click would blink a spinner it never needed —
+ * precisely the "glitchy" impression this work exists to remove. The spinner
+ * appears only when a nav genuinely stalls, e.g. a cold route or a slow query.
+ *
+ * It is positioned ABSOLUTELY at the item's trailing edge rather than appended
+ * to the row's flex line, so raising it cannot re-flow the label or shift the
+ * badge. Caveat by construction: it would sit over a trailing count badge, and
+ * today it cannot — the only linkable items (Bill Pay, Vendors, the Design
+ * System footer action) carry no badge, and every badged entry in NAV_SECTIONS
+ * is `disabled`, which renders a button rather than a link.
+ */
+function NavLinkPending() {
+  const { pending } = useLinkStatus();
+  const visible = useDelayedFlag(pending);
+  if (!visible) return null;
+  return (
+    <span className="right-rui-3 pointer-events-none absolute top-1/2 flex -translate-y-1/2">
+      <Spinner size="sm" label="Loading page" />
+    </span>
+  );
+}
+
+/**
  * The router link the design system renders for every nav destination.
  *
  * `@ramps/ui` deliberately carries no framework dependency, so SideMenuItem's
@@ -48,11 +87,15 @@ import { isNavItemActive, type NavItem } from '../helpers/nav.helpers';
  * them as dynamic and (by default) prefetches only their loading boundary. The
  * data set behind this demo is small enough that warming the whole payload on
  * hover/viewport is free — and it's what makes the destination feel already
- * there when you click.
+ * there when you click. The pending spinner rides along for the cases where
+ * that warming didn't finish in time.
  */
-const NavLink: SideMenuLinkComponent = ({ href, children, ...rest }) => (
-  <Link href={href} prefetch {...rest}>
+const NavLink: SideMenuLinkComponent = ({ href, className, children, ...rest }) => (
+  // `relative` is the positioning context NavLinkPending anchors to; everything
+  // else about the row's look still comes from the primitive's own classes.
+  <Link href={href} prefetch className={cn('relative', className)} {...rest}>
     {children}
+    <NavLinkPending />
   </Link>
 );
 

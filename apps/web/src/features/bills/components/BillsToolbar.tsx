@@ -5,10 +5,8 @@ import { Button } from '@ramps/ui/Button';
 import { IconButton } from '@ramps/ui/IconButton';
 import { CalendarRange, ChevronDown, Download, Filter, Layout, Search } from '@ramps/ui/icons';
 import { Input } from '@ramps/ui/Input';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { buildSearchQuery } from '../helpers/search-query.helpers';
+import { useDebouncedSearchNavigation } from '@/features/common/hooks/useDebouncedSearchNavigation';
 
 /**
  * BillsToolbar — the control strip between the tabs and the table
@@ -23,8 +21,14 @@ import { buildSearchQuery } from '../helpers/search-query.helpers';
  * as live ones (a disabled control reads as "not yet", not "broken").
  *
  * The initial value comes from the URL (`initialSearch`) so a shared `?q=` link
- * lands with the field populated; local state then owns the keystrokes and the
- * debounce owns the navigation.
+ * lands with the field populated; from there `useDebouncedSearchNavigation`
+ * owns the keystrokes, the pause and the navigation.
+ *
+ * What is NOT shared with the Vendors toolbar: everything below the field. The
+ * two disabled clusters are identical today because both trace the same
+ * reference frame, but they are placeholders for different filters and will
+ * diverge as soon as either is built. Only the search wiring — which has no
+ * entity vocabulary in it at all — was worth lifting out.
  */
 export interface BillsToolbarProps {
   /**
@@ -35,44 +39,13 @@ export interface BillsToolbarProps {
   initialSearch: BillListItemType['invoice_number'];
 }
 
-/** How long to wait after the last keystroke before navigating (ms). */
-const SEARCH_DEBOUNCE_MS = 300;
-
 export function BillsToolbar({ initialSearch }: BillsToolbarProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const [value, setValue] = useState(initialSearch ?? '');
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Debounce, URL math and the shared transition all live in the hook — see
+  // useDebouncedSearchNavigation for why that part is shared and the disabled
+  // cluster below deliberately is not.
+  const { value, onChange } = useDebouncedSearchNavigation(initialSearch);
 
   const buttonClassName = 'h-full';
-
-  // Push `?q=` (trimmed; dropped when empty) while preserving every other param
-  // — notably `?tab=` — so searching never clears the active tab. The URL math
-  // lives in buildSearchQuery so it's unit-tested without a DOM.
-  const commit = useCallback(
-    (next: string) => {
-      const query = buildSearchQuery(searchParams.toString(), next);
-      router.replace(query ? `${pathname}?${query}` : pathname);
-    },
-    [router, pathname, searchParams],
-  );
-
-  // Debounce the navigation: every keystroke resets the timer, so we route once
-  // the user pauses rather than on each character.
-  useEffect(() => {
-    return () => clearTimeout(timer.current);
-  }, []);
-
-  const onChange = useCallback(
-    (next: string) => {
-      setValue(next);
-      clearTimeout(timer.current);
-      timer.current = setTimeout(() => commit(next), SEARCH_DEBOUNCE_MS);
-    },
-    [commit],
-  );
 
   return (
     <div className="gap-rui-2 px-rui-6 py-rui-2 bg-stone-50 flex">

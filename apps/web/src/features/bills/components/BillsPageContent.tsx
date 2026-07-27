@@ -1,6 +1,9 @@
 import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
 
+import { CommonUrlNavigationProgress } from '@/features/common/components/CommonUrlNavigationProgress';
+import { UrlNavigationProvider } from '@/features/common/context/UrlNavigation.context';
+
 import { buildTabCounts } from '../helpers/bill-tabs.helpers';
 import { BillsCreateNewBillButton } from './BillsCreateNewBillButton';
 import { BillsTable } from './BillsTable';
@@ -16,6 +19,12 @@ import { BillsToolbar } from './BillsToolbar';
  * tab `code`) and splits the surface into the tab bar and the table so the page
  * file stays a thin data loader. Server Component itself — only the interactive
  * leaves (`BillsTabs`, `BillsTable`) cross the client boundary.
+ *
+ * The whole surface is wrapped in {@link UrlNavigationProvider}: the tabs, the
+ * search field and the pager all mutate this page's URL state, and they share
+ * ONE React transition so a single rail can report all three. The provider is a
+ * client boundary but takes its children as `children`, so everything inside
+ * stays server-rendered.
  */
 export interface BillsPageContentProps {
   bills: BillListItemType[];
@@ -49,17 +58,23 @@ export function BillsPageContent({
 
   return (
     <div className="bg-white flex flex-1 flex-col">
-      <div className="pt-rui-6">
-        <div className="px-rui-6 flex items-start justify-between">
-          <h2 className="font-heading text-3xl text-ink">Bill Pay</h2>
-          {/* Self-contained "Create demo bill" CTA — mints another demo bill to
-              test with, no props, owns its own loading + navigation. */}
-          <BillsCreateNewBillButton />
+      <UrlNavigationProvider>
+        <div className="pt-rui-6">
+          <div className="px-rui-6 flex items-start justify-between">
+            <h2 className="font-heading text-3xl text-ink">Bill Pay</h2>
+            {/* Self-contained "Create demo bill" CTA — mints another demo bill to
+                test with, no props, owns its own loading + navigation. */}
+            <BillsCreateNewBillButton />
+          </div>
+          <BillsTabs tabs={tabs} activeCode={activeCode} counts={tabCounts} />
         </div>
-        <BillsTabs tabs={tabs} activeCode={activeCode} counts={tabCounts} />
-      </div>
-      <BillsToolbar initialSearch={search} />
-      <BillsTable bills={bills} total={total} page={page} pageSize={pageSize} />
+        <BillsToolbar initialSearch={search} />
+        {/* The activity rail sits directly under the filter strip and spans the
+            content width — the region below it is what re-queries. It always
+            occupies its 2px, so starting a load never nudges the table. */}
+        <CommonUrlNavigationProgress />
+        <BillsTable bills={bills} total={total} page={page} pageSize={pageSize} />
+      </UrlNavigationProvider>
     </div>
   );
 }

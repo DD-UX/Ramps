@@ -131,6 +131,10 @@
       "types": "./dist/components/Money/Money.d.ts",
       "import": "./dist/components/Money/Money.js"
     },
+    "./ProgressBar": {
+      "types": "./dist/components/ProgressBar/ProgressBar.d.ts",
+      "import": "./dist/components/ProgressBar/ProgressBar.js"
+    },
     "./Skeleton": {
       "types": "./dist/components/Skeleton/Skeleton.d.ts",
       "import": "./dist/components/Skeleton/Skeleton.js"
@@ -146,6 +150,10 @@
     "./UserAvatars": {
       "types": "./dist/components/UserAvatars/UserAvatars.d.ts",
       "import": "./dist/components/UserAvatars/UserAvatars.js"
+    },
+    "./useDelayedFlag": {
+      "types": "./dist/hooks/useDelayedFlag.d.ts",
+      "import": "./dist/hooks/useDelayedFlag.js"
     },
     "./useClickAway": {
       "types": "./dist/hooks/useClickAway.d.ts",

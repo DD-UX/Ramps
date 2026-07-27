@@ -3,10 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { buildSearchQuery, normalizeSearchParam } from './search-query.helpers';
 
 /**
- * buildSearchQuery is the URL math behind the toolbar's search box. It must set
- * `?q=` on a real term, drop it when the field clears, and — in every case —
- * leave the other params (above all `?tab=`) untouched, so searching never
- * wipes the active tab.
+ * buildSearchQuery is the URL math behind every list page's search box — Bill
+ * Pay's and Vendors' alike, which is why it lives in `common`. It must set `?q=`
+ * on a real term, drop it when the field clears, and — in every case — leave the
+ * other params (above all `?tab=`) untouched, so searching never wipes the
+ * active tab.
  */
 describe('buildSearchQuery', () => {
   it('sets ?q= to the (trimmed) term', () => {
@@ -55,6 +56,18 @@ describe('buildSearchQuery', () => {
     expect(cleared.get('tab')).toBe('history');
     expect(cleared.has('q')).toBe(false);
     expect(cleared.has('page')).toBe(false);
+  });
+
+  /**
+   * The page reset is unconditional, which is what let the two former per-feature
+   * copies collapse into one. On a list that doesn't paginate (Vendors today)
+   * there is no `?page=` to remove, so the rule costs nothing — and the day that
+   * list grows a pager it is already correct rather than quietly one commit
+   * behind, which is how the copies had drifted in the first place.
+   */
+  it('is a no-op on the page reset for a query that carries no ?page=', () => {
+    expect(buildSearchQuery('tab=active', 'acme')).toBe('tab=active&q=acme');
+    expect(buildSearchQuery('tab=active&q=old', '')).toBe('tab=active');
   });
 });
 

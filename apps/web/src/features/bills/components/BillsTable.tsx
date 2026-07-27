@@ -4,8 +4,10 @@ import type { BillFlagType, BillListItemType } from '@ramps/schemas/bills';
 import { Money } from '@ramps/ui/Money';
 import { StatusPill } from '@ramps/ui/StatusPill';
 import { Table, TableAnnotationLink, type TableColumn } from '@ramps/ui/Table';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
+
+import { useUrlNavigation } from '@/features/common/context/UrlNavigation.context';
 
 import { hasBillActions } from '../constants/bill-actions.constants';
 import { formatBillDate } from '../helpers/format-date.helpers';
@@ -124,9 +126,12 @@ const COLUMNS: TableColumn<BillListItemType>[] = [
 ];
 
 export function BillsTable({ bills, total, page, pageSize }: BillsTableProps) {
+  // `router` is kept for the ROW click alone: opening a bill is a real route
+  // change, so Next's own `loading.tsx` boundary covers it. The pager is URL
+  // state on THIS route, where that boundary never fires — hence the shared
+  // transition below.
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const { navigate, pathname, search } = useUrlNavigation();
   // Sum of the rows on THIS page — the footer shows the subtotal for the visible
   // window ("1–10 of N · $… total"), alongside the range it belongs to.
   const totalCents = bills.reduce((sum, bill) => sum + bill.amount_cents, 0);
@@ -136,10 +141,10 @@ export function BillsTable({ bills, total, page, pageSize }: BillsTableProps) {
   // re-queries the window; page 1 drops the param. buildPageQuery owns the math.
   const onPageChange = useCallback(
     (next: number) => {
-      const query = buildPageQuery(searchParams.toString(), next);
-      router.push(query ? `${pathname}?${query}` : pathname);
+      const query = buildPageQuery(search, next);
+      navigate(query ? `${pathname}?${query}` : pathname);
     },
-    [router, pathname, searchParams],
+    [navigate, pathname, search],
   );
 
   return (
