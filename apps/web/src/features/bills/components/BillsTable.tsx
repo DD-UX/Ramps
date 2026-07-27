@@ -107,9 +107,16 @@ const COLUMNS: TableColumn<BillListItemType>[] = [
     // three-dot. The wrapper swallows its own clicks so opening the menu (or
     // firing an action) never triggers the row's navigate-to-detail — the same
     // guard the checkbox cell uses.
+    //
+    // `role="presentation"` is the accurate description AND what unblocks a11y
+    // linting: the div is a pure event barrier with no semantics and nothing
+    // focusable of its own. It deliberately carries NO keyboard handler — the
+    // row activates on click only (Table wires `onRowClick`, never a key
+    // listener), so there is no keyboard path to intercept. Pairing a fake
+    // onKeyDown with it would be dead code written to appease a rule.
     cell: (bill) =>
       hasBillActions(bill.status) ? (
-        <div onClick={(event) => event.stopPropagation()}>
+        <div role="presentation" onClick={(event) => event.stopPropagation()}>
           <BillsActionsMenu bill={bill} />
         </div>
       ) : null,

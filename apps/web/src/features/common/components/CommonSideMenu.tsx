@@ -8,12 +8,14 @@ import {
   SideMenuDivider,
   SideMenuHeader,
   SideMenuItem,
+  type SideMenuLinkComponent,
   SideMenuProgress,
 } from '@ramps/ui/SideMenu';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Fragment } from 'react';
 
-import { NAV_SECTIONS } from '../constants/nav.constants';
+import { NAV_SECTIONS, NAV_UNIMPLEMENTED_HINT } from '../constants/nav.constants';
 import { isNavItemActive, type NavItem } from '../helpers/nav.helpers';
 
 /**
@@ -33,19 +35,47 @@ import { isNavItemActive, type NavItem } from '../helpers/nav.helpers';
  * without a DOM; this component is just the render.
  */
 
+/**
+ * The router link the design system renders for every nav destination.
+ *
+ * `@ramps/ui` deliberately carries no framework dependency, so SideMenuItem's
+ * default link element is a bare `<a>` — and a bare `<a>` makes every sidebar
+ * click a FULL DOCUMENT RELOAD: new HTML, new JS parse, the whole shell torn
+ * down and rebuilt. Injecting `next/link` here turns those into client-side
+ * transitions.
+ *
+ * `prefetch` is forced ON: these routes read from the database, so Next treats
+ * them as dynamic and (by default) prefetches only their loading boundary. The
+ * data set behind this demo is small enough that warming the whole payload on
+ * hover/viewport is free — and it's what makes the destination feel already
+ * there when you click.
+ */
+const NavLink: SideMenuLinkComponent = ({ href, children, ...rest }) => (
+  <Link href={href} prefetch {...rest}>
+    {children}
+  </Link>
+);
+
 export function CommonSideMenu() {
   const pathname = usePathname();
 
   // One item → one <SideMenuItem>; the item whose href matches the route wins
   // the active highlight. The icon is stored as a component (data, not JSX), so
   // it's instantiated here at the render edge.
+  //
+  // A `disabled` item is a destination the product HAS but this build doesn't:
+  // it renders inert (no href reaches the primitive) with a hint explaining
+  // why, instead of linking to a placeholder page that admits nothing was done.
   const renderItem = ({ icon: Icon, ...item }: NavItem) => (
     <SideMenuItem
       key={`${item.href}:${item.label}`}
       icon={<Icon width={16} height={16} />}
       href={item.href}
+      linkComponent={NavLink}
       active={isNavItemActive(item.href, pathname)}
       badge={item.badge}
+      disabled={item.disabled}
+      hint={item.disabled ? NAV_UNIMPLEMENTED_HINT : undefined}
     >
       {item.label}
     </SideMenuItem>
@@ -76,7 +106,12 @@ export function CommonSideMenu() {
         </>
       }
       footer={
-        <SideMenuAction href="/design-system" className="h-8" icon={<LayoutPanelTop width={16} />}>
+        <SideMenuAction
+          href="/design-system"
+          linkComponent={NavLink}
+          className="h-8"
+          icon={<LayoutPanelTop width={16} />}
+        >
           Design System
         </SideMenuAction>
       }

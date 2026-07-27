@@ -1,10 +1,25 @@
 import { ChevronDown } from 'lucide-react';
-import type { PropsWithChildren, ReactNode } from 'react';
+import type { ComponentType, PropsWithChildren, ReactNode } from 'react';
 
 import { cn } from '../../lib/cn';
 import { Badge } from '../Badge/Badge';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 const ACTIVE_ITEM_CLASS = 'bg-stone text-ink hover:bg-stone';
+
+/**
+ * The inert treatment for a nav destination that exists in the information
+ * architecture but is NOT built — it stays in place (removing it would misread
+ * the product's shape) while reading as unavailable.
+ *
+ * It deliberately does NOT reuse `DISABLED_CONTROL`: that treatment fills the
+ * control with `bg-stone`, and in THIS component stone is the ACTIVE highlight
+ * — a disabled item would look like the current page. So the nav keeps the
+ * inactive palette (transparent + hushed) and only drops to 60% with no hover
+ * reaction, matching the system's opacity while avoiding the collision.
+ */
+const INERT_ITEM_CLASS =
+  'bg-transparent text-hushed opacity-60 cursor-not-allowed hover:bg-transparent hover:text-hushed';
 
 /**
  * SideMenu — the product's left navigation (the persistent vertical sidebar).
@@ -86,6 +101,30 @@ export interface SideMenuProps extends PropsWithChildren {
   'aria-label'?: string;
 }
 
+/**
+ * The props SideMenu hands whatever element renders a LINK. A plain `<a>`
+ * satisfies it, and so does a router link (`next/link`, `react-router`'s
+ * `Link`, …) — which is the point: this package carries no framework
+ * dependency, so the APP injects its own router link and the nav gets
+ * client-side navigation (and prefetch) without `@ramps/ui` ever importing a
+ * router. Without it a nav click is a full document reload.
+ */
+export type SideMenuLinkProps = PropsWithChildren<{
+  href: string;
+  className?: string;
+  'aria-current'?: 'page';
+  onClick?: () => void;
+}>;
+
+export type SideMenuLinkComponent = ComponentType<SideMenuLinkProps>;
+
+/** The fallback link element — a native anchor (full page load). */
+const DefaultLink: SideMenuLinkComponent = ({ href, className, onClick, children, ...rest }) => (
+  <a href={href} className={className} onClick={onClick} {...rest}>
+    {children}
+  </a>
+);
+
 export interface SideMenuItemProps extends PropsWithChildren {
   /** Leading icon (Lucide icon or SVG, e.g. <Receipt />). */
   icon?: ReactNode;
@@ -93,10 +132,21 @@ export interface SideMenuItemProps extends PropsWithChildren {
   badge?: number;
   /** Active state — highlights the item with stone background and ink text. */
   active?: boolean;
+  /**
+   * Inert state — the destination exists in the IA but isn't built. Renders a
+   * focusable-but-`aria-disabled` button (never a link, whatever `href` says),
+   * dimmed and unreactive to hover. Focusable ON PURPOSE: a keyboard user must
+   * still be able to reach it to read the `hint`.
+   */
+  disabled?: boolean;
+  /** Hover/focus tooltip — the "why" behind a disabled item, mostly. */
+  hint?: ReactNode;
   /** Click handler for navigation (wire your router here). */
   onClick?: () => void;
   /** Href for native anchor behavior (alternative to onClick for link-based routing). */
   href?: string;
+  /** Router link to render instead of a bare `<a>` — see {@link SideMenuLinkProps}. */
+  linkComponent?: SideMenuLinkComponent;
   className?: string;
 }
 
@@ -184,20 +234,27 @@ export function SideMenu({
 
 /**
  * SideMenuItem — an individual nav item (Home, Bill Pay, Accounting, etc.).
- * Renders as a <button> (onClick) or <a> (href) with optional icon, label, and badge.
- * Active items get a stone background and ink text; inactive items are hushed with
- * limestone hover.
+ * Renders as a <button> (onClick, or `disabled`) or a LINK (href) with optional
+ * icon, label, and badge. Active items get a stone background and ink text;
+ * inactive items are hushed with limestone hover; disabled items go inert.
+ *
+ * The link element is injectable (`linkComponent`) so the app can supply its
+ * router's Link and keep navigation client-side — the default is a bare `<a>`,
+ * which reloads the document.
  */
 export function SideMenuItem({
   children,
   icon,
   badge,
   active = false,
+  disabled = false,
+  hint,
   onClick,
   href,
+  linkComponent,
   className,
 }: SideMenuItemProps) {
-  const Component = href ? 'a' : 'button';
+  const LinkComponent = linkComponent ?? DefaultLink;
 
   const content = (
     <>
@@ -225,29 +282,60 @@ export function SideMenuItem({
     </>
   );
 
+  const classes = cn(
+    'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
+    'transition-colors outline-none',
+    // Active: stone background (vetted #e5e0dc) + ink text (vetted #0b0704–#2c2825).
+    // Inactive: transparent + hushed text (vetted #6f6e6a).
+    // Disabled: the inactive palette dimmed, hover suppressed (see INERT_ITEM_CLASS).
+    disabled
+      ? INERT_ITEM_CLASS
+      : active
+        ? ACTIVE_ITEM_CLASS
+        : 'text-hushed hover:bg-limestone hover:text-ink bg-transparent',
+    // Focus: reuse the hover surface (no glow ring). A disabled item stays
+    // reachable by keyboard (that's how its hint is read) but doesn't light up.
+    !disabled && 'focus-visible:bg-limestone focus-visible:text-ink cursor-pointer',
+    className,
+  );
+
+  // A disabled destination is NEVER a link — an aria-disabled anchor still
+  // navigates on Enter. The button carries no handler, so it is truly inert.
+  const control = disabled ? (
+    <button type="button" aria-disabled className={classes}>
+      {content}
+    </button>
+  ) : href ? (
+    <LinkComponent
+      href={href}
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+      className={classes}
+    >
+      {content}
+    </LinkComponent>
+  ) : (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+      className={classes}
+    >
+      {content}
+    </button>
+  );
+
   return (
     <li>
-      <Component
-        onClick={onClick}
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={cn(
-          'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
-          'transition-colors outline-none',
-          // Active: stone background (vetted #e5e0dc) + ink text (vetted #0b0704–#2c2825).
-          // Inactive: transparent + hushed text (vetted #6f6e6a).
-          active
-            ? ACTIVE_ITEM_CLASS
-            : 'text-hushed hover:bg-limestone hover:text-ink bg-transparent',
-          // Focus: reuse the hover surface (no glow ring).
-          'focus-visible:bg-limestone focus-visible:text-ink',
-          // Pointer affordance.
-          'cursor-pointer',
-          className,
-        )}
-      >
-        {content}
-      </Component>
+      {hint ? (
+        // placement="bottom": the item list is its own overflow-auto box, so a
+        // bubble ABOVE the first item would be clipped at its top edge.
+        <Tooltip label={hint} placement="bottom" className="w-full">
+          {control}
+        </Tooltip>
+      ) : (
+        control
+      )}
     </li>
   );
 }
@@ -377,6 +465,11 @@ export interface SideMenuActionProps extends PropsWithChildren {
    * the surrounding layout persists.
    */
   href?: string;
+  /**
+   * Router link for INTERNAL hrefs — see {@link SideMenuLinkProps}. An EXTERNAL
+   * href always falls back to a native anchor: a router link can't leave the app.
+   */
+  linkComponent?: SideMenuLinkComponent;
   className?: string;
 }
 
@@ -396,34 +489,68 @@ function isExternalHref(href: string): boolean {
  * hushed items), spark glyph #7a7975 (HUSHED). Hover/focus reuse the item
  * conventions (limestone hover, control-ring focus) — INFERRED, no hover frame.
  */
-export function SideMenuAction({ children, icon, onClick, href, className }: SideMenuActionProps) {
-  const Component = href ? 'a' : 'button';
+export function SideMenuAction({
+  children,
+  icon,
+  onClick,
+  href,
+  linkComponent,
+  className,
+}: SideMenuActionProps) {
   // Only external links open a new tab; an internal route navigates in place.
   const external = href ? isExternalHref(href) : false;
-  return (
-    <Component
-      type={href ? undefined : 'button'}
-      href={href}
-      target={external ? '_blank' : undefined}
-      rel={external ? 'noreferrer' : undefined}
-      onClick={onClick}
-      className={cn(
-        'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
-        // Label is INK (vetted #4f4e4a junctions on product-overview/01, darker
-        // than the hushed nav items) — the spark glyph below stays HUSHED.
-        'text-sm font-body text-ink transition-colors outline-none',
-        'hover:bg-limestone',
-        'focus-visible:bg-limestone',
-        'cursor-pointer',
-        className,
-      )}
-    >
+
+  const classes = cn(
+    'gap-rui-2 px-rui-3 py-rui-2 flex w-full items-center rounded-[6px]',
+    // Label is INK (vetted #4f4e4a junctions on product-overview/01, darker
+    // than the hushed nav items) — the spark glyph below stays HUSHED.
+    'text-sm font-body text-ink transition-colors outline-none',
+    'hover:bg-limestone',
+    'focus-visible:bg-limestone',
+    'cursor-pointer',
+    className,
+  );
+
+  const content = (
+    <>
       {icon && (
         <span className="text-hushed shrink-0" aria-hidden>
           {icon}
         </span>
       )}
       <span className="flex-1 truncate text-left">{children}</span>
-    </Component>
+    </>
+  );
+
+  // An INTERNAL href routes through the injected router link when one is
+  // supplied (client-side, no document reload); an EXTERNAL one always uses a
+  // native anchor — target/rel are anchor concerns a router link doesn't own.
+  if (href && !external && linkComponent) {
+    const LinkComponent = linkComponent;
+    return (
+      <LinkComponent href={href} onClick={onClick} className={classes}>
+        {content}
+      </LinkComponent>
+    );
+  }
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target={external ? '_blank' : undefined}
+        rel={external ? 'noreferrer' : undefined}
+        onClick={onClick}
+        className={classes}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onClick} className={classes}>
+      {content}
+    </button>
   );
 }

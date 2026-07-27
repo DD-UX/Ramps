@@ -18,8 +18,14 @@ export default function ShellLayout({ children }: PropsWithChildren) {
       {/* Left: SideMenu (full viewport height) */}
       <CommonSideMenu />
 
-      {/* Right: Top bar + main content column */}
-      <div className="flex flex-1 flex-col overflow-auto">
+      {/* Right: Top bar + main content column.
+          `scrollbar-gutter: stable` reserves the scrollbar's width WHETHER OR
+          NOT one is showing. Without it, any change in page height (switching a
+          Bills tab from 12 rows to 3, an empty state replacing a table) toggles
+          the scrollbar, which resizes this column — and everything inside it,
+          including the top bar's search field, jumps sideways. Reserving the
+          gutter up front makes that shift structurally impossible. */}
+      <div className="flex flex-1 [scrollbar-gutter:stable] flex-col overflow-auto">
         <CommonTopBar>
           <CommonTopBarSearch />
         </CommonTopBar>

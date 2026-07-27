@@ -19,6 +19,14 @@ export type NavItem = {
   href: string;
   icon: NavIcon;
   badge?: number;
+  /**
+   * The destination is part of the product's information architecture but is
+   * NOT built here. The item keeps its `href` — that href is its identity and
+   * its intended home, and dropping it would misreport the product's shape —
+   * but the nav renders it INERT (no link, no route). Only items WITHOUT this
+   * flag need a page to exist; see {@link implementedNavHrefs}.
+   */
+  disabled?: boolean;
 };
 
 /**
@@ -41,6 +49,18 @@ export function isNavItemActive(href: string, pathname: string | null): boolean 
 /** Every href the nav advertises, flattened across sections, in render order. */
 export function navHrefs(sections: NavSection[]): string[] {
   return sections.flatMap((section) => section.map((item) => item.href));
+}
+
+/**
+ * The hrefs the nav actually NAVIGATES to — the subset that must resolve to a
+ * real page. Disabled entries are excluded: they render inert precisely because
+ * this build doesn't implement them, so requiring a route for them would only
+ * force placeholder pages back into existence.
+ */
+export function implementedNavHrefs(sections: NavSection[]): string[] {
+  return sections.flatMap((section) =>
+    section.filter((item) => !item.disabled).map((item) => item.href),
+  );
 }
 
 /**

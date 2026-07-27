@@ -1,6 +1,7 @@
 'use client';
 
 import type { VendorListItemType } from '@ramps/schemas/vendors';
+import { Avatar } from '@ramps/ui/Avatar';
 import { IconButton } from '@ramps/ui/IconButton';
 import { MoreVertical } from '@ramps/ui/icons';
 import { Money } from '@ramps/ui/Money';
@@ -8,7 +9,6 @@ import { Table, type TableColumn } from '@ramps/ui/Table';
 
 import { formatPaymentMethod } from '../helpers/format-payment-method.helpers';
 import { VendorsStatusPill } from './VendorsStatusPill';
-import { Avatar } from '@ramps/ui/Avatar';
 
 export interface VendorsTableProps {
   vendors: VendorListItemType[];

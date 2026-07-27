@@ -167,6 +167,61 @@ export const UpdatedNav: Story = {
 };
 
 /**
+ * Scoped nav — the shape the APP ships. The information architecture is the
+ * product's in full, but only the destinations this build owns are LINKS; the
+ * rest are `disabled` and carry a `hint` explaining why.
+ *
+ * The point is honesty without amputation. Deleting the unbuilt items would
+ * misreport the product's shape; routing them to placeholder pages turns the
+ * sidebar into a list of things that weren't done. Inert-with-a-reason says
+ * "this is the map, and here is the part I built" — one dimmed row, no dead end.
+ *
+ * A disabled item is a `<button aria-disabled>`, never a link (an aria-disabled
+ * anchor still navigates on Enter), and it stays FOCUSABLE so a keyboard user
+ * can reach the hint. The bubble opens BELOW because the item list is its own
+ * scroll box and would clip a bubble above the first row.
+ */
+const OUT_OF_SCOPE = 'Out of scope for this build — Bill Pay is the focus.';
+
+export const ScopedNav: Story = {
+  render: () => (
+    <SideMenu
+      aria-label="Bill Pay navigation"
+      header={<SideMenuHeader icon={<CircleDot size={16} />}>Ramps Demo</SideMenuHeader>}
+      footer={
+        <SideMenuAction icon={<ArrowRight size={16} />} href="/design-system">
+          Design System
+        </SideMenuAction>
+      }
+    >
+      <SideMenuItem icon={<Home size={16} />} disabled hint={OUT_OF_SCOPE}>
+        Home
+      </SideMenuItem>
+      <SideMenuItem icon={<TrendingUp size={16} />} badge={2} disabled hint={OUT_OF_SCOPE}>
+        Insights
+      </SideMenuItem>
+      <SideMenuDivider />
+      <SideMenuItem icon={<Wallet size={16} />} disabled hint={OUT_OF_SCOPE}>
+        Manage spend
+      </SideMenuItem>
+      <SideMenuItem icon={<FileText size={16} />} href="/bills" active>
+        Bill Pay
+      </SideMenuItem>
+      <SideMenuItem icon={<Landmark size={16} />} disabled hint={OUT_OF_SCOPE}>
+        Financial accounts
+      </SideMenuItem>
+      <SideMenuDivider />
+      <SideMenuItem icon={<Store size={16} />} href="/vendors">
+        Vendors
+      </SideMenuItem>
+      <SideMenuItem icon={<Building size={16} />} disabled hint={OUT_OF_SCOPE}>
+        Company
+      </SideMenuItem>
+    </SideMenu>
+  ),
+};
+
+/**
  * Design-system footer — the APP-shell variant where the pinned band links
  * INTERNALLY to `/design-system` (the in-app Storybook embed) with a trailing
  * arrow, instead of the primitive showcase's external "About DD". Same slot,

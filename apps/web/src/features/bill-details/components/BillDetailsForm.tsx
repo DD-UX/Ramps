@@ -6,7 +6,7 @@ import { EmptyState } from '@ramps/ui/EmptyState';
 import { FieldError } from '@ramps/ui/FieldError';
 import { ActivityIcon } from '@ramps/ui/icons';
 import { Tabs } from '@ramps/ui/Tabs';
-import { Activity, useEffect, useRef, useState } from 'react';
+import { Activity, createElement, useEffect, useRef, useState } from 'react';
 import { useFormState, useWatch } from 'react-hook-form';
 
 import { BillsActionsMenu } from '@/features/bills/components/BillsActionsMenu';
@@ -207,7 +207,14 @@ export function BillDetailsForm() {
   // CalendarClock schedule, Eye view, CircleDollarSign complete, RotateCcw
   // reopen). Read only when the status actually renders a primary — `archived`
   // renders none (see `hasPrimaryAction`), so its resolved glyph is never used.
-  const PrimaryIcon = resolvePrimaryActionIcon(bill.status);
+  //
+  // Built with `createElement` rather than binding the resolved component to a
+  // capitalized local and writing `<PrimaryIcon />`: that local reads to the
+  // linter as a component BORN during render (which would remount, losing its
+  // state, on every pass). This one never is — the lookup returns a module-scope
+  // Lucide component — so we emit the element the JSX tag would have compiled to
+  // and skip the misleading binding entirely.
+  const primaryIcon = createElement(resolvePrimaryActionIcon(bill.status), { size: 16 });
 
   // create is the only kind whose enablement is form-driven (valid + complete);
   // the others gate on their own in-flight state. `none` (terminal states) is
@@ -433,7 +440,7 @@ export function BillDetailsForm() {
               <Button
                 type={primary.isSubmit ? 'submit' : 'button'}
                 variant="primary"
-                leadingIcon={<PrimaryIcon size={16} />}
+                leadingIcon={primaryIcon}
                 disabled={primary.disabled}
                 onClick={primary.isSubmit ? undefined : primary.run}
                 keys={shortcutKeys}

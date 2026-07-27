@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { NAV_SECTIONS } from '../constants/nav.constants';
 import {
   duplicateNavHrefs,
+  implementedNavHrefs,
   isNavItemActive,
   navHrefs,
   type NavIcon,
@@ -55,6 +56,29 @@ describe('navHrefs', () => {
 
   it('is empty for an empty nav', () => {
     expect(navHrefs([])).toEqual([]);
+  });
+});
+
+/**
+ * implementedNavHrefs is the subset that must resolve to a real page. Disabled
+ * entries are advertised in the IA but not built, so they're excluded — that's
+ * exactly what lets the placeholder pages stay deleted.
+ */
+describe('implementedNavHrefs', () => {
+  it('drops the disabled entries and keeps the rest in order', () => {
+    const sections: NavSection[] = [
+      [
+        { label: 'A', href: '/a', icon: StubIcon },
+        { label: 'B', href: '/b', icon: StubIcon, disabled: true },
+      ],
+      [{ label: 'C', href: '/c', icon: StubIcon }],
+    ];
+    expect(implementedNavHrefs(sections)).toEqual(['/a', '/c']);
+  });
+
+  it('is empty when nothing is built', () => {
+    const sections: NavSection[] = [[{ label: 'A', href: '/a', icon: StubIcon, disabled: true }]];
+    expect(implementedNavHrefs(sections)).toEqual([]);
   });
 });
 
@@ -122,5 +146,36 @@ describe('NAV_SECTIONS (the shipped nav)', () => {
     expect(insights?.badge).toBe(2);
     const billPay = items.find((item) => item.label === 'Bill Pay');
     expect(billPay?.badge).toBeUndefined();
+  });
+
+  /**
+   * SCOPE CONTRACT: the nav keeps the product's whole information architecture,
+   * but only Bill Pay and Vendors are BUILT. Everything else is `disabled` —
+   * inert in the UI — which is why no placeholder pages exist for them. If a
+   * new surface ships, it drops its `disabled` flag here and gains a route.
+   */
+  it('navigates only to the surfaces this build implements', () => {
+    expect(implementedNavHrefs(NAV_SECTIONS)).toEqual(['/bills', '/vendors']);
+  });
+
+  it('marks every other destination disabled rather than dropping it', () => {
+    const disabled = items.filter((item) => item.disabled).map((item) => item.label);
+    expect(disabled).toEqual([
+      'Home',
+      'Insights',
+      'Manage spend',
+      'Expenses',
+      'Travel',
+      'Financial accounts',
+      'Accounting',
+      'Policy',
+      'Company',
+    ]);
+  });
+
+  it('leaves Home disabled — `/` redirects to Bill Pay, it has no page', () => {
+    const home = items.find((item) => item.label === 'Home');
+    expect(home?.href).toBe('/');
+    expect(home?.disabled).toBe(true);
   });
 });

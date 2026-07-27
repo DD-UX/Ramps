@@ -38,3 +38,17 @@ export const LongLabelWraps: Story = {
     children: <Button variant="secondary">Why?</Button>,
   },
 };
+
+/**
+ * `placement="bottom"` hangs the bubble UNDER the trigger. It exists for
+ * triggers near the top of a scrolling container: a CSS-only tooltip is clipped
+ * by any `overflow` ancestor, so the first item in the SideMenu's item list
+ * can't put its bubble above itself — it drops it below instead.
+ */
+export const PlacementBottom: Story = {
+  args: {
+    label: 'Out of scope for this build — Bill Pay is the focus.',
+    placement: 'bottom',
+    children: <Button variant="secondary">Insights</Button>,
+  },
+};
