@@ -5,7 +5,9 @@ import { Archive, Ban } from '@ramps/ui/icons';
 import { Menu, type MenuItem } from '@ramps/ui/Menu';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
+import { useSWRConfig } from 'swr';
 
+import { reconcileBillCaches } from '@/features/bill-details/helpers/bill-cache.helpers';
 import { apiClient } from '@/features/common/helpers/api-client.helpers';
 
 import {
@@ -25,8 +27,12 @@ import {
  * (Reject only while `awaiting_approval`; Archive from any non-archived state) —
  * one map, checked against the transition guard, so the menu can't offer a move
  * the server will 409. Each item POSTs the matching bodyless endpoint and then
- * `router.refresh()` so the server components (the row's status pill, the
- * footer's primary) re-read the bill's new state.
+ * refreshes BOTH surfaces it may be sitting on: `router.refresh()` for the RSC
+ * Bill Pay table (the row's status pill, the tab counts), and
+ * {@link reconcileBillCaches} for the detail screen's client caches (the rail
+ * list + detail entry the footer reads). On the list page the reconcile is a
+ * no-op (no SWR entries mounted); on the detail footer the refresh is the
+ * cheap half — each surface answers to its own half.
  *
  * When the status yields NO action, the component renders NOTHING (returns
  * `null`) — the call sites gate on {@link hasBillActions} so a non-actionable
@@ -57,6 +63,7 @@ const ACTION_ICON = {
 
 export function BillsActionsMenu({ bill, side = 'bottom', disabled = false }: BillsActionsMenuProps) {
   const router = useRouter();
+  const { mutate } = useSWRConfig();
   const [busy, setBusy] = useState(false);
 
   const actions = resolveBillActions(bill.status);
@@ -71,6 +78,10 @@ export function BillsActionsMenu({ bill, side = 'bottom', disabled = false }: Bi
         } else {
           await apiClient.bills.reject(bill.id);
         }
+        // Both surfaces, one call each: RSC table rows via refresh, the detail
+        // screen's SWR entries (rail + detail) via reconcile. Awaiting the
+        // reconcile holds `busy` until the status flip lands on screen.
+        await reconcileBillCaches(mutate, bill.id);
         router.refresh();
       } catch {
         // Swallow: the refresh re-reads server truth, and the menu re-enables so
@@ -79,7 +90,7 @@ export function BillsActionsMenu({ bill, side = 'bottom', disabled = false }: Bi
         setBusy(false);
       }
     },
-    [bill.id, busy, router],
+    [bill.id, busy, router, mutate],
   );
 
   // Nothing to do → render nothing. The call sites already gate on

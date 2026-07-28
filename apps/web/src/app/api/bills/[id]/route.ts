@@ -1,8 +1,45 @@
-import { BillMutationResponseSchema, BillSaveSchema } from '@ramps/schemas/bills';
+import {
+  BillDetailResponseSchema,
+  BillMutationResponseSchema,
+  BillSaveSchema,
+} from '@ramps/schemas/bills';
 import { IdSchema } from '@ramps/schemas/primitives';
-import { BillNotEditableError, saveBill } from '@ramps/sdk/bills';
+import { BillNotEditableError, getBill, saveBill } from '@ramps/sdk/bills';
 import { createServerSupabase } from '@ramps/sdk/server';
 import { NextResponse } from 'next/server';
+
+import { publicDocumentUrl } from '@/features/bill-details/helpers/document-url.helpers';
+
+/**
+ * GET /api/bills/[id] — READ one bill's full detail.
+ *
+ * The browser→API read behind the client-side detail cache. The RSC page seeds
+ * the SWR entry by STREAMING the same read (it starts `getBillDetail` and
+ * hands the promise across); this route is the revalidation path — a rail hop
+ * confirming its seed, a mutation reconciling, a long-open screen freshening on
+ * reconnect. Same envelope both ways ({@link BillDetailResponseSchema}): the
+ * bill plus the invoice PDF's public URL, resolved HERE because the storage
+ * base is a server-only secret. 404 mirrors the page's `notFound()`.
+ */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const { id } = await params;
+  if (!IdSchema.safeParse(id).success) {
+    return NextResponse.json({ error: 'Invalid bill id' }, { status: 400 });
+  }
+
+  const supabase = createServerSupabase();
+  const bill = await getBill(supabase, id);
+  if (!bill) {
+    return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
+  }
+
+  return NextResponse.json(
+    BillDetailResponseSchema.parse({ bill, documentUrl: publicDocumentUrl(bill.document_url) }),
+  );
+}
 
 /**
  * PUT /api/bills/[id] — SAVE DRAFT. Persist the whole edit form (header fields

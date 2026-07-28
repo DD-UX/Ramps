@@ -8,18 +8,25 @@ import {
   BillEditFormSchema,
   type BillEditFormType,
 } from '@ramps/schemas/bills';
+import { usePrevious } from '@ramps/ui/usePrevious';
 import {
   createContext,
   type ReactNode,
   type RefObject,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import { FormProvider, useForm, type UseFormReturn } from 'react-hook-form';
 
+import {
+  BILL_DETAIL_DATA_LEVEL,
+  type BillDetailDataLevel,
+  dataLevelRose,
+} from '../constants/data-level.constants';
 import { isBillPreSubmit } from '../constants/pre-submit.constants';
 import { billToFormDefaults } from '../helpers/form-defaults.helpers';
 import { type PaymentDraft, paymentDraftFor } from '../helpers/payment-completeness.helpers';
@@ -77,11 +84,25 @@ export interface BillDetailContextValue {
    */
   pendingApprovalStagesRef: RefObject<SaveApprovalStagesType | null>;
   /**
+   * How much of `bill` is REAL — the screen's rendering ladder
+   * ({@link BILL_DETAIL_DATA_LEVEL}): `skeleton` (a placeholder — every
+   * section renders its own skeleton), `seed` (a rail list item — header
+   * concerns real, detail-only concerns skeleton), `full` (the fetched
+   * record). Each section compares against the level ITS data needs, so the
+   * skeletons live with the concerns they stand in for. Below `full`, a
+   * seed's empty placeholders (no lines, no approvals, no payment) must never
+   * be rendered as truth — and `editable` is forced off, because a save from
+   * a partial form would erase the lines the seed never had.
+   */
+  dataLevel: BillDetailDataLevel;
+  /**
    * Whether the screen's fields accept input right now. Pre-submit bills
    * (`draft` / `missing_info`) open editable and stay so; anything past that
    * opens READ-ONLY and only becomes editable through the footer's "Edit bill"
    * action. The form renders this as one `<fieldset disabled>` around the
    * sections, so every input/select/button inside inherits the lock natively.
+   * Always false below the `full` data level — a partial bill is never
+   * editable.
    */
   editable: boolean;
   /** Flip the edit mode — "Edit bill" passes true, a successful save passes false. */
@@ -105,6 +126,12 @@ export interface BillDetailProviderProps {
   bill: BillDetailType;
   refs: BillDetailRefsType;
   documentUrl: string | null;
+  /**
+   * Where `bill` sits on the rendering ladder. Defaults to `full` — a caller
+   * that always has the fetched record (tests, stories) needn't know the
+   * ladder exists.
+   */
+  dataLevel?: BillDetailDataLevel;
   // Required + never storied (a provider wrapping no tree is meaningless):
   // explicit `children` over PropsWithChildren is the deliberate, stricter contract.
   children: ReactNode;
@@ -115,7 +142,13 @@ export interface BillDetailProviderProps {
  * Validation is the same zod schema the entity is defined by, narrowed to the
  * edit scope (`BillEditFormSchema`), so the form can never drift from the SSoT.
  */
-export function BillDetailProvider({ bill, refs, documentUrl, children }: BillDetailProviderProps) {
+export function BillDetailProvider({
+  bill,
+  refs,
+  documentUrl,
+  dataLevel = BILL_DETAIL_DATA_LEVEL.FULL,
+  children,
+}: BillDetailProviderProps) {
   const form = useForm<BillEditFormType>({
     resolver: zodResolver(BillEditFormSchema),
     defaultValues: billToFormDefaults(bill),
@@ -149,6 +182,44 @@ export function BillDetailProvider({ bill, refs, documentUrl, children }: BillDe
     [],
   );
 
+  // LADDER CLIMB (skeleton → seed → full), in place — not a remount: the outer
+  // key stays the bill id, so the pane split, scroll offsets and tab choice
+  // survive the upgrade. When the `bill` prop is replaced by a strictly richer
+  // record, everything the initializers read from the poorer one re-derives.
+  // Safe by construction: below `full` the screen is never editable, so there
+  // is no user-typed state to clobber. A same-level `bill` change (a
+  // background revalidation at `full`) deliberately does NOT reset: it could
+  // yank a form out from under a mid-edit user.
+  //
+  // The re-derive is split by WHAT each write touches:
+  //
+  // RENDER HALF — the provider's own state (edit mode, payment slice): React's
+  // "adjusting state when a prop changes" pattern. The setState restarts this
+  // render before anything commits, and the seen-level marker terminates it —
+  // the restarted pass sees `seenDataLevel === dataLevel` and skips — so the
+  // poorer derivations never paint.
+  const [seenDataLevel, setSeenDataLevel] = useState(dataLevel);
+  if (seenDataLevel !== dataLevel) {
+    setSeenDataLevel(dataLevel);
+    if (dataLevelRose(seenDataLevel, dataLevel)) {
+      setEditable(isBillPreSubmit(bill.status));
+      setPaymentState(paymentDraftFor(bill));
+    }
+  }
+
+  // EFFECT HALF — the form: `form.reset` writes react-hook-form's external
+  // store and notifies its subscribers, which must not happen mid-render, so
+  // it keeps the effect. `usePrevious` still reads the pre-climb level here:
+  // its ref only advances in its own later effect.
+  const previousDataLevel = usePrevious(dataLevel, dataLevel);
+  useEffect(() => {
+    if (!dataLevelRose(previousDataLevel, dataLevel)) return;
+    form.reset(billToFormDefaults(bill));
+    // previousDataLevel is usePrevious's render-time read — deliberately not a
+    // dependency (see the hook's own contract).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataLevel, bill, form]);
+
   const value = useMemo<BillDetailContextValue>(
     () => ({
       form,
@@ -157,12 +228,16 @@ export function BillDetailProvider({ bill, refs, documentUrl, children }: BillDe
       documentUrl,
       leftPaneRef,
       pendingApprovalStagesRef,
-      editable,
+      dataLevel,
+      // A partial bill is never editable, whatever the state says: the lock is
+      // derived at the one place every consumer reads, so no section can slip
+      // past it.
+      editable: dataLevel === BILL_DETAIL_DATA_LEVEL.FULL && editable,
       toggleEditable,
       payment,
       setPayment,
     }),
-    [form, bill, refs, documentUrl, editable, toggleEditable, payment, setPayment],
+    [form, bill, refs, documentUrl, dataLevel, editable, toggleEditable, payment, setPayment],
   );
 
   // Two providers, one form: `BillDetailContext` carries bill + refs (and the

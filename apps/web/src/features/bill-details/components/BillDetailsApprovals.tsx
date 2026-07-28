@@ -1,11 +1,13 @@
 'use client';
 
 import { type ApprovalsStage, ApprovalsWorkflow } from '@ramps/ui/ApprovalsWorkflow';
+import { Skeleton } from '@ramps/ui/Skeleton';
 import { useCallback, useMemo } from 'react';
 
 import { useApproverCandidateUsers } from '@/features/common/hooks/useApproverCandidateUsers';
 
 import { isApprovalRouteEditable } from '../constants/approval-editable.constants';
+import { BILL_DETAIL_DATA_LEVEL, dataLevelAtLeast } from '../constants/data-level.constants';
 import { useBillDetail } from '../context/BillDetail.context';
 import {
   fromWorkflowStages,
@@ -36,8 +38,35 @@ import { BillDetailsSection } from './BillDetailsSection';
  * `missing_info`); past that the same component renders `readOnly` — a static
  * record of the route — with the identical guard the PUT route enforces, so the
  * lock is one rule shared by client and server.
+ *
+ * A DETAIL-ONLY concern — the rail item carries no `approval_stages`, so this
+ * needs `full`: seeded `[]` would seed the workflow's own state EMPTY and a
+ * later reset couldn't reach it (`initialStages` is initial by contract). Two
+ * approver rows (avatar circle + name + role bars) stand in.
  */
 export function BillDetailsApprovals() {
+  const { dataLevel } = useBillDetail();
+  if (!dataLevelAtLeast(dataLevel, BILL_DETAIL_DATA_LEVEL.FULL)) {
+    return (
+      <BillDetailsSection title="Approvals">
+        <div className="gap-rui-3 grid">
+          {[0, 1].map((row) => (
+            <div key={row} className="gap-rui-3 flex items-center">
+              <Skeleton className="size-8 rounded-full" />
+              <div className="gap-rui-2 grid">
+                <Skeleton className="h-3 w-40" />
+                <Skeleton className="h-2.5 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </BillDetailsSection>
+    );
+  }
+  return <BillDetailsApprovalsLoaded />;
+}
+
+function BillDetailsApprovalsLoaded() {
   const { bill, leftPaneRef, pendingApprovalStagesRef } = useBillDetail();
   // The approver catalog comes from its own cache hook, not the context — seeded
   // by the route on first paint, then shared across every picker in the app.

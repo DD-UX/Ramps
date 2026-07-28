@@ -1,11 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
+import { useSWRConfig } from 'swr';
 
 import { apiClient } from '@/features/common/helpers/api-client.helpers';
 
 import { useBillDetail } from '../context/BillDetail.context';
+import { reconcileBillCaches } from '../helpers/bill-cache.helpers';
 import { toSchedulePayload } from '../helpers/payment-completeness.helpers';
 
 /**
@@ -22,13 +23,14 @@ import { toSchedulePayload } from '../helpers/payment-completeness.helpers';
  * Unlike submit, Approve STAYS ON THE PAGE: the bill is still this screen's
  * subject, only its status/footer change. So on success it `form.reset(
  * getValues())` to clear `isDirty` (nothing more is editable once approved, and
- * a clean form keeps the unsaved-changes guard quiet), then `router.refresh()`
- * so the server component re-reads the bill's new status — the footer flips to
- * "Schedule payment" / "View schedule" — rather than showing a stale cache.
+ * a clean form keeps the unsaved-changes guard quiet), then AWAITS
+ * {@link reconcileBillCaches} — the detail entry re-read is what flips the
+ * footer to "Schedule payment" / "View schedule" (and moves the rail card to
+ * its new category), so the button's busy state holds until the flip lands.
  */
 export function useApproveBill() {
   const { bill, form, payment } = useBillDetail();
-  const router = useRouter();
+  const { mutate } = useSWRConfig();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +43,7 @@ export function useApproveBill() {
       // Clear dirty state so the unsaved-changes guard stays quiet; the bill is
       // no longer editable here, so its own values are the truth to reset to.
       form.reset(form.getValues());
-      router.refresh();
+      await reconcileBillCaches(mutate, bill.id);
       return true;
     } catch {
       setError('Could not approve the bill. Your changes are not persisted yet.');
@@ -49,7 +51,7 @@ export function useApproveBill() {
     } finally {
       setSubmitting(false);
     }
-  }, [bill.id, form, payment, router]);
+  }, [bill.id, form, payment, mutate]);
 
   return { approve, submitting, error };
 }

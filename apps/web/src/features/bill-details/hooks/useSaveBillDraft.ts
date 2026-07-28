@@ -1,10 +1,12 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useSWRConfig } from 'swr';
 
 import { apiClient } from '@/features/common/helpers/api-client.helpers';
 
 import { useBillDetail } from '../context/BillDetail.context';
+import { reconcileBillCaches } from '../helpers/bill-cache.helpers';
 
 /**
  * useSaveBillDraft — THE "Save draft" flow for the bill screen, shared by its
@@ -34,6 +36,7 @@ import { useBillDetail } from '../context/BillDetail.context';
  */
 export function useSaveBillDraft() {
   const { bill, form, pendingApprovalStagesRef } = useBillDetail();
+  const { mutate } = useSWRConfig();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +58,11 @@ export function useSaveBillDraft() {
       // The saved values are the new clean baseline — clears `isDirty` so a
       // repeat save is a no-op and the unsaved-changes guard stops flagging.
       form.reset(form.getValues());
+      // Fire-and-forget: the rail card mirrors saved fields (vendor, amount,
+      // due date), so its list revalidates alongside the detail entry. Not
+      // awaited — the save already succeeded, and a same-level detail refresh
+      // never resets the form (see the provider's ladder contract).
+      void reconcileBillCaches(mutate, bill.id);
       return true;
     } catch {
       setError('Could not save your changes. They are not persisted yet.');
@@ -62,7 +70,7 @@ export function useSaveBillDraft() {
     } finally {
       setSaving(false);
     }
-  }, [bill.id, form, pendingApprovalStagesRef]);
+  }, [bill.id, form, pendingApprovalStagesRef, mutate]);
 
   return { saveDraft, saving, error };
 }

@@ -1,15 +1,33 @@
 'use client';
 
 import type { BillEditFormType } from '@ramps/schemas/bills';
+import { Skeleton } from '@ramps/ui/Skeleton';
 import { useFormContext } from 'react-hook-form';
 
+import { BILL_DETAIL_DATA_LEVEL, dataLevelAtLeast } from '../constants/data-level.constants';
+import { useBillDetail } from '../context/BillDetail.context';
 import { BillDetailsSection } from './BillDetailsSection';
 
 /**
  * Memo section (snapshot 10): the free-text "Memo for vendor" that rides along
  * with the payment. A plain textarea bound to the form's `memo` field.
+ *
+ * A HEADER concern (`memo` rides the rail item), so it needs `seed`: below it,
+ * the real title frames one textarea-height (h-20 ≈ rows=3) bar.
  */
 export function BillDetailsMemo() {
+  const { dataLevel } = useBillDetail();
+  if (!dataLevelAtLeast(dataLevel, BILL_DETAIL_DATA_LEVEL.SEED)) {
+    return (
+      <BillDetailsSection title="Memo for vendor">
+        <Skeleton className="h-20 w-full" />
+      </BillDetailsSection>
+    );
+  }
+  return <BillDetailsMemoLoaded />;
+}
+
+function BillDetailsMemoLoaded() {
   const { register } = useFormContext<BillEditFormType>();
 
   return (

@@ -5,6 +5,7 @@ import { Button } from '@ramps/ui/Button';
 import { EmptyState } from '@ramps/ui/EmptyState';
 import { FieldError } from '@ramps/ui/FieldError';
 import { ActivityIcon } from '@ramps/ui/icons';
+import { Skeleton } from '@ramps/ui/Skeleton';
 import { Tabs } from '@ramps/ui/Tabs';
 import { Activity, createElement, useEffect, useRef, useState } from 'react';
 import { useFormState, useWatch } from 'react-hook-form';
@@ -15,6 +16,7 @@ import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
 import { useCommandPlusKey } from '@/features/common/hooks/useCommandPlusKey';
 import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 
+import { BILL_DETAIL_DATA_LEVEL, dataLevelAtLeast } from '../constants/data-level.constants';
 import { isBillEditable } from '../constants/editable-status.constants';
 import {
   FOOTER_ACTION,
@@ -81,7 +83,7 @@ import { BillDetailsVendor } from './BillDetailsVendor';
  * screen to its frozen record state.
  */
 export function BillDetailsForm() {
-  const { form, bill, editable, toggleEditable } = useBillDetail();
+  const { form, bill, editable, toggleEditable, dataLevel } = useBillDetail();
   const [tab, setTab] = useState<BillDetailsTab>(BILL_DETAILS_TAB.OVERVIEW);
   const { saveDraft, saving: savingDraft, error: saveError } = useSaveBillDraft();
   // Create bill: persist the form + submit for approval + redirect. Drives the
@@ -115,6 +117,14 @@ export function BillDetailsForm() {
   // `editable`. From `approved` on the record is LOCKED: no left action at all.
   const preSubmit = isBillPreSubmit(bill.status);
   const editableStatus = isBillEditable(bill.status);
+
+  // The footer's two ladder gates. Below `seed` the STATUS itself is a
+  // placeholder, so the action bar renders bars — a "Save draft" for a bill
+  // that might be paid would be a lie. At `seed` the status (and thus every
+  // label) is real but the RECORD isn't saved-against-able yet, so the whole
+  // bar renders true-but-inert until `full`.
+  const seeded = dataLevelAtLeast(dataLevel, BILL_DETAIL_DATA_LEVEL.SEED);
+  const full = dataLevelAtLeast(dataLevel, BILL_DETAIL_DATA_LEVEL.FULL);
 
   /**
    * One save flow, two exits: the pre-submit "Save draft" keeps edit mode as
@@ -290,14 +300,16 @@ export function BillDetailsForm() {
       if (primary.isSubmit) formRef.current?.requestSubmit();
       else primary.run();
     },
-    !primary.disabled && !scheduleModalOpen,
+    // `full` mirrors the footer fieldset's lock: below it the buttons are
+    // natively disabled, so the chord they advertise must be off too.
+    full && !primary.disabled && !scheduleModalOpen,
   );
 
   // The ⌘/Ctrl+↵ chip, shown on the ACTIVE primary whenever the chord would
-  // fire it (enabled + no modal). ⌘ on Apple, Ctrl elsewhere. Undefined hides
-  // the chip — a disabled primary advertises no shortcut.
+  // fire it (enabled + no modal + full record). ⌘ on Apple, Ctrl elsewhere.
+  // Undefined hides the chip — a disabled primary advertises no shortcut.
   const shortcutKeys =
-    !primary.disabled && !scheduleModalOpen ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined;
+    full && !primary.disabled && !scheduleModalOpen ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined;
 
   return (
     <form
@@ -324,11 +336,16 @@ export function BillDetailsForm() {
       />
       {/* Overview holds the resizable split: form on the white left pane,
             invoice preview on the warm limestone right pane. The panel supplies
-            each pane's surface + framing, so children only bring padding. */}
+            each pane's surface + framing, so children only bring padding.
+            `flex-1` is the footer's floor: when the sections run short (a
+            sparse bill, or the seed/skeleton tiers' compact placeholders) the
+            pane absorbs the leftover height so the action bar sits at the
+            pane's BOTTOM; when they run long the pane takes content height and
+            the sticky band overlaps the scroll instead. */}
       <Activity
         mode={tab === BILL_DETAILS_TAB.OVERVIEW ? ACTIVITY_MODE.VISIBLE : ACTIVITY_MODE.HIDDEN}
       >
-        <BillDetailsPane>
+        <BillDetailsPane className="flex-1">
           {/* The read-only lock, applied ONCE: a disabled fieldset disables
               every nested input/select/textarea/button natively (the DS's
               `disabled:` styling reacts to the same :disabled state), so no
@@ -347,11 +364,14 @@ export function BillDetailsForm() {
         </BillDetailsPane>
       </Activity>
       {/* Activity — no audit trail yet, so the same empty-state treatment as
-            the document pane's "No documents" tab. */}
+            the document pane's "No documents" tab. `flex-1` (not `h-full`,
+            which reads 100% of the FORM and ignores its siblings): fill the
+            remaining height between the tabs row and the action bar, keeping
+            the footer on the pane's bottom edge. */}
       <Activity
         mode={tab === BILL_DETAILS_TAB.ACTIVITY ? ACTIVITY_MODE.VISIBLE : ACTIVITY_MODE.HIDDEN}
       >
-        <BillDetailsPane className="h-full">
+        <BillDetailsPane className="flex-1">
           <EmptyState
             className="min-h-0 flex-1"
             icon={<ActivityIcon size={28} />}
@@ -366,42 +386,55 @@ export function BillDetailsForm() {
           pane's default padding) so it levels with the rail's Prev/Next
           footer instead of towering over it. */}
       <BillDetailsPane className="border-bone bg-white/80 backdrop-blur h-14 py-0 sticky -bottom-px z-10 grid shrink-0 grid-flow-col items-center justify-between border-t">
-        <div className="gap-rui-3 flex items-center">
-          {/* Cancel — the "Save bill" companion, only while editing a submitted
+        {!seeded ? (
+          /* Below `seed` the status is a placeholder — every label would lie —
+             so the band holds two action-sized bars where the clusters land. */
+          <>
+            <Skeleton className="h-9 w-28" />
+            <Skeleton className="h-9 w-32" />
+          </>
+        ) : (
+          /* The ladder lock, applied ONCE — the same `display: contents`
+             fieldset trick as the sections': below `full` every footer button
+             disables natively (labels already real off the seeded status), and
+             the fieldset stays out of the grid's two-cluster layout. */
+          <fieldset disabled={!full} className="contents">
+            <div className="gap-rui-3 flex items-center">
+              {/* Cancel — the "Save bill" companion, only while editing a submitted
               bill (the save_bill mode). Discards the in-edit changes and snaps
               the screen back to the fetched record, no write. Sits BEFORE Save
               in the left cluster ([Cancel][Save bill]); disabled while a save is
               mid-flight so it can't yank the form out from under it. */}
-          {footerActionKey === FOOTER_ACTION.SAVE_BILL && (
-            <Button type="button" variant="subtle" onClick={cancelEdit} disabled={footerBusy}>
-              Cancel
-            </Button>
-          )}
-          {/* The left slot renders whatever strategy the lifecycle resolves to
+              {footerActionKey === FOOTER_ACTION.SAVE_BILL && (
+                <Button type="button" variant="subtle" onClick={cancelEdit} disabled={footerBusy}>
+                  Cancel
+                </Button>
+              )}
+              {/* The left slot renders whatever strategy the lifecycle resolves to
               (Save draft / Edit bill / Save bill) — the branching lives in the
               strategy table, this stays one dumb Button. A locked bill resolves
               to no action, so the slot renders nothing at all. */}
-          {footerAction && (
-            <Button
-              type="button"
-              variant="underline"
-              leadingIcon={<footerAction.Icon size={16} />}
-              onClick={() => footerAction.run(footerActionDeps)}
-              disabled={footerBusy}
-            >
-              {footerBusy ? footerAction.busyLabel : footerAction.label}
-            </Button>
-          )}
-          <FieldError size="sm">{saveError}</FieldError>
-        </div>
-        {/* The status-driven primary (Create / Approve / Schedule / View),
+              {footerAction && (
+                <Button
+                  type="button"
+                  variant="underline"
+                  leadingIcon={<footerAction.Icon size={16} />}
+                  onClick={() => footerAction.run(footerActionDeps)}
+                  disabled={footerBusy}
+                >
+                  {footerBusy ? footerAction.busyLabel : footerAction.label}
+                </Button>
+              )}
+              <FieldError size="sm">{saveError}</FieldError>
+            </div>
+            {/* The status-driven primary (Create / Approve / Schedule / View),
             rendered off the resolved `primary` record. Create rides the form's
             native submit and carries the ⌘/Ctrl+↵ chip (a disabled action
             advertises no shortcut); the rest are explicit-handler buttons. The
             flow's own error surfaces beside it, mirroring Save draft's line. */}
-        <div className="gap-rui-3 flex items-center">
-          <FieldError size="sm">{submitError ?? approveError}</FieldError>
-          {/* The shared overflow menu — the SAME kebab the Bill Pay row carries —
+            <div className="gap-rui-3 flex items-center">
+              <FieldError size="sm">{submitError ?? approveError}</FieldError>
+              {/* The shared overflow menu — the SAME kebab the Bill Pay row carries —
               for the lifecycle side-actions (Reject while awaiting approval,
               Archive from any live state). Only mounted when the status has a
               move: a rejected/archived/mid-payment bill omits the kebab entirely.
@@ -409,47 +442,52 @@ export function BillDetailsForm() {
               past the viewport floor. Disabled mid-edit (`editable`): the
               side-actions lock alongside the Approve primary, so the user
               resolves their edit (Save/Cancel) before archiving or rejecting. */}
-          {hasBillActions(bill.status) && (
-            <BillsActionsMenu bill={bill} side="top" disabled={editable} />
-          )}
-          {/* A `scheduled` bill's primary reads "View schedule" (read-only) — the
+              {hasBillActions(bill.status) && (
+                /* `!full` rides the kebab's own `disabled` (not just the fieldset):
+               its trigger dims + goes inert through the Menu's contract, which
+               a fieldset can't reach if the trigger isn't a native button. */
+                <BillsActionsMenu bill={bill} side="top" disabled={editable || !full} />
+              )}
+              {/* A `scheduled` bill's primary reads "View schedule" (read-only) — the
               real money-movement action, "Complete payment", sits beside it as
               the SAME shared button the View-schedule modal uses (secondary here
               so View stays the visual primary). It runs the FORM's roll flow so
               the chord (which fires View, not Complete, here) and its click stay
               separate — the companion is a click-only affordance (no chip). */}
-          {bill.status === 'scheduled' && (
-            <BillDetailsCompletePaymentButton variant="secondary" flow={rollPayment} />
-          )}
-          {primaryAction === PRIMARY_ACTION.COMPLETE ? (
-            /* A `partially_paid` bill's primary IS "Complete payment" — the same
+              {bill.status === 'scheduled' && (
+                <BillDetailsCompletePaymentButton variant="secondary" flow={rollPayment} />
+              )}
+              {primaryAction === PRIMARY_ACTION.COMPLETE ? (
+                /* A `partially_paid` bill's primary IS "Complete payment" — the same
                shared button, rendered as the primary (no separate inert CTA) and
                driven by the form's roll flow so ⌘/Ctrl+↵ and a click share it. It
                carries the chord chip since it's THE active primary here. */
-            <BillDetailsCompletePaymentButton
-              variant="primary"
-              flow={rollPayment}
-              keys={shortcutKeys}
-            />
-          ) : (
-            /* The generic status primary — omitted entirely for statuses with no
+                <BillDetailsCompletePaymentButton
+                  variant="primary"
+                  flow={rollPayment}
+                  keys={shortcutKeys}
+                />
+              ) : (
+                /* The generic status primary — omitted entirely for statuses with no
                primary (archived: there's no restore flow, so no button at all,
                not an inert one). Terminal states that DO read (paid / rejected)
                still render, disabled. */
-            hasPrimaryAction(bill.status) && (
-              <Button
-                type={primary.isSubmit ? 'submit' : 'button'}
-                variant="primary"
-                leadingIcon={primaryIcon}
-                disabled={primary.disabled}
-                onClick={primary.isSubmit ? undefined : primary.run}
-                keys={shortcutKeys}
-              >
-                {primary.label}
-              </Button>
-            )
-          )}
-        </div>
+                hasPrimaryAction(bill.status) && (
+                  <Button
+                    type={primary.isSubmit ? 'submit' : 'button'}
+                    variant="primary"
+                    leadingIcon={primaryIcon}
+                    disabled={primary.disabled}
+                    onClick={primary.isSubmit ? undefined : primary.run}
+                    keys={shortcutKeys}
+                  >
+                    {primary.label}
+                  </Button>
+                )
+              )}
+            </div>
+          </fieldset>
+        )}
       </BillDetailsPane>
       {/* Direct child of the <form>, NOT the footer pane: the pane's
           backdrop-blur is a containing block for fixed descendants, which

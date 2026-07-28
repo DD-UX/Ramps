@@ -86,6 +86,10 @@ vi.mock('../context/BillDetail.context', () => ({
   useBillDetail: () => ({
     form,
     bill: { status, ...completeValues } as unknown as BillDetailType,
+    // The footer under test is the LOADED footer: below `full` it renders
+    // skeleton bars / a disabled fieldset instead (covered by the ladder's own
+    // tests), so every case here sits at the ladder's top.
+    dataLevel: 'full',
     editable,
     toggleEditable: vi.fn(),
   }),

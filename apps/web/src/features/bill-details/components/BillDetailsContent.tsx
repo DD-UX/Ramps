@@ -7,6 +7,10 @@ import { useFormState } from 'react-hook-form';
 
 import { CommonUnsavedChangesGuard } from '@/features/common/components/CommonUnsavedChangesGuard';
 
+import {
+  BILL_DETAIL_DATA_LEVEL,
+  type BillDetailDataLevel,
+} from '../constants/data-level.constants';
 import { BillDetailProvider, useBillDetail } from '../context/BillDetail.context';
 import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
 import { BillDetailsDocument } from './BillDetailsDocument';
@@ -17,6 +21,11 @@ export interface BillDetailsContentProps {
   refs: BillDetailRefsType;
   /** Public URL of the invoice PDF, resolved on the server. */
   documentUrl: string | null;
+  /**
+   * Where `bill` sits on the rendering ladder (skeleton placeholder / rail
+   * seed / fetched record) — see {@link BillDetailProvider}. Default `full`.
+   */
+  dataLevel?: BillDetailDataLevel;
 }
 
 /**
@@ -32,9 +41,14 @@ export interface BillDetailsContentProps {
  * live inside the left pane's {@link BillDetailsForm}; this surface just frames
  * the split.
  */
-export function BillDetailsContent({ bill, refs, documentUrl }: BillDetailsContentProps) {
+export function BillDetailsContent({
+  bill,
+  refs,
+  documentUrl,
+  dataLevel = BILL_DETAIL_DATA_LEVEL.FULL,
+}: BillDetailsContentProps) {
   return (
-    <BillDetailProvider bill={bill} refs={refs} documentUrl={documentUrl}>
+    <BillDetailProvider bill={bill} refs={refs} documentUrl={documentUrl} dataLevel={dataLevel}>
       <BillDetailsBody />
     </BillDetailProvider>
   );

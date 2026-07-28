@@ -371,6 +371,19 @@ export const BillMutationResponseSchema = z.object({
 });
 export type BillMutationResponseType = z.infer<typeof BillMutationResponseSchema>;
 
+/**
+ * The `/api/bills/:id` (GET) response envelope — the full detail plus the
+ * invoice PDF's RESOLVED public URL. `document_url` on the bill is a
+ * storage-relative `bucket/path` and the storage base is server-only, so the
+ * server resolves the absolute URL once and ships it alongside; the client
+ * never derives it.
+ */
+export const BillDetailResponseSchema = z.object({
+  bill: BillDetailSchema,
+  documentUrl: z.string().nullable(),
+});
+export type BillDetailResponseType = z.infer<typeof BillDetailResponseSchema>;
+
 /* ────────────────────────────────────────────────────────────────────────
  * APPROVE + SCHEDULE — the payment side of the lifecycle
  *

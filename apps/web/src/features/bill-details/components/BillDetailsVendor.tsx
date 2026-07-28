@@ -3,9 +3,11 @@
 import { Banner } from '@ramps/ui/Banner';
 import { useWatch } from 'react-hook-form';
 
+import { BILL_DETAIL_DATA_LEVEL, dataLevelAtLeast } from '../constants/data-level.constants';
 import { useBillDetail } from '../context/BillDetail.context';
 import { vendorCompleteness } from '../helpers/section-completeness.helpers';
 import { useRefOptions } from '../hooks/useRefOptions';
+import { BillDetailsFieldSkeleton } from './BillDetailsFieldSkeleton';
 import { BillDetailsSection } from './BillDetailsSection';
 import { BillDetailsSelectField } from './BillDetailsSelectField';
 
@@ -14,8 +16,28 @@ import { BillDetailsSelectField } from './BillDetailsSelectField';
  * new one. When no vendor is matched the section reads `Incomplete` and shows
  * the blocking amber banner ("Add missing information") the draft screen leans
  * on. Buttons are stubbed — persistence is out of scope for this pass.
+ *
+ * A HEADER concern (`vendor_id` rides the rail item), so it needs `seed`:
+ * below it the real section title frames two field bars — no banner, no
+ * completeness pill, since an unjudged placeholder must not read "Incomplete".
+ * The gate/Loaded split keeps the form hooks unconditional.
  */
 export function BillDetailsVendor() {
+  const { dataLevel } = useBillDetail();
+  if (!dataLevelAtLeast(dataLevel, BILL_DETAIL_DATA_LEVEL.SEED)) {
+    return (
+      <BillDetailsSection title="Vendor">
+        <div className="gap-rui-2 grid">
+          <BillDetailsFieldSkeleton />
+          <BillDetailsFieldSkeleton />
+        </div>
+      </BillDetailsSection>
+    );
+  }
+  return <BillDetailsVendorLoaded />;
+}
+
+function BillDetailsVendorLoaded() {
   const { control } = useBillDetail().form;
   const { vendors, entities } = useRefOptions();
 

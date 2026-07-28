@@ -1,76 +1,31 @@
-import { notFound } from 'next/navigation';
-import { SWRConfig } from 'swr';
-
-import { BillDetailsContent } from '@/features/bill-details/components/BillDetailsContent';
-import { BillDetailsRail } from '@/features/bill-details/components/BillDetailsRail';
-import {
-  getBillDetail,
-  getBillRefs,
-  getRailBills,
-  getUsers,
-} from '@/features/bill-details/data/bill-detail.data';
+import { BillDetailsScreen } from '@/features/bill-details/components/BillDetailsScreen';
+import { getBillDetail } from '@/features/bill-details/data/bill-detail.data';
 import { publicDocumentUrl } from '@/features/bill-details/helpers/document-url.helpers';
-import { railStatusesFor } from '@/features/bill-details/helpers/rail.helpers';
-import { getBillTabs } from '@/features/bills/data/bill-tabs.data';
-import { USERS_SWR_KEY } from '@/features/common/constants/swr.constants';
 
 /**
- * /bills/[id] — the bill detail / draft-review screen.
+ * /bills/[id] — the bill detail / draft-review screen's route.
  *
- * A Server Component that does all the data work and hands validated models to
- * the client shell: `getBillDetail` reads the bill (already `.parse()`d against
- * `BillDetailSchema`, with vendor/entity names and the approval chain embedded)
- * and `getBillRefs` reads the dropdown catalogs — both request-deduped via React
- * `cache()`, fetched together since neither depends on the other. An unknown id
- * yields `notFound()`. The invoice PDF's public URL is resolved here (the
- * storage base is a server-only secret) and passed down so the viewer stays a
- * dumb client leaf.
+ * Deliberately THIN: the layout above owns the frame (rail + grid) and the
+ * bill-independent catalogs; everything bill-SPECIFIC is client-rendered by
+ * {@link BillDetailsScreen} off the SWR cache. This page's one job is the
+ * STREAMED SEED — it STARTS `getBillDetail(id)` and hands the un-awaited
+ * promise across the RSC boundary, so the shell reaches the client
+ * immediately and the screen upgrades in place when the read settles
+ * (`await` here would resurrect the blank-on-every-hop loading boundary this
+ * design removed). The invoice PDF's public URL rides inside the same
+ * promise, resolved server-side because the storage base is a server-only
+ * secret.
  *
- * The screen is a two-column grid (frame 1): the LEFT RAIL — side-menu width,
- * "← Bill Pay" and every bill in this bill's status category, the open one
- * highlighted — beside the editing surface. The rail's category is the first
- * Bill Pay tab whose status group contains this bill (`railStatusesFor`), and
- * its bills are fetched here (`getRailBills`) — it depends on the bill's
- * status, so it waits for the first batch. Rail navigation is plain links:
- * server-side, one fresh render per bill.
- *
- * The approver directory is server-fetched here too, but instead of being
- * drilled it seeds the SWR cache: `<SWRConfig fallback>` pre-fills
- * {@link USERS_SWR_KEY} so `useApproverCandidateUsers()` in the approvals picker
- * paints instantly from the seed, then freshens it with one silent background
- * revalidation (`revalidateIfStale: true`) — while still owning its own read.
+ * "No such bill" resolves to null INSIDE the promise (not a server
+ * `notFound()` — the page never awaits, so it never knows); the client
+ * screen throws `notFound()` when the null lands, same boundary either way.
  */
 export default async function BillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const [bill, refs, users, tabs] = await Promise.all([
-    getBillDetail(id),
-    getBillRefs(),
-    getUsers(),
-    getBillTabs(),
-  ]);
-  if (!bill) notFound();
-
-  const documentUrl = publicDocumentUrl(bill.document_url);
-  const railStatuses = railStatusesFor(tabs, bill.status);
-  const railBills = await getRailBills(railStatuses);
-
-  return (
-    <SWRConfig value={{ fallback: { [USERS_SWR_KEY]: users } }}>
-      {/* The single row is EXPLICITLY minmax(0,1fr): an implicit row would be
-          auto-sized and grow past h-full when a pane's content is tall, making
-          the whole (detail) surface scroll. Bounded, each column scrolls itself. */}
-      <div className="min-h-0 grid h-full flex-1 grid-cols-[16rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">
-        <BillDetailsRail bills={railBills} statuses={railStatuses} activeId={bill.id} />
-        <div className="min-h-0 min-w-0 flex flex-col">
-          {/* key={bill.id} is LOAD-BEARING: rail hops are client-side, and an
-              unkeyed provider would be state-preserved across records — the
-              form instance (and its pristine/dirty state, values, staged
-              approvals) would still be the PREVIOUS bill's. Keyed, every
-              record mounts a fresh editing surface seeded from ITS OWN data. */}
-          <BillDetailsContent key={bill.id} bill={bill} refs={refs} documentUrl={documentUrl} />
-        </div>
-      </div>
-    </SWRConfig>
+  const seed = getBillDetail(id).then((bill) =>
+    bill ? { bill, documentUrl: publicDocumentUrl(bill.document_url) } : null,
   );
+
+  return <BillDetailsScreen id={id} seed={seed} />;
 }

@@ -4,8 +4,10 @@ import { Button } from '@ramps/ui/Button';
 import { Card } from '@ramps/ui/Card';
 import { cn } from '@ramps/ui/cn';
 import { Plus } from '@ramps/ui/icons';
+import { Skeleton } from '@ramps/ui/Skeleton';
 import { useFieldArray, useWatch } from 'react-hook-form';
 
+import { BILL_DETAIL_DATA_LEVEL, dataLevelAtLeast } from '../constants/data-level.constants';
 import { useBillDetail } from '../context/BillDetail.context';
 import {
   lineItemsCompleteness,
@@ -23,8 +25,34 @@ import { BillDetailsSection } from './BillDetailsSection';
  * "+ Add line item" affordance on the left against the invoice-total stack
  * ({@link BillDetailsLineItemsTotal}) on the right, which reconciles the summed
  * lines against the bill total.
+ *
+ * A DETAIL-ONLY concern — the rail item carries no lines, so this needs
+ * `full`: below it the seeded `[]` would paint the "No line items yet" empty
+ * state, a lie about a bill that may be fully coded. The skeleton guesses
+ * three rows in the real bordered card; the count is wrong exactly as often
+ * as any other guess, and the error lands below the fold.
  */
 export function BillDetailsLineItems() {
+  const { dataLevel } = useBillDetail();
+  if (!dataLevelAtLeast(dataLevel, BILL_DETAIL_DATA_LEVEL.FULL)) {
+    return (
+      <BillDetailsSection title="Line items">
+        <Card className="p-rui-3 gap-rui-2 grid">
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="gap-rui-2 flex">
+              <Skeleton className="h-9 flex-1" />
+              <Skeleton className="h-9 w-16" />
+              <Skeleton className="h-9 w-24" />
+            </div>
+          ))}
+        </Card>
+      </BillDetailsSection>
+    );
+  }
+  return <BillDetailsLineItemsLoaded />;
+}
+
+function BillDetailsLineItemsLoaded() {
   const { form, editable } = useBillDetail();
   const { control } = form;
   const { fields, append, remove } = useFieldArray({ control, name: 'line_items' });

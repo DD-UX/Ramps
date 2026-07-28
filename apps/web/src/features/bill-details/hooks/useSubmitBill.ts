@@ -2,10 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
+import { useSWRConfig } from 'swr';
 
 import { apiClient } from '@/features/common/helpers/api-client.helpers';
 
 import { useBillDetail } from '../context/BillDetail.context';
+import { reconcileBillCaches } from '../helpers/bill-cache.helpers';
 
 /**
  * Where a freshly-created bill lands: the Bill Pay list scoped to the "For
@@ -27,7 +29,10 @@ export const FOR_APPROVAL_HREF = '/bills?tab=for_approval';
  * here, and a clean form means the unsaved-changes guard won't intercept the
  * redirect. Then `router.push` to the For-approval list and `router.refresh()`
  * so the server components (the list rows, the tab counts) re-read the bill's
- * new status rather than showing a stale cache.
+ * new status rather than showing a stale cache. The destination is an RSC
+ * table, so the refresh stays; {@link reconcileBillCaches} fires alongside it
+ * (not awaited — this screen is being left) so a back-nav to the detail
+ * surface finds its rail + detail entries already re-reading, not stale.
  *
  * The caller (the form's submit handler) has already gated on completeness, so
  * this trusts the current values are submit-ready; a server-side transition
@@ -36,6 +41,7 @@ export const FOR_APPROVAL_HREF = '/bills?tab=for_approval';
 export function useSubmitBill() {
   const { bill, form } = useBillDetail();
   const router = useRouter();
+  const { mutate } = useSWRConfig();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +52,9 @@ export function useSubmitBill() {
       await apiClient.bills.submit(bill.id, form.getValues());
       // Clear dirty state before we leave, so the guard doesn't intercept.
       form.reset(form.getValues());
+      // Fire-and-forget: we're leaving this screen, but its SWR entries (rail
+      // list, detail) survive in cache — reconcile so a back-nav is fresh.
+      void reconcileBillCaches(mutate, bill.id);
       router.push(FOR_APPROVAL_HREF);
       router.refresh();
       return true;
@@ -55,7 +64,7 @@ export function useSubmitBill() {
     } finally {
       setSubmitting(false);
     }
-  }, [bill.id, form, router]);
+  }, [bill.id, form, router, mutate]);
 
   return { submit, submitting, error };
 }

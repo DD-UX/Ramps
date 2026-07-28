@@ -2,8 +2,10 @@
 
 import { cn } from '@ramps/ui/cn';
 import { Kbd } from '@ramps/ui/Kbd';
+import { Skeleton } from '@ramps/ui/Skeleton';
 import Link from 'next/link';
 
+import { useBillRail } from '../context/BillRail.context';
 import { useRailActive } from '../context/RailActive.context';
 
 /**
@@ -23,12 +25,21 @@ import { useRailActive } from '../context/RailActive.context';
  * not the page. Clicking one is a DIRECT hop (`setActiveId` cancels any queued
  * skim). An end of the list renders the label disabled (frame 1's muted
  * "Prev") instead of dropping it.
+ *
+ * The footer is TRI-STATE: while the rail's `loading` (read straight off the
+ * rail context, same flag the list body uses) neither neighbour is KNOWN,
+ * which is not the same as absent — so the steps render skeleton bars, never
+ * the muted end-of-list label. "Disabled" is a verdict ("you're at the
+ * edge"); loading must not pass one.
  */
 export function BillDetailsRailNav() {
+  const { loading } = useBillRail();
   const { prevId, nextId, setActiveId } = useRailActive();
 
   const step = (label: string, id: string | null, key: string) =>
-    id ? (
+    loading ? (
+      <Skeleton className="h-3.5 w-14" />
+    ) : id ? (
       <Link
         href={`/bills/${id}`}
         // A direct footer click is its own navigation — point the pill and
