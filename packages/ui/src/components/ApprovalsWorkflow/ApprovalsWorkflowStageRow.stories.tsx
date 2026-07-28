@@ -16,7 +16,7 @@ import { STORY_ROLES as ROLES, STORY_USERS as USERS } from './storyFixtures';
  * in the `DndContext` + `SortableContext` the workflow provides — without them
  * the sortable hook has no context and the grip is inert. `onEdit`/`onRemove`
  * are no-ops here; the ApprovalsWorkflow stories cover the wired-up
- * commit/remove/reorder behaviour. The catalog is the family's shared
+ * commit/remove/reorder behavior. The catalog is the family's shared
  * `storyFixtures`.
  */
 const meta = {

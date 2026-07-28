@@ -2,6 +2,7 @@ import { ChevronDown } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { cn } from '../../lib/cn';
+import { Kbd } from '../Kbd/Kbd';
 import { Menu } from '../Menu/Menu';
 import type { CellAlign, TableColumn } from './Table';
 
@@ -82,6 +83,64 @@ function fullColSpan<T, K extends string | number>({
 // Pagination band — the product's real table footer.
 // ---------------------------------------------------------------------------
 
+/**
+ * One Prev/Next step of the band's pager — the bill-details rail-footer
+ * pattern verbatim: a text label with the arrow-key `Kbd` hint riding its
+ * OUTER edge (← before "Prev", "Next" before →), pointing the way the page
+ * flips. An edge renders the step DISABLED instead of dropping it: the hushed
+ * label keeps its keycap, faded (the system's opacity-60 disabled dim), so a
+ * dead end never reshapes the band — opacity alone says "inert".
+ *
+ * The live step is a real `<button>` tagged `data-table-pager="prev|next"` so
+ * a caller can bind the physical ←/→ keys by CLICKING it — keyboard and mouse
+ * stay one code path, and the clamp is automatic (a disabled edge renders no
+ * button, so the key finds nothing to press).
+ */
+function TablePagerStep({
+  direction,
+  targetPage,
+  disabled,
+  onPageChange,
+}: {
+  direction: 'prev' | 'next';
+  targetPage: number;
+  disabled: boolean;
+  onPageChange: (page: number) => void;
+}) {
+  const label = direction === 'prev' ? 'Prev' : 'Next';
+  const hint = direction === 'prev' ? '←' : '→';
+
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        aria-label={`${label} page`}
+        className="gap-rui-2 text-hushed text-sm flex items-center"
+      >
+        {direction === 'prev' && <Kbd className="opacity-60">{hint}</Kbd>}
+        {label}
+        {direction === 'next' && <Kbd className="opacity-60">{hint}</Kbd>}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-table-pager={direction}
+      aria-label={`${label} page`}
+      onClick={() => onPageChange(targetPage)}
+      // group-hover scopes the underline to the label — an underline on the
+      // button itself would paint straight through the Kbd chip's box.
+      className="gap-rui-2 text-ink group text-sm flex items-center"
+    >
+      {direction === 'prev' && <Kbd>{hint}</Kbd>}
+      <span className="group-hover:underline">{label}</span>
+      {direction === 'next' && <Kbd>{hint}</Kbd>}
+    </button>
+  );
+}
+
 export interface TablePaginationFooterProps {
   /** Current page, 1-based. */
   page: number;
@@ -104,6 +163,12 @@ export interface TablePaginationFooterProps {
  * The vetted pagination band: "Select ⌄" on the left (hushed underline + a
  * chevron that is NOT underlined), the clickable range + "of N {noun} · $TOTAL
  * total" on the right, on a single canvas band under a limestone hairline.
+ *
+ * When the band is INTERACTIVE (`onPageChange` provided), the right cluster
+ * gains the {@link TablePagerStep} Prev/Next pair FLANKING the range summary —
+ * `← Prev · 1–10 of N … · Next →` — single-step siblings of the range menu's
+ * jump-anywhere picker. A static band (no `onPageChange`) renders neither
+ * pager nor the steps: a summary that can't navigate shouldn't dress like one.
  *
  * Rendered as a `<div>` (NOT a <tfoot>) so Table can pin it to the SCROLL
  * container's floor — below the flex-1 filler whitespace — rather than the
@@ -168,41 +233,62 @@ export function TablePaginationFooter({
             },
           ]}
         />
-        {/* Right — the range numbers are the ONLY underlined part ("1–7"
+        {/* Right — the Prev/Next steps flank the range summary (hints on the
+            outer edges, pointing the way the page flips), and the range
+            numbers are the ONLY underlined part of the summary ("1–7"
             underlined, " of 7 bills · $… total" plain, all one hushed gray —
-            8x zoom, frame 6). Clicking opens the (inferred) page picker. */}
-        <div className="gap-rui-1 flex items-center whitespace-nowrap">
-          <Menu
-            side="top"
-            align="end"
-            label="Go to page"
-            trigger={
-              <span className="text-sm text-hushed decoration-hushed tabular-nums underline underline-offset-2">
-                {rangeStart}–{rangeEnd}
-              </span>
-            }
-            items={Array.from({ length: totalPages }, (_, i) => {
-              const p = i + 1;
-              const s = totalCount === 0 ? 0 : i * pageSize + 1;
-              const e = Math.min(p * pageSize, totalCount);
-              return {
-                label: `${s}–${e}`,
-                disabled: p === page,
-                onSelect: () => onPageChange?.(p),
-              };
-            })}
-          />
-          <span>
-            {' '}
-            of {totalCount} {noun}
-            {formattedTotal !== undefined && (
-              <>
-                {' '}
-                · <span className="tabular-nums">{formattedTotal}</span> total
-              </>
-            )}
-            {extra}
-          </span>
+            8x zoom, frame 6). Clicking the range opens the (inferred) page
+            picker. */}
+        <div className="gap-rui-4 flex items-center whitespace-nowrap">
+          {onPageChange && (
+            <TablePagerStep
+              direction="prev"
+              targetPage={page - 1}
+              disabled={page <= 1}
+              onPageChange={onPageChange}
+            />
+          )}
+          <div className="gap-rui-1 flex items-center">
+            <Menu
+              side="top"
+              align="end"
+              label="Go to page"
+              trigger={
+                <span className="text-sm text-hushed decoration-hushed tabular-nums underline underline-offset-2">
+                  {rangeStart}–{rangeEnd}
+                </span>
+              }
+              items={Array.from({ length: totalPages }, (_, i) => {
+                const p = i + 1;
+                const s = totalCount === 0 ? 0 : i * pageSize + 1;
+                const e = Math.min(p * pageSize, totalCount);
+                return {
+                  label: `${s}–${e}`,
+                  disabled: p === page,
+                  onSelect: () => onPageChange?.(p),
+                };
+              })}
+            />
+            <span>
+              {' '}
+              of {totalCount} {noun}
+              {formattedTotal !== undefined && (
+                <>
+                  {' '}
+                  · <span className="tabular-nums">{formattedTotal}</span> total
+                </>
+              )}
+              {extra}
+            </span>
+          </div>
+          {onPageChange && (
+            <TablePagerStep
+              direction="next"
+              targetPage={page + 1}
+              disabled={page >= totalPages}
+              onPageChange={onPageChange}
+            />
+          )}
         </div>
       </div>
     </div>

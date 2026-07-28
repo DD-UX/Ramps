@@ -57,6 +57,17 @@ export function lineItemsCompleteness(form: LineItemFields): SectionCompleteness
 }
 
 /**
+ * Approvals are REQUIRED to submit: the chain needs at least one stage, or the
+ * bill would enter `awaiting_approval` with nobody to act on it. NOT a form
+ * slice like its siblings — the route lives outside react-hook-form (persisted
+ * `bill.approval_stages`, or the staged-but-unsaved edit the context counts) —
+ * so this reads the resolved stage count the caller derives from those two.
+ */
+export function approvalsCompleteness(stageCount: number): SectionCompleteness {
+  return stageCount > 0 ? 'complete' : 'incomplete';
+}
+
+/**
  * Do the line amounts reconcile to the bill total? The invoice-total line under
  * the grid turns this into the "$X of $Y" mismatch cue. Returns the summed
  * line amount so callers can render it.
@@ -71,12 +82,20 @@ export function lineItemsTotalCents(form: LineItemFields): number {
  * state), so `formState.isValid` alone would offer "Create bill" on an
  * unmatched, number-less draft. What the submit transition demands is the
  * REQUIRED sections reading complete: a matched vendor, the identifying
- * invoice trio, and a fully-coded line grid. (The PO stays out — optional.)
+ * invoice trio, a fully-coded line grid, AND an approval route with at least
+ * one stage — the SDK refuses an approver-less submit, so the button gates on
+ * the same rule. (The PO stays out — optional.) The stage count travels as its
+ * own argument because the route isn't form state (see
+ * {@link approvalsCompleteness}).
  */
-export function billSubmitReady(form: VendorFields & InvoiceFields & LineItemFields): boolean {
+export function billSubmitReady(
+  form: VendorFields & InvoiceFields & LineItemFields,
+  approvalStageCount: number,
+): boolean {
   return (
     vendorCompleteness(form) === 'complete' &&
     billDetailsCompleteness(form) === 'complete' &&
-    lineItemsCompleteness(form) === 'complete'
+    lineItemsCompleteness(form) === 'complete' &&
+    approvalsCompleteness(approvalStageCount) === 'complete'
   );
 }

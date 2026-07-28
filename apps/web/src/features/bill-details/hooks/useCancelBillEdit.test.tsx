@@ -19,6 +19,7 @@ import { useCancelBillEdit } from './useCancelBillEdit';
 const reset = vi.fn();
 const setPayment = vi.fn();
 const toggleEditable = vi.fn();
+const setPendingApprovalStageCount = vi.fn();
 const pendingApprovalStagesRef = { current: { some: 'staged-route' } as unknown };
 
 const bill = { id: 'b-1', status: 'awaiting_approval' } as unknown as BillDetailType;
@@ -29,6 +30,7 @@ vi.mock('../context/BillDetail.context', () => ({
     form: { reset },
     setPayment,
     pendingApprovalStagesRef,
+    setPendingApprovalStageCount,
     toggleEditable,
   }),
 }));
@@ -46,6 +48,7 @@ beforeEach(() => {
   reset.mockReset();
   setPayment.mockReset();
   toggleEditable.mockReset();
+  setPendingApprovalStageCount.mockReset();
   pendingApprovalStagesRef.current = { some: 'staged-route' } as unknown;
 });
 
@@ -59,8 +62,10 @@ describe('useCancelBillEdit', () => {
     expect(reset).toHaveBeenCalledWith({ defaultsFor: bill });
     // Payment slice resets to the bill's persisted draft.
     expect(setPayment).toHaveBeenCalledWith({ paymentFor: bill });
-    // Any staged-but-unsaved approval route is dropped.
+    // Any staged-but-unsaved approval route is dropped — payload AND its
+    // reactive count shadow, so the gate falls back to the persisted route.
     expect(pendingApprovalStagesRef.current).toBeNull();
+    expect(setPendingApprovalStageCount).toHaveBeenCalledWith(null);
     // Edit mode flips off — back to the read-only record.
     expect(toggleEditable).toHaveBeenCalledWith(false);
   });

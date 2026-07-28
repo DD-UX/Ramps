@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   archiveBill,
+  BillMissingApproversError,
   BillNotEditableError,
   countBillsByStatus,
   createDemoBill,
@@ -63,10 +64,7 @@ type QueryResult = { data?: unknown; error?: unknown; count?: number };
  * (`from('vendors').select('id').ilike('name', …)`) that vendor search runs
  * first; each `from(table)` gets its own recorded builder + result.
  */
-function makeSupabase(
-  result: QueryResult,
-  vendorMatches: QueryResult = { data: [] },
-) {
+function makeSupabase(result: QueryResult, vendorMatches: QueryResult = { data: [] }) {
   const calls = {
     eq: [] as [string, unknown][],
     in: [] as [string, unknown[]][],
@@ -109,9 +107,7 @@ function makeSupabase(
     };
     return builder;
   };
-  const from = vi.fn((table: string) =>
-    makeBuilder(table === 'vendors' ? vendorMatches : result),
-  );
+  const from = vi.fn((table: string) => makeBuilder(table === 'vendors' ? vendorMatches : result));
   return { supabase: { from } as unknown as ServerSupabase, calls, from };
 }
 
@@ -478,14 +474,26 @@ describe('saveBill', () => {
 });
 
 describe('submitBill', () => {
+  /** A DB-row-shaped approval stage (as the detail read embeds it) — submit
+   *  demands at least one, so the routed fixtures carry this. */
+  const stageRow = {
+    id: 'a0000000-0000-4000-8000-00000000a001',
+    bill_id: 'b0000000-0000-4000-8000-00000000d001',
+    sequence: 1,
+    roles: [{ role: 'admin' }],
+    users: [],
+  };
+
   it('saves, then moves the bill to awaiting_approval', async () => {
     const { supabase, ops } = makeWriteSupabase([
-      { data: makeDetailRow({ status: 'draft' }) }, // saveBill guard read
+      { data: makeDetailRow({ status: 'draft', approval_stages: [stageRow] }) }, // saveBill guard read
       { error: null }, // header update
       { error: null }, // line delete
-      { data: makeDetailRow({ status: 'draft' }) }, // saveBill re-read
+      { data: makeDetailRow({ status: 'draft', approval_stages: [stageRow] }) }, // saveBill re-read
       { error: null }, // status update
-      { data: makeDetailRow({ status: 'awaiting_approval' }) }, // final re-read
+      {
+        data: makeDetailRow({ status: 'awaiting_approval', approval_stages: [stageRow] }),
+      }, // final re-read
     ]);
 
     const submitted = await submitBill(
@@ -496,9 +504,7 @@ describe('submitBill', () => {
 
     expect(submitted.status).toBe('awaiting_approval');
     // The last bills update carries the status transition.
-    const statusUpdate = ops
-      .filter((o) => o.table === 'bills' && o.op === 'update')
-      .at(-1);
+    const statusUpdate = ops.filter((o) => o.table === 'bills' && o.op === 'update').at(-1);
     expect((statusUpdate!.payload as Record<string, unknown>).status).toBe('awaiting_approval');
   });
 
@@ -510,6 +516,22 @@ describe('submitBill', () => {
     await expect(
       submitBill(supabase, 'b0000000-0000-4000-8000-00000000d001', makeSavePayload()),
     ).rejects.toBeInstanceOf(BillNotEditableError);
+  });
+
+  it('refuses an EMPTY approval route (BillMissingApproversError) — the status never moves', async () => {
+    const { supabase, ops } = makeWriteSupabase([
+      { data: makeDetailRow({ status: 'draft' }) }, // saveBill guard read
+      { error: null }, // header update
+      { error: null }, // line delete
+      { data: makeDetailRow({ status: 'draft' }) }, // saveBill re-read — no stages
+    ]);
+
+    await expect(
+      submitBill(supabase, 'b0000000-0000-4000-8000-00000000d001', makeSavePayload()),
+    ).rejects.toBeInstanceOf(BillMissingApproversError);
+
+    // Only the header save touched `bills` — the status UPDATE never ran.
+    expect(ops.filter((o) => o.table === 'bills' && o.op === 'update')).toHaveLength(1);
   });
 });
 
@@ -642,9 +664,7 @@ describe('archiveBill', () => {
 
   it('throws when the bill does not exist', async () => {
     const { supabase } = makeWriteSupabase([{ data: null }]);
-    await expect(
-      archiveBill(supabase, 'b0000000-0000-4000-8000-00000000d001'),
-    ).rejects.toThrow();
+    await expect(archiveBill(supabase, 'b0000000-0000-4000-8000-00000000d001')).rejects.toThrow();
   });
 });
 
@@ -685,9 +705,7 @@ describe('rejectBill', () => {
 
   it('throws when the bill does not exist', async () => {
     const { supabase } = makeWriteSupabase([{ data: null }]);
-    await expect(
-      rejectBill(supabase, 'b0000000-0000-4000-8000-00000000d001'),
-    ).rejects.toThrow();
+    await expect(rejectBill(supabase, 'b0000000-0000-4000-8000-00000000d001')).rejects.toThrow();
   });
 });
 
@@ -815,9 +833,7 @@ describe('createDemoBill', () => {
       expect(stub.uploads[0].contentType).toBe('application/pdf');
 
       // document_url is backfilled to the uploaded object path.
-      const backfill = stub.ops
-        .filter((o) => o.table === 'bills' && o.op === 'update')
-        .at(-1);
+      const backfill = stub.ops.filter((o) => o.table === 'bills' && o.op === 'update').at(-1);
       expect((backfill!.payload as Record<string, unknown>).document_url).toBe(
         `invoices/${NEW_BILL_ID}.pdf`,
       );

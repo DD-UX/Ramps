@@ -15,6 +15,7 @@ import {
   toApprovalsUsers,
   toWorkflowStages,
 } from '../helpers/approvals-workflow.helpers';
+import { approvalsCompleteness } from '../helpers/section-completeness.helpers';
 import { BillDetailsSection } from './BillDetailsSection';
 
 /**
@@ -67,12 +68,25 @@ export function BillDetailsApprovals() {
 }
 
 function BillDetailsApprovalsLoaded() {
-  const { bill, leftPaneRef, pendingApprovalStagesRef } = useBillDetail();
+  const {
+    bill,
+    leftPaneRef,
+    pendingApprovalStagesRef,
+    pendingApprovalStageCount,
+    setPendingApprovalStageCount,
+  } = useBillDetail();
   // The approver catalog comes from its own cache hook, not the context — seeded
   // by the route on first paint, then shared across every picker in the app.
   const { users } = useApproverCandidateUsers();
 
   const readOnly = !isApprovalRouteEditable(bill.status);
+
+  // The header pill, while the route is still authorable: approvals are
+  // REQUIRED to submit (the Create-bill gate reads the same rule), so an empty
+  // chain reads amber like an unmatched vendor does. The staged count wins
+  // over the persisted route — the pill tracks what's on screen. Read-only
+  // bills drop the pill: their route is a frozen record, not a checklist item.
+  const stageCount = pendingApprovalStageCount ?? bill.approval_stages.length;
 
   // The approver catalog + the bill's saved route, mapped into the DS's opaque
   // string-id shapes once. `initialStages` seeds the component's own working
@@ -89,13 +103,20 @@ function BillDetailsApprovalsLoaded() {
       // Stage, don't save: map the DS chain back to our save payload (dropping
       // any stale role ids / empty stages) and park it for the footer's "Save
       // draft" to PUT. The component already reflects the change on screen.
-      pendingApprovalStagesRef.current = fromWorkflowStages(stages);
+      // The count shadows the ref through state (see the context docblock), so
+      // the pill above and the footer's Create-bill gate re-render with it.
+      const next = fromWorkflowStages(stages);
+      pendingApprovalStagesRef.current = next;
+      setPendingApprovalStageCount(next.stages.length);
     },
-    [pendingApprovalStagesRef],
+    [pendingApprovalStagesRef, setPendingApprovalStageCount],
   );
 
   return (
-    <BillDetailsSection title="Approvals">
+    <BillDetailsSection
+      title="Approvals"
+      completeness={readOnly ? undefined : approvalsCompleteness(stageCount)}
+    >
       <ApprovalsWorkflow
         roles={roles}
         users={catalog}

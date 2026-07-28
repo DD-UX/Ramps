@@ -5,9 +5,10 @@ import { Money } from '@ramps/ui/Money';
 import { StatusPill } from '@ramps/ui/StatusPill';
 import { Table, TableAnnotationLink, type TableColumn } from '@ramps/ui/Table';
 import { useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useUrlNavigation } from '@/features/common/context/UrlNavigation.context';
+import { isTypingOrDialog } from '@/features/common/hooks/useUpDownNavigation';
 
 import { hasBillActions } from '../constants/bill-actions.constants';
 import { formatBillDate } from '../helpers/format-date.helpers';
@@ -24,10 +25,11 @@ import { BillsActionsMenu } from './BillsActionsMenu';
  *
  * Columns mirror the frames: Vendor (sticky-left), Invoice #, Due date,
  * Status pill, Amount (sticky-right, right-aligned tabular money). The footer
- * is the vetted pagination band: the caller windows the rows to
- * `page`/`pageSize` (`BillsPageContent` slices the SWR-cached category), and
- * the band's page picker navigates `?page=` (preserving the tab and search) —
- * a shallow URL update the caller re-derives the window from.
+ * is the vetted pagination band: the rows ARE the server's window (the caller
+ * fetches exactly `page`/`pageSize` of the category), and the band's page
+ * picker and Prev/Next steps navigate `?page=` (preserving the tab and
+ * search) — a shallow URL update whose re-keyed fetch brings the next window.
+ * The physical ←/→ keys drive the same Prev/Next (binding below).
  */
 export interface BillsTableProps {
   bills: BillListItemType[];
@@ -147,6 +149,30 @@ export function BillsTable({ bills, total, page, pageSize }: BillsTableProps) {
     },
     [navigate, pathname, search],
   );
+
+  // ←/→, document-wide — the pagination twin of the detail screen's category
+  // chevrons: the horizontal arrows walk the horizontal axis (pages here,
+  // categories there), one binding per surface since the two never co-mount.
+  // A keypress CLICKS the footer's own real Prev/Next button, so keyboard and
+  // mouse are one code path — and the clamp is free: at an edge the band
+  // renders the faded step with NO button, so the key finds nothing to press.
+  // The shared `isTypingOrDialog` gate keeps ←/→ away from fields (the search
+  // box owns its caret) and open dialogs.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      if (isTypingOrDialog(event.target)) return;
+      const button = document.querySelector<HTMLButtonElement>(
+        `button[data-table-pager="${event.key === 'ArrowLeft' ? 'prev' : 'next'}"]`,
+      );
+      if (!button) return; // at an edge — the key has no page to flip to
+      event.preventDefault();
+      button.click();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   return (
     <Table

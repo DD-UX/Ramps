@@ -135,7 +135,9 @@ type Story = StoryObj<typeof meta>;
 
 /**
  * The vetted pagination band: "Select ⌄" on the left, the clickable range +
- * "of N bills · $TOTAL total" on the right, on a canvas band.
+ * "of N bills · $TOTAL total" on the right, on a canvas band. A single page
+ * clamps BOTH pager steps — hushed labels keeping their faded keycaps, the
+ * same disabled treatment as the details rail's Prev/Next.
  */
 export const Pagination: Story = {
   render: () => (
@@ -146,6 +148,7 @@ export const Pagination: Story = {
         totalCount={7}
         noun="bills"
         totalCents={149408}
+        onPageChange={() => {}}
         onSelectPage={() => {}}
         onClearSelection={() => {}}
         selectionSize={0}
@@ -157,6 +160,7 @@ export const Pagination: Story = {
 /**
  * Multi-page pagination — the range menu offers every page (here 21 records
  * across 5-record pages), and the trailing `extra` meta reads more currencies.
+ * Page 1 of 5: Prev clamps (faded keycap), Next is live with its → hint.
  */
 export const PaginationMultiPage: Story = {
   render: () => (
@@ -168,9 +172,32 @@ export const PaginationMultiPage: Story = {
         noun="drafts"
         totalCents={49452080}
         extra=" + 5 more currencies"
+        onPageChange={() => {}}
         onSelectPage={() => {}}
         onClearSelection={() => {}}
         selectionSize={2}
+      />
+    </BandFrame>
+  ),
+};
+
+/**
+ * A middle page — both Prev/Next steps live, `← Prev` and `Next →` flanking
+ * the range summary with the Kbd hints on their outer edges.
+ */
+export const PaginationMiddlePage: Story = {
+  render: () => (
+    <BandFrame>
+      <TablePaginationFooter
+        page={3}
+        pageSize={5}
+        totalCount={21}
+        noun="drafts"
+        totalCents={49452080}
+        onPageChange={() => {}}
+        onSelectPage={() => {}}
+        onClearSelection={() => {}}
+        selectionSize={0}
       />
     </BandFrame>
   ),

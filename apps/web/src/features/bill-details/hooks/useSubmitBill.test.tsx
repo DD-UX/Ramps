@@ -16,6 +16,13 @@ import { useSubmitBill } from './useSubmitBill';
  *
  * The context and the cache helper are mocked at their seams; the failure
  * path pins that NO reconciliation side effect fires on a failed submit.
+ *
+ * Since approvers became REQUIRED, submit also FLUSHES the staged approval
+ * route first: the chain editor parks edits on `pendingApprovalStagesRef`
+ * (no per-change PUT), and the stages PUT is only legal PRE-submit — so a
+ * staged route must land via `saveApprovalStages` BEFORE the submit POST.
+ * The flush tests pin that ordering, the ref clearing, and that a failed
+ * flush leaves the route re-sendable and never reaches the POST.
  */
 const values = { invoice_number: 'INV-1' };
 const getValues = vi.fn(() => values);
@@ -25,13 +32,20 @@ const push = vi.fn();
 const refresh = vi.fn();
 const mutate = vi.fn();
 const submitApi = vi.fn();
+const saveStagesApi = vi.fn();
 const reconcileBillCaches = vi.fn((..._args: unknown[]) => Promise.resolve());
+const pendingApprovalStagesRef: { current: unknown } = { current: null };
 
 const bill = { id: 'b-1', status: 'draft' } as unknown as BillDetailType;
 const submitted = { id: 'b-1', status: 'awaiting_approval' };
 
 vi.mock('../context/BillDetail.context', () => ({
-  useBillDetail: () => ({ bill, form: { getValues, reset }, toggleEditable }),
+  useBillDetail: () => ({
+    bill,
+    form: { getValues, reset },
+    toggleEditable,
+    pendingApprovalStagesRef,
+  }),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -43,7 +57,12 @@ vi.mock('swr', () => ({
 }));
 
 vi.mock('@/features/common/helpers/api-client.helpers', () => ({
-  apiClient: { bills: { submit: (id: unknown, body: unknown) => submitApi(id, body) } },
+  apiClient: {
+    bills: {
+      submit: (id: unknown, body: unknown) => submitApi(id, body),
+      saveApprovalStages: (id: unknown, body: unknown) => saveStagesApi(id, body),
+    },
+  },
 }));
 
 vi.mock('../helpers/bill-cache.helpers', () => ({
@@ -53,6 +72,8 @@ vi.mock('../helpers/bill-cache.helpers', () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   submitApi.mockResolvedValue({ bill: submitted });
+  saveStagesApi.mockResolvedValue({ bill });
+  pendingApprovalStagesRef.current = null;
 });
 
 describe('useSubmitBill', () => {
@@ -94,5 +115,54 @@ describe('useSubmitBill', () => {
     expect(reconcileBillCaches).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it('flushes a STAGED approval route before the submit POST, then clears the ref', async () => {
+    const staged = { stages: [{ roles: ['admin'], user_ids: [] }] };
+    pendingApprovalStagesRef.current = staged;
+    const { result } = renderHook(() => useSubmitBill());
+
+    await act(async () => {
+      await result.current.submit();
+    });
+
+    // The route PUT landed with the staged payload — and BEFORE the POST,
+    // because the stages route closes the moment the status moves.
+    expect(saveStagesApi).toHaveBeenCalledWith('b-1', staged);
+    expect(saveStagesApi.mock.invocationCallOrder[0]!).toBeLessThan(
+      submitApi.mock.invocationCallOrder[0]!,
+    );
+    // The ref clears only after the PUT succeeded.
+    expect(pendingApprovalStagesRef.current).toBeNull();
+  });
+
+  it('skips the flush entirely when nothing is staged', async () => {
+    const { result } = renderHook(() => useSubmitBill());
+
+    await act(async () => {
+      await result.current.submit();
+    });
+
+    expect(saveStagesApi).not.toHaveBeenCalled();
+    expect(submitApi).toHaveBeenCalledWith('b-1', values);
+  });
+
+  it('a failed flush never reaches the POST and leaves the route re-sendable', async () => {
+    const staged = { stages: [{ roles: ['admin'], user_ids: [] }] };
+    pendingApprovalStagesRef.current = staged;
+    saveStagesApi.mockRejectedValue(new Error('409'));
+    const { result } = renderHook(() => useSubmitBill());
+
+    let ok = true;
+    await act(async () => {
+      ok = await result.current.submit();
+    });
+
+    expect(ok).toBe(false);
+    expect(result.current.error).toMatch(/not persisted/);
+    // The transition never fired over an unsaved route…
+    expect(submitApi).not.toHaveBeenCalled();
+    // …and the staged route survives for a retry.
+    expect(pendingApprovalStagesRef.current).toBe(staged);
   });
 });

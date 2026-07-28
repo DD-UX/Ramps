@@ -85,7 +85,8 @@ import { BillDetailsVendor } from './BillDetailsVendor';
  * screen to its frozen record state.
  */
 export function BillDetailsForm() {
-  const { form, bill, editable, toggleEditable, dataLevel } = useBillDetail();
+  const { form, bill, editable, toggleEditable, dataLevel, pendingApprovalStageCount } =
+    useBillDetail();
   const [tab, setTab] = useState<BillDetailsTab>(BILL_DETAILS_TAB.OVERVIEW);
   const { saveDraft, saving: savingDraft, error: saveError } = useSaveBillDraft();
   // Create bill: persist the form + submit for approval + redirect. Drives the
@@ -173,15 +174,22 @@ export function BillDetailsForm() {
     control: form.control,
     name: ['vendor_id', 'invoice_number', 'invoice_date', 'due_date', 'line_items'],
   });
+  // The approvals leg of the gate lives OUTSIDE the form: the route is either
+  // the persisted `bill.approval_stages` or, once the chain editor stages an
+  // edit, the context's reactive count of it — whichever is on screen.
+  const approvalStageCount = pendingApprovalStageCount ?? bill.approval_stages.length;
   const canSubmit =
     isValid &&
-    billSubmitReady({
-      vendor_id: vendorId,
-      invoice_number: invoiceNumber ?? '',
-      invoice_date: invoiceDate,
-      due_date: dueDate,
-      line_items: lineItems ?? [],
-    });
+    billSubmitReady(
+      {
+        vendor_id: vendorId,
+        invoice_number: invoiceNumber ?? '',
+        invoice_date: invoiceDate,
+        due_date: dueDate,
+        line_items: lineItems ?? [],
+      },
+      approvalStageCount,
+    );
 
   // WHY-is-it-invalid console trail: RHF's silent validity check doesn't
   // populate `formState.errors` until a field blurs or a submit fires, so an

@@ -41,12 +41,20 @@ import { reconcileBillCaches } from '../helpers/bill-cache.helpers';
  * read-only rest state an awaiting bill opens in (Edit bill ⇄ Approve). Same
  * exit the post-submit "Save bill" takes.
  *
- * The caller (the form's submit handler) has already gated on completeness, so
- * this trusts the current values are submit-ready; a server-side transition
- * guard is the backstop (a 409 surfaces as the error line).
+ * The STAGED APPROVAL ROUTE flushes first: the chain editor parks its edits on
+ * `pendingApprovalStagesRef` (nothing PUTs per change), and the submit
+ * transition CLOSES the stages route (editable only pre-submit) — so any
+ * staged route must land via its own PUT before the status moves, exactly as
+ * "Save draft" would have sent it. The server then enforces approvers-required
+ * against the persisted truth (an approver-less submit is a 422).
+ *
+ * The caller (the form's submit handler) has already gated on completeness —
+ * including the approvals leg, so a reachable submit has a route to flush or
+ * one already persisted; the SDK's transition + approvers guards are the
+ * backstop (a 409/422 surfaces as the error line).
  */
 export function useSubmitBill() {
-  const { bill, form, toggleEditable } = useBillDetail();
+  const { bill, form, toggleEditable, pendingApprovalStagesRef } = useBillDetail();
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const [submitting, setSubmitting] = useState(false);
@@ -56,6 +64,16 @@ export function useSubmitBill() {
     setError(null);
     setSubmitting(true);
     try {
+      // 1) Flush the staged route, if any — its PUT is only legal PRE-submit,
+      //    so it must land before the transition. The ref clears only after
+      //    the PUT succeeds, so a failed flush leaves the route re-sendable.
+      const pending = pendingApprovalStagesRef.current;
+      if (pending) {
+        await apiClient.bills.saveApprovalStages(bill.id, pending);
+        pendingApprovalStagesRef.current = null;
+      }
+
+      // 2) Save + transition in one call; the server re-checks the route.
       const { bill: submitted } = await apiClient.bills.submit(bill.id, form.getValues());
       // Clear dirty state so the unsaved-changes guard stays quiet; the bill
       // has left the editable draft states, so its values are the truth.
@@ -76,7 +94,7 @@ export function useSubmitBill() {
     } finally {
       setSubmitting(false);
     }
-  }, [bill.id, form, toggleEditable, router, mutate]);
+  }, [bill.id, form, toggleEditable, pendingApprovalStagesRef, router, mutate]);
 
   return { submit, submitting, error };
 }

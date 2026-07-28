@@ -25,18 +25,34 @@ import { paymentDraftFor } from '../helpers/payment-completeness.helpers';
  * state. No busy/error state: the whole thing is synchronous and can't fail.
  */
 export function useCancelBillEdit() {
-  const { bill, form, setPayment, pendingApprovalStagesRef, toggleEditable } = useBillDetail();
+  const {
+    bill,
+    form,
+    setPayment,
+    pendingApprovalStagesRef,
+    setPendingApprovalStageCount,
+    toggleEditable,
+  } = useBillDetail();
 
   const cancelEdit = useCallback(() => {
     // Fields + line items back to the fetched values; clears isDirty.
     form.reset(billToFormDefaults(bill));
     // The shared payment slice back to what the bill persisted.
     setPayment(paymentDraftFor(bill));
-    // Drop any approval route the chain editor staged but didn't save.
+    // Drop any approval route the chain editor staged but didn't save — the
+    // count shadow resets with it, so consumers fall back to the persisted route.
     pendingApprovalStagesRef.current = null;
+    setPendingApprovalStageCount(null);
     // Leave edit mode — back to the read-only record.
     toggleEditable(false);
-  }, [bill, form, setPayment, pendingApprovalStagesRef, toggleEditable]);
+  }, [
+    bill,
+    form,
+    setPayment,
+    pendingApprovalStagesRef,
+    setPendingApprovalStageCount,
+    toggleEditable,
+  ]);
 
   return { cancelEdit };
 }

@@ -2,6 +2,7 @@ import type { BillEditFormType } from '@ramps/schemas/bills';
 import { describe, expect, it } from 'vitest';
 
 import {
+  approvalsCompleteness,
   billDetailsCompleteness,
   billSubmitReady,
   lineItemsCompleteness,
@@ -101,27 +102,39 @@ describe('lineItemsTotalCents', () => {
   });
 });
 
+describe('approvalsCompleteness', () => {
+  it('is complete with at least one stage, incomplete with none', () => {
+    expect(approvalsCompleteness(1)).toBe('complete');
+    expect(approvalsCompleteness(3)).toBe('complete');
+    expect(approvalsCompleteness(0)).toBe('incomplete');
+  });
+});
+
 describe('billSubmitReady', () => {
   it('is ready when the required sections all read complete', () => {
-    expect(billSubmitReady(base)).toBe(true);
+    expect(billSubmitReady(base, 1)).toBe(true);
   });
 
   it('is not ready on the unmatched draft (no vendor)', () => {
-    expect(billSubmitReady({ ...base, vendor_id: null })).toBe(false);
+    expect(billSubmitReady({ ...base, vendor_id: null }, 1)).toBe(false);
   });
 
   it('is not ready without the invoice trio', () => {
-    expect(billSubmitReady({ ...base, invoice_number: '' })).toBe(false);
-    expect(billSubmitReady({ ...base, due_date: null })).toBe(false);
+    expect(billSubmitReady({ ...base, invoice_number: '' }, 1)).toBe(false);
+    expect(billSubmitReady({ ...base, due_date: null }, 1)).toBe(false);
   });
 
   it('is not ready with an empty or uncoded line grid', () => {
-    expect(billSubmitReady({ ...base, line_items: [] })).toBe(false);
+    expect(billSubmitReady({ ...base, line_items: [] }, 1)).toBe(false);
+  });
+
+  it('is not ready without an approval route — approvers are required', () => {
+    expect(billSubmitReady(base, 0)).toBe(false);
   });
 
   it('ignores the optional PO (base ships with a blank one)', () => {
     const withPo: BillEditFormType = { ...base, po_number: 'PO-5521' };
-    expect(billSubmitReady(base)).toBe(true);
-    expect(billSubmitReady(withPo)).toBe(true);
+    expect(billSubmitReady(base, 1)).toBe(true);
+    expect(billSubmitReady(withPo, 1)).toBe(true);
   });
 });

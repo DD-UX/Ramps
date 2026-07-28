@@ -1,7 +1,7 @@
 import type { BillFlagType, BillListItemType } from '@ramps/schemas/bills';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UrlNavigationProvider } from '@/features/common/context/UrlNavigation.context';
 
@@ -10,8 +10,11 @@ import { BillsTable } from './BillsTable';
 // The table reads the App Router hooks — `useRouter` for the row click, and
 // (through UrlNavigationProvider) `usePathname`/`useSearchParams` to rebuild the
 // `?page=` URL — so stub all three to render outside an App Router context.
+// `push` is hoisted and SHARED so the pager tests can assert where the footer's
+// Prev/Next (and their ←/→ key binding) navigated.
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push }),
   usePathname: () => '/bills',
   useSearchParams: () => new URLSearchParams(),
 }));
@@ -64,6 +67,10 @@ function makeBill(overrides: Partial<BillListItemType> = {}): BillListItemType {
     ...overrides,
   };
 }
+
+beforeEach(() => {
+  push.mockClear();
+});
 
 describe('BillsTable', () => {
   it('renders a vendor name, invoice #, formatted due date, status, and amount', () => {
@@ -146,6 +153,43 @@ describe('BillsTable', () => {
     renderTable(<BillsTable bills={bills} total={2} page={1} pageSize={10} />);
     expect(screen.getByText('Paid')).toBeInTheDocument();
     expect(screen.getByText('Draft')).toBeInTheDocument();
+  });
+
+  it('clamps Prev on page 1 — the step keeps its shape but renders no button — while Next is live', () => {
+    renderTable(<BillsTable bills={[makeBill()]} total={42} page={1} pageSize={10} />);
+    // The clamp is the rail footer's treatment: a hushed label + faded keycap
+    // marked inert, NOT a disabled button and NOT an empty slot.
+    expect(document.querySelector('button[data-table-pager="prev"]')).toBeNull();
+    expect(screen.getByLabelText('Prev page')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeInTheDocument();
+  });
+
+  it('clicking Next navigates to ?page=2', () => {
+    renderTable(<BillsTable bills={[makeBill()]} total={42} page={1} pageSize={10} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    expect(push).toHaveBeenCalledWith('/bills?page=2');
+  });
+
+  it('→ flips to the next page through the footer button; ← at page 1 finds no button and no-ops', () => {
+    renderTable(<BillsTable bills={[makeBill()]} total={42} page={1} pageSize={10} />);
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft' });
+    expect(push).not.toHaveBeenCalled();
+    fireEvent.keyDown(document.body, { key: 'ArrowRight' });
+    expect(push).toHaveBeenCalledWith('/bills?page=2');
+  });
+
+  it('← from page 2 lands on page 1 with the ?page= param dropped', () => {
+    renderTable(<BillsTable bills={[makeBill()]} total={42} page={2} pageSize={10} />);
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft' });
+    expect(push).toHaveBeenCalledWith('/bills');
+  });
+
+  it('the arrow keys never page while an input owns the keystroke', () => {
+    renderTable(<BillsTable bills={[makeBill()]} total={42} page={1} pageSize={10} />);
+    // Any input hits the shared isTypingOrDialog gate — the row checkbox is
+    // the nearest one to hand.
+    fireEvent.keyDown(screen.getAllByRole('checkbox')[0] as HTMLElement, { key: 'ArrowRight' });
+    expect(push).not.toHaveBeenCalled();
   });
 
   it('sums the visible rows into the footer money total', () => {

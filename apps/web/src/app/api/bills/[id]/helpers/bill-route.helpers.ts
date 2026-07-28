@@ -1,6 +1,6 @@
 import { BillMutationResponseSchema } from '@ramps/schemas/bills';
 import { IdSchema } from '@ramps/schemas/primitives';
-import { BillNotEditableError } from '@ramps/sdk/bills';
+import { BillMissingApproversError, BillNotEditableError } from '@ramps/sdk/bills';
 import { createServerSupabase } from '@ramps/sdk/server';
 import { NextResponse } from 'next/server';
 import type { ZodType } from 'zod';
@@ -76,8 +76,11 @@ export async function requireBody<T>(
  * The mutation envelope: run the SDK call and answer with the re-read bill.
  * The SDK owns the transition guards, so an illegal move surfaces here as
  * {@link BillNotEditableError} → 409 — a stale client can't rewrite a frozen
- * record; anything else is a genuine 500 and rethrows. The response shape is
- * re-validated at the boundary before it crosses the wire.
+ * record — and a submit whose approval route is empty as
+ * {@link BillMissingApproversError} → 422 (the record is fine, the
+ * approvers-required rule isn't met); anything else is a genuine 500 and
+ * rethrows. The response shape is re-validated at the boundary before it
+ * crosses the wire.
  */
 export async function respondWithBillMutation(
   mutate: (supabase: ReturnType<typeof createServerSupabase>) => Promise<unknown>,
@@ -89,6 +92,9 @@ export async function respondWithBillMutation(
   } catch (error) {
     if (error instanceof BillNotEditableError) {
       return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+    if (error instanceof BillMissingApproversError) {
+      return NextResponse.json({ error: error.message }, { status: 422 });
     }
     throw error;
   }

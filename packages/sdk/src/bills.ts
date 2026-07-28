@@ -367,6 +367,21 @@ export class BillNotEditableError extends Error {
 }
 
 /**
+ * BillMissingApproversError — the caller tried to submit a bill whose approval
+ * route is EMPTY. Approvals are required to enter the queue: a bill in
+ * `awaiting_approval` with no stage would have nobody to act on it, so the
+ * submit transition demands at least one `approval_stages` row. The route maps
+ * this to a 422 (the record is fine, the business rule isn't met) — distinct
+ * from {@link BillNotEditableError}'s 409, which is a lifecycle conflict.
+ */
+export class BillMissingApproversError extends Error {
+  constructor() {
+    super('Add at least one approver before creating this bill.');
+    this.name = 'BillMissingApproversError';
+  }
+}
+
+/**
  * The statuses whose record still accepts a `saveBill` write. Wider than the
  * PRE-SUBMIT window (`draft`/`missing_info`): a bill in `awaiting_approval` is
  * still being shaped, so its header + lines stay editable while it sits in the
@@ -474,7 +489,11 @@ export async function saveBill(
  * superset of {@link saveBill}: same persistence, plus the one lifecycle move
  * `draft`/`missing_info` → `awaiting_approval`, validated against the
  * transition map (`canTransitionBill`) so an illegal move can't sneak through.
- * Returns the re-read bill now carrying `awaiting_approval`.
+ * The move also demands an approval route: at least one `approval_stages` row
+ * must exist (the client PUTs any staged route before calling submit), else
+ * {@link BillMissingApproversError} — the queue must never receive a bill
+ * nobody can approve. Returns the re-read bill now carrying
+ * `awaiting_approval`.
  */
 export async function submitBill(
   supabase: ServerSupabase,
@@ -488,6 +507,13 @@ export async function submitBill(
   // this stays a legal move even if the states list grows.
   if (!canTransitionBill(saved.status, 'awaiting_approval')) {
     throw new BillNotEditableError(saved.status);
+  }
+
+  // Approvers are REQUIRED to enter the queue. `saveBill`'s re-read embeds the
+  // persisted stages, so this checks the server's own truth — the client-side
+  // completeness gate is convenience, this is the contract.
+  if (saved.approval_stages.length === 0) {
+    throw new BillMissingApproversError();
   }
 
   const move = await supabase

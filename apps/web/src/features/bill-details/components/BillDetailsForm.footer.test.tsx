@@ -85,13 +85,21 @@ const form = {
 vi.mock('../context/BillDetail.context', () => ({
   useBillDetail: () => ({
     form,
-    bill: { status, ...completeValues } as unknown as BillDetailType,
+    // One persisted stage: approvers are REQUIRED to submit, so the `draft`
+    // case's "Create bill" gate needs a routed bill to read enabled.
+    bill: {
+      status,
+      ...completeValues,
+      approval_stages: [{ id: 's-1', bill_id: 'b-1', sequence: 1, roles: ['admin'], user_ids: [] }],
+    } as unknown as BillDetailType,
     // The footer under test is the LOADED footer: below `full` it renders
     // skeleton bars / a disabled fieldset instead (covered by the ladder's own
     // tests), so every case here sits at the ladder's top.
     dataLevel: 'full',
     editable,
     toggleEditable: vi.fn(),
+    // Nothing staged in these cases — the gate falls back to the bill's route.
+    pendingApprovalStageCount: null,
   }),
 }));
 

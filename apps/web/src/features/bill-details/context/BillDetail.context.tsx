@@ -84,6 +84,22 @@ export interface BillDetailContextValue {
    */
   pendingApprovalStagesRef: RefObject<SaveApprovalStagesType | null>;
   /**
+   * The staged route's STAGE COUNT — the ref's one reactive shadow. Null while
+   * nothing is staged (the persisted `bill.approval_stages` is then the
+   * truth); a number the moment the chain editor stages an edit. State, not
+   * derived from the ref, because ONE consumer must re-render on staging: the
+   * footer's Create-bill gate (approvals are required to submit). A count
+   * rather than the stages so those re-renders stay rare (only when the count
+   * changes could the gate flip) and the payload keeps living on the ref.
+   */
+  pendingApprovalStageCount: number | null;
+  /**
+   * Mirror of the ref's writes — the chain editor sets the count alongside the
+   * ref; cancel-edit clears both to null. A save keeps it: the just-saved
+   * count is still the on-screen truth while the detail entry revalidates.
+   */
+  setPendingApprovalStageCount: (next: number | null) => void;
+  /**
    * How much of `bill` is REAL — the screen's rendering ladder
    * ({@link BILL_DETAIL_DATA_LEVEL}): `skeleton` (a placeholder — every
    * section renders its own skeleton), `seed` (a rail list item — header
@@ -162,6 +178,11 @@ export function BillDetailProvider({
   // The approvals route staged-but-unsaved by the chain editor, awaiting the
   // footer's "Save draft". Stable ref: staging an edit must not re-render.
   const pendingApprovalStagesRef = useRef<SaveApprovalStagesType | null>(null);
+  // …and its one reactive shadow: the staged stage COUNT, so the Create-bill
+  // gate re-evaluates when the chain gains/loses its last approver (see the
+  // interface docblock). Null = nothing staged, fall back to the bill's
+  // persisted route.
+  const [pendingApprovalStageCount, setPendingApprovalStageCount] = useState<number | null>(null);
 
   // Edit mode: pre-submit bills are the author view and open editable;
   // everything past that opens read-only until the footer's "Edit bill" flips
@@ -228,6 +249,8 @@ export function BillDetailProvider({
       documentUrl,
       leftPaneRef,
       pendingApprovalStagesRef,
+      pendingApprovalStageCount,
+      setPendingApprovalStageCount,
       dataLevel,
       // A partial bill is never editable, whatever the state says: the lock is
       // derived at the one place every consumer reads, so no section can slip
@@ -237,7 +260,18 @@ export function BillDetailProvider({
       payment,
       setPayment,
     }),
-    [form, bill, refs, documentUrl, dataLevel, editable, toggleEditable, payment, setPayment],
+    [
+      form,
+      bill,
+      refs,
+      documentUrl,
+      pendingApprovalStageCount,
+      dataLevel,
+      editable,
+      toggleEditable,
+      payment,
+      setPayment,
+    ],
   );
 
   // Two providers, one form: `BillDetailContext` carries bill + refs (and the
