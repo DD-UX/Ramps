@@ -2,6 +2,7 @@
 
 import { Kbd } from '@ramps/ui/Kbd';
 
+import { getCmdCharacter } from '../helpers/platform.helpers';
 import { useIsApplePlatform } from '../hooks/useIsApplePlatform';
 
 /**
@@ -27,7 +28,7 @@ export interface CommonCommandKeyProps {
 export function CommonCommandKey({ asChild = false, className }: CommonCommandKeyProps) {
   const isApple = useIsApplePlatform();
 
-  const glyph = isApple ? '⌘' : 'Ctrl';
+  const glyph = getCmdCharacter(isApple);
   // A screen reader hears "Command" / "Control" rather than the raw "⌘" glyph.
   const label = isApple ? 'Command' : 'Control';
 

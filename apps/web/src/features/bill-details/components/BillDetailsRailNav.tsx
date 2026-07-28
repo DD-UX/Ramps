@@ -23,8 +23,10 @@ import { useRailActive } from '../context/RailActive.context';
  * The footer's own Prev/Next are real `<a href>` LINKS pointing at the ids the
  * context derives around the CURRENT pill — so mid-skim they track the pill,
  * not the page. Clicking one is a DIRECT hop (`setActiveId` cancels any queued
- * skim). An end of the list renders the label disabled (frame 1's muted
- * "Prev") instead of dropping it.
+ * skim). An end of the list renders the step disabled instead of dropping it:
+ * the muted label (frame 1's "Prev") KEEPS its Kbd keycap, faded — the same
+ * treatment as the chevrons' clamp, so a dead end never reshapes the row,
+ * opacity alone says "inert".
  *
  * The footer is TRI-STATE: while the rail's `loading` (read straight off the
  * rail context, same flag the list body uses) neither neighbour is KNOWN,
@@ -46,14 +48,20 @@ export function BillDetailsRailNav() {
         // drop any pending keyboard skim. A guard-vetoed click never reaches
         // here, so the pill stays put on a blocked hop.
         onClick={() => setActiveId(id)}
-        className={cn('gap-rui-2 text-ink text-sm flex items-center', 'hover:underline')}
+        // group-hover scopes the underline to the label — an underline on the
+        // anchor itself paints straight through the Kbd chip's box.
+        className={cn('gap-rui-2 text-ink text-sm group flex items-center')}
       >
-        {label}
+        <span className="group-hover:underline">{label}</span>
         <Kbd>{key}</Kbd>
       </Link>
     ) : (
-      <span className="text-hushed text-sm" aria-disabled="true">
+      // The edge verdict keeps the live step's SHAPE — hushed label AND the
+      // Kbd keycap, dimmed (the system's opacity-60 disabled fade, same as
+      // the chevrons' clamp): the key still exists, it just does nothing here.
+      <span className="gap-rui-2 text-hushed text-sm flex items-center" aria-disabled="true">
         {label}
+        <Kbd className="opacity-60">{key}</Kbd>
       </span>
     );
 

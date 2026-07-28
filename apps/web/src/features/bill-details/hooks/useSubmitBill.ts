@@ -10,36 +10,43 @@ import { useBillDetail } from '../context/BillDetail.context';
 import { reconcileBillCaches } from '../helpers/bill-cache.helpers';
 
 /**
- * Where a freshly-created bill lands: the Bill Pay list scoped to the "For
- * approval" tab (its `bill_tabs.code`, the `?tab=` slug). A submitted bill is
- * now `awaiting_approval`, which is exactly the status that tab rolls up — so
- * the author sees the bill they just created sitting in the approval queue.
- */
-export const FOR_APPROVAL_HREF = '/bills?tab=for_approval';
-
-/**
- * useSubmitBill — THE "Create bill" flow: persist the whole edit form, submit
- * the bill for approval, then land the author on the "For approval" list.
+ * useSubmitBill — THE "Create bill" flow: persist the whole edit form, then
+ * submit the bill for approval.
  *
  * Create bill is a strict SUPERSET of Save draft — same form persistence, plus
  * the `draft`/`missing_info` → `awaiting_approval` transition — so it's one
  * server call to `POST /api/bills/:id/submit` (the SDK's `submit` saves then
- * moves). On success it `form.reset(getValues())` to clear `isDirty` BEFORE
- * navigating: the bill has left the draft states, so nothing more is editable
- * here, and a clean form means the unsaved-changes guard won't intercept the
- * redirect. Then `router.push` to the For-approval list and `router.refresh()`
- * so the server components (the list rows, the tab counts) re-read the bill's
- * new status rather than showing a stale cache. The destination is an RSC
- * table, so the refresh stays; {@link reconcileBillCaches} fires alongside it
- * (not awaited — this screen is being left) so a back-nav to the detail
- * surface finds its rail + detail entries already re-reading, not stale.
+ * moves).
+ *
+ * Like every other status move on this screen (approve, schedule, archive…),
+ * submit STAYS ON THE BILL — no redirect out. The bill is still the screen's
+ * subject; what changes is its status, and the page reconciles around it:
+ * on success it `form.reset(getValues())` to clear `isDirty` (the bill has
+ * left the draft states, nothing more is editable, and a clean form keeps the
+ * unsaved-changes guard quiet), then AWAITS {@link reconcileBillCaches} WITH
+ * the re-read bill the POST returned. Seeding the detail entry in place flips
+ * the status pill and the footer primary the moment the response lands (no
+ * second roundtrip), and the rail revalidation + the status-derived category
+ * (`railStatusesFor` reads the seeded status) flip the rail to the bill's NEW
+ * category — the card now sits in For approval, chevrons re-rung around it.
+ * `router.refresh()` still runs because the Bill Pay list and its tab counts
+ * are RSC surfaces: a later hop back must read the new status, not the router
+ * cache's stale rows.
+ *
+ * One more flip on success: `toggleEditable(false)`. The context's edit-mode
+ * flag only re-derives on remount or a data-level RISE — a same-level seeded
+ * reconcile leaves it alone — and it initialized `true` for the pre-submit
+ * draft. Left stale, the now-`awaiting_approval` bill would render mid-edit
+ * (Save bill footer, unlocked fieldset, kebab locked out) instead of the
+ * read-only rest state an awaiting bill opens in (Edit bill ⇄ Approve). Same
+ * exit the post-submit "Save bill" takes.
  *
  * The caller (the form's submit handler) has already gated on completeness, so
  * this trusts the current values are submit-ready; a server-side transition
  * guard is the backstop (a 409 surfaces as the error line).
  */
 export function useSubmitBill() {
-  const { bill, form } = useBillDetail();
+  const { bill, form, toggleEditable } = useBillDetail();
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const [submitting, setSubmitting] = useState(false);
@@ -50,13 +57,17 @@ export function useSubmitBill() {
     setSubmitting(true);
     try {
       const { bill: submitted } = await apiClient.bills.submit(bill.id, form.getValues());
-      // Clear dirty state before we leave, so the guard doesn't intercept.
+      // Clear dirty state so the unsaved-changes guard stays quiet; the bill
+      // has left the editable draft states, so its values are the truth.
       form.reset(form.getValues());
-      // Fire-and-forget: we're leaving this screen, but its SWR entries (rail
-      // list, detail) survive in cache — seed the detail with the re-read
-      // bill and revalidate the rails so a back-nav finds truth, not staleness.
-      void reconcileBillCaches(mutate, bill.id, submitted);
-      router.push(FOR_APPROVAL_HREF);
+      // Leave edit mode — the awaiting bill's rest state is read-only
+      // (Edit bill ⇄ Approve); the stale pre-submit flag must not linger.
+      toggleEditable(false);
+      // Seed the detail entry with the re-read bill + revalidate the rails:
+      // the status UX and the rail's category both re-derive from the seed.
+      await reconcileBillCaches(mutate, bill.id, submitted);
+      // The Bill Pay tables and tab counts are RSC — refresh them behind us
+      // so leaving later shows the new status, while WE stay on the bill.
       router.refresh();
       return true;
     } catch {
@@ -65,7 +76,7 @@ export function useSubmitBill() {
     } finally {
       setSubmitting(false);
     }
-  }, [bill.id, form, router, mutate]);
+  }, [bill.id, form, toggleEditable, router, mutate]);
 
   return { submit, submitting, error };
 }

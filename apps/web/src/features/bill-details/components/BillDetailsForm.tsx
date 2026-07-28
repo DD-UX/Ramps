@@ -14,6 +14,7 @@ import { useFormState, useWatch } from 'react-hook-form';
 import { BillsActionsMenu } from '@/features/bills/components/BillsActionsMenu';
 import { hasBillActions } from '@/features/bills/constants/bill-actions.constants';
 import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
+import { getCmdCharacter } from '@/features/common/helpers/platform.helpers';
 import { useCommandPlusKey } from '@/features/common/hooks/useCommandPlusKey';
 import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 
@@ -310,7 +311,7 @@ export function BillDetailsForm() {
   // fire it (enabled + no modal + full record). ⌘ on Apple, Ctrl elsewhere.
   // Undefined hides the chip — a disabled primary advertises no shortcut.
   const shortcutKeys =
-    full && !primary.disabled && !scheduleModalOpen ? [isApple ? '⌘' : 'Ctrl', '↵'] : undefined;
+    full && !primary.disabled && !scheduleModalOpen ? [getCmdCharacter(isApple), '↵'] : undefined;
 
   return (
     <form
@@ -343,7 +344,11 @@ export function BillDetailsForm() {
           onValueChange={(value) => setTab(value as BillDetailsTab)}
           className="px-rui-5 h-12 items-stretch"
         />
-        <ProgressBar active={!full} label="Loading bill" className="absolute inset-x-0 -bottom-px" />
+        <ProgressBar
+          active={!full}
+          label="Loading bill"
+          className="inset-x-0 absolute -bottom-px"
+        />
       </div>
       {/* Overview holds the resizable split: form on the white left pane,
             invoice preview on the warm limestone right pane. The panel supplies

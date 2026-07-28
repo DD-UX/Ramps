@@ -35,3 +35,13 @@ export function detectApplePlatform(): boolean {
   if (typeof navigator === 'undefined') return false;
   return isApplePlatform(navigator.platform || navigator.userAgent);
 }
+
+/**
+ * The command modifier's keycap glyph for a platform: `⌘` on Apple keyboards,
+ * `Ctrl` everywhere else. The one spelling shared by every shortcut chip
+ * (CommonCommandKey, the bill form's submit chips, the Create-demo-bill CTA)
+ * so the ternary isn't re-derived at each site.
+ */
+export function getCmdCharacter(isApple: boolean): '⌘' | 'Ctrl' {
+  return isApple ? '⌘' : 'Ctrl';
+}

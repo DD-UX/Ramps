@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isApplePlatform } from './platform.helpers';
+import { getCmdCharacter, isApplePlatform } from './platform.helpers';
 
 /**
  * isApplePlatform is the one decision behind "⌘ or Ctrl?": both the keycap
@@ -30,5 +30,16 @@ describe('isApplePlatform', () => {
   it('treats a missing / empty platform (SSR) as non-Apple', () => {
     expect(isApplePlatform(undefined)).toBe(false);
     expect(isApplePlatform('')).toBe(false);
+  });
+});
+
+/**
+ * getCmdCharacter is the shared spelling of that decision: every shortcut chip
+ * renders its output, so the glyphs are pinned here.
+ */
+describe('getCmdCharacter', () => {
+  it('spells ⌘ for Apple and Ctrl for everything else', () => {
+    expect(getCmdCharacter(true)).toBe('⌘');
+    expect(getCmdCharacter(false)).toBe('Ctrl');
   });
 });

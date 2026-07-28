@@ -43,9 +43,9 @@ import type { ChevronState } from '../helpers/chevron.helpers';
  *   guard's click capture is the whole point), `prefetch` forced on like the
  *   side nav's links.
  * - settled null → the muted clamp: every candidate that way is empty. There
- *   is no landing name to say, so a hushed arrow character marks the dead
- *   end; the Kbd hint drops with it — a key that does nothing shouldn't
- *   advertise.
+ *   is no landing name to say, so the Kbd keycap stays — same shape as the
+ *   live stepper's hint — but FADED (the system's disabled dim): the key
+ *   still reads as "this key exists", the fade says it does nothing here.
  *
  * A click also calls `flipCategory(target)` — the optimistic half of the hop:
  * the rail flips to the target category NOW (warm list or honest skeletons)
@@ -114,12 +114,13 @@ function Chevron({
   const { target } = state;
   if (!target) {
     // The clamp: a real verdict — nothing non-empty that way. No landing
-    // name to show, so a hushed arrow marks the dead end; the Kbd hint
-    // drops, same as the footer's muted end-of-list treatment.
+    // name to show, so the same Kbd keycap the live stepper wears — just
+    // FADED (the system's opacity-60 disabled dim) — marks the dead end:
+    // one shape for the key in both states, opacity alone saying "inert".
     return (
-      <span aria-disabled="true" aria-label={`${direction} category`} className="text-hushed text-sm">
+      <Kbd aria-disabled="true" aria-label={`${direction} category`} className="opacity-60">
         {hint}
-      </span>
+      </Kbd>
     );
   }
 
@@ -134,10 +135,12 @@ function Chevron({
       // The optimistic flip — only reachable on a guard-approved click,
       // whether from the mouse or the ←/→ binding's synthetic click.
       onClick={() => flipCategory(target)}
-      className="gap-rui-2 text-ink flex items-center text-sm hover:underline"
+      // group-hover scopes the underline to the NAME: an underline on the
+      // anchor itself paints straight through the Kbd chip's box.
+      className="gap-rui-2 text-ink group text-sm flex items-center"
     >
       {anchor === 'prev' && <ChevronHint hint={hint} />}
-      {target.tab.name}
+      <span className="group-hover:underline">{target.tab.name}</span>
       {anchor === 'next' && <ChevronHint hint={hint} />}
     </Link>
   );

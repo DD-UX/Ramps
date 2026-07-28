@@ -74,8 +74,12 @@ const tab = (code: string): BillTabType => {
   return found;
 };
 
-/** resolveChevronState only reads `list[0].id` — a cast keeps the fixture honest-sized. */
-const bill = (id: string) => ({ id }) as BillListItemType;
+/**
+ * resolveChevronState reads `id` + `status` (it groups the list the way the
+ * rail renders it) — a cast keeps the fixture honest-sized. Status-less bills
+ * fold into a single trailing group, preserving the flat order.
+ */
+const bill = (id: string, status?: string) => ({ id, status }) as BillListItemType;
 
 describe('sameStatuses', () => {
   it('is order-sensitive equality over the arrangement', () => {
@@ -163,6 +167,21 @@ describe('resolveChevronState', () => {
     const state = resolveChevronState([tab('drafts'), tab('for_payment')], listFor);
     expect(state).toEqual({
       target: { tab: tab('drafts'), billId: 'd1' },
+      settled: true,
+    });
+  });
+
+  it("lands on the rail's FIRST CARD, not the raw list head — grouping wins over due date", () => {
+    // For payment renders sections in status order: approved, scheduled,
+    // partially_paid. The raw list is due-date-ordered ACROSS statuses, so its
+    // head (a scheduled bill) sits in the SECOND section — the hop must select
+    // the first card of the first section instead.
+    const state = resolveChevronState([tab('for_payment')], () => [
+      bill('p-sched', 'scheduled'),
+      bill('p-appr', 'approved'),
+    ]);
+    expect(state).toEqual({
+      target: { tab: tab('for_payment'), billId: 'p-appr' },
       settled: true,
     });
   });

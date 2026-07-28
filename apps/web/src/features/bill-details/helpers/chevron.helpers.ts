@@ -1,6 +1,8 @@
 import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
 
+import { groupBillsByStatus, railOrderedIds } from './rail.helpers';
+
 /**
  * Chevron logic — the `< >` category steppers in the detail header.
  *
@@ -15,9 +17,11 @@ import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
  *   direction — an empty category is skipped, not landed on.
  * - **Clamp ends.** No non-empty category in a direction → that chevron is
  *   disabled, same muted-end treatment as the rail footer.
- * - **Concrete landing.** The target is a specific BILL — the first of the
- *   category in the rail's own due-date order — so the chevron can be a real
- *   `<Link href="/bills/:id">` the unsaved-changes guard intercepts.
+ * - **Concrete landing.** The target is a specific BILL — the first CARD the
+ *   landing rail will show (its grouped visual order's head, via the rail's
+ *   own `groupBillsByStatus`), so the hop selects the first item in the first
+ *   list and the chevron can be a real `<Link href="/bills/:id">` the
+ *   unsaved-changes guard intercepts.
  *
  * Everything here is a pure function over the tab catalog and whatever
  * category lists the provider has warmed; "not loaded yet" is an explicit
@@ -58,7 +62,7 @@ export function chevronRing(tabs: readonly BillTabType[]): BillTabType[] {
 /** A chevron's resolved destination: the category tab and the bill it lands on. */
 export interface ChevronTarget {
   tab: BillTabType;
-  /** First bill of the category in rail (due-date) order — the `<Link>` href. */
+  /** The landing rail's first CARD (grouped visual order) — the `<Link>` href. */
   billId: string;
 }
 
@@ -104,10 +108,14 @@ export function chevronCandidates(
 
 /**
  * Walk one direction's candidates (nearest first) to the chevron's state.
- * The first candidate with bills wins — its head bill is the landing. An
- * UNLOADED candidate stops the walk unsettled: skipping past a category we
- * haven't seen could steal the hop from the nearer neighbor a moment before
- * its (possibly non-empty) list lands.
+ * The first candidate with bills wins — and the landing is the bill its RAIL
+ * will show FIRST: the raw list is due-date-ordered ACROSS statuses, but the
+ * rail folds it into status sections (`groupBillsByStatus`), so the visual
+ * head can differ from `list[0]`. Grouping here keeps the hop honest — you
+ * always land selected on the first card of the first section. An UNLOADED
+ * candidate stops the walk unsettled: skipping past a category we haven't
+ * seen could steal the hop from the nearer neighbor a moment before its
+ * (possibly non-empty) list lands.
  */
 export function resolveChevronState(
   candidates: readonly BillTabType[],
@@ -116,8 +124,8 @@ export function resolveChevronState(
   for (const tab of candidates) {
     const list = listFor(tab);
     if (!list) return { target: null, settled: false };
-    const head = list[0];
-    if (head) return { target: { tab, billId: head.id }, settled: true };
+    const head = railOrderedIds(groupBillsByStatus(list, tab.statuses))[0];
+    if (head) return { target: { tab, billId: head }, settled: true };
   }
   return { target: null, settled: true };
 }

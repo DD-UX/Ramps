@@ -23,7 +23,9 @@ export function Kbd({ className, children, ...props }: KbdProps) {
       className={cn(
         // A raised white square keycap: hairline + 1px drop via shadow-key.
         'h-5 min-w-5 rounded-square bg-white px-1 inline-flex items-center justify-center',
-        'font-sans text-xs font-body text-ink shadow-key leading-none select-none',
+        // no-underline: a keycap glyph must never inherit a wrapping link's
+        // hover underline (the chevron steppers put Kbd inside hover:underline).
+        'font-sans text-xs font-body text-ink shadow-key leading-none select-none no-underline',
         className,
       )}
       {...props}

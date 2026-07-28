@@ -54,10 +54,12 @@ export function BillDetailsRail() {
       <div className="px-rui-4 border-stone flex h-[3.1rem] shrink-0 items-center border-b-2">
         <Link
           href="/bills"
-          className="gap-rui-2 text-ink text-sm font-medium flex items-center hover:underline"
+          // group-hover keeps the underline off the arrow glyph — decoration
+          // on the anchor itself would strike through the icon's box.
+          className="gap-rui-2 text-ink text-sm font-medium group flex items-center"
         >
           <ArrowLeft size={16} />
-          Bill Pay
+          <span className="group-hover:underline">Bill Pay</span>
         </Link>
       </div>
 

@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
 import { apiClient } from '@/features/common/helpers/api-client.helpers';
+import { getCmdCharacter } from '@/features/common/helpers/platform.helpers';
+import { useCommandPlusKey } from '@/features/common/hooks/useCommandPlusKey';
+import { useIsApplePlatform } from '@/features/common/hooks/useIsApplePlatform';
 
 /**
  * BillsCreateNewBillButton — the Bill Pay header's "Create demo bill" CTA.
@@ -22,9 +25,20 @@ import { apiClient } from '@/features/common/helpers/api-client.helpers';
  * the tester lands on something to code. A double-click can't fire twice: the
  * button disables itself the moment it starts (the `loading` prop swaps the
  * leading icon for a spinner and sets `disabled`).
+ *
+ * ⌘/Ctrl+Enter is the keyboard spelling of the same click — `useCommandPlusKey`
+ * owns the document listener, and the chord is advertised as trailing keycaps
+ * via the Button's `keys` prop (exactly the snapshot-9 "Create bill ⌘↵"
+ * treatment), with the modifier glyph resolved per-OS by `useIsApplePlatform` —
+ * the same single platform read behind the top bar's ⌘K chip. The chord unbinds
+ * while a create is in flight, mirroring the button's own disabled state.
+ * (⌘/Ctrl+N was tried first but browsers reserve it for "new window" and never
+ * deliver it to the page. ⌘Enter is safe here: the detail route's save/approve
+ * binding lives on a different page, so the two never coexist.)
  */
 export function BillsCreateNewBillButton() {
   const router = useRouter();
+  const isApple = useIsApplePlatform();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +60,17 @@ export function BillsCreateNewBillButton() {
     // the button stays inert until the detail page takes over.
   }, [loading, router]);
 
+  // The chord IS the click — same handler, same in-flight guard (the hook
+  // additionally unbinds while loading, so a held-down repeat can't queue up).
+  useCommandPlusKey(
+    'Enter',
+    (event) => {
+      event.preventDefault();
+      void onClick();
+    },
+    !loading,
+  );
+
   return (
     <div className="gap-rui-1 flex flex-col items-end">
       <Button
@@ -53,6 +78,7 @@ export function BillsCreateNewBillButton() {
         leadingIcon={<Plus size={16} />}
         loading={loading}
         onClick={onClick}
+        keys={[getCmdCharacter(isApple), '↵']}
       >
         Create demo bill
       </Button>

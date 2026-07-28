@@ -4,7 +4,9 @@ import { EmptyState } from '@ramps/ui/EmptyState';
 import { FileText } from '@ramps/ui/icons';
 import { Skeleton } from '@ramps/ui/Skeleton';
 import { Tabs } from '@ramps/ui/Tabs';
-import { useState } from 'react';
+import { Activity, useState } from 'react';
+
+import { ACTIVITY_MODE } from '@/features/common/constants/activity.constants';
 
 import { BILL_DETAIL_DATA_LEVEL, dataLevelAtLeast } from '../constants/data-level.constants';
 import {
@@ -27,6 +29,11 @@ import { BillDetailsPane } from './BillDetailsPane';
  * so the viewer body needs `full` — below it, "No invoice attached" would be
  * a lie about a bill whose PDF simply hasn't landed. The Tabs stay real and
  * clickable either way: they're chrome, not data.
+ *
+ * The two tab bodies are `<Activity>` panes (the form pane's Overview/Activity
+ * pattern): hopping to Documents HIDES the invoice iframe instead of
+ * unmounting it, so the browser's PDF viewer — its fetch, its scroll, its
+ * zoom — survives the round trip rather than re-initializing from scratch.
  */
 export function BillDetailsDocument() {
   const {
@@ -54,23 +61,35 @@ export function BillDetailsDocument() {
         <div className="rounded-square border-bone flex-1 overflow-hidden border">
           {!full ? (
             <Skeleton className="h-full min-h-[32rem] w-full rounded-none" />
-          ) : isInvoiceTab && documentUrl ? (
-            <iframe
-              src={documentUrl}
-              title={invoiceNumber ? `Invoice ${invoiceNumber}` : 'Invoice document'}
-              className="h-full min-h-[32rem] w-full"
-            />
           ) : (
-            <EmptyState
-              className="h-full min-h-[32rem]"
-              icon={<FileText size={28} />}
-              title={isInvoiceTab ? 'No invoice attached' : 'No documents'}
-              description={
-                isInvoiceTab
-                  ? 'This bill has no source document to preview.'
-                  : 'Supporting documents will appear here once attached.'
-              }
-            />
+            <>
+              {/* Hidden ≠ unmounted: the iframe stays alive behind the
+                  Documents tab, keeping the loaded PDF and its view state. */}
+              <Activity mode={isInvoiceTab ? ACTIVITY_MODE.VISIBLE : ACTIVITY_MODE.HIDDEN}>
+                {documentUrl ? (
+                  <iframe
+                    src={documentUrl}
+                    title={invoiceNumber ? `Invoice ${invoiceNumber}` : 'Invoice document'}
+                    className="h-full min-h-[32rem] w-full"
+                  />
+                ) : (
+                  <EmptyState
+                    className="h-full min-h-[32rem]"
+                    icon={<FileText size={28} />}
+                    title="No invoice attached"
+                    description="This bill has no source document to preview."
+                  />
+                )}
+              </Activity>
+              <Activity mode={isInvoiceTab ? ACTIVITY_MODE.HIDDEN : ACTIVITY_MODE.VISIBLE}>
+                <EmptyState
+                  className="h-full min-h-[32rem]"
+                  icon={<FileText size={28} />}
+                  title="No documents"
+                  description="Supporting documents will appear here once attached."
+                />
+              </Activity>
+            </>
           )}
         </div>
       </BillDetailsPane>

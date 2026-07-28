@@ -10,9 +10,9 @@ import { BillDetailsChevrons } from './BillDetailsChevrons';
  *
  * - a settled target renders a real anchor (href to the landing BILL) whose
  *   label is the landing category's NAME with the Kbd hint baked in; the
- *   clamp renders the muted verdict as a plain hushed arrow with NO Kbd chip
- *   (a dead key must not advertise); an unsettled side renders neither
- *   (skeleton).
+ *   clamp renders the SAME Kbd keycap faded out (aria-disabled, opacity dim)
+ *   with no anchor — one key shape in both states, the fade saying "inert";
+ *   an unsettled side renders neither (skeleton).
  * - ArrowLeft / ArrowRight click the matching stepper's own anchor — so the
  *   optimistic `flipCategory` fires through the SAME React onClick a mouse
  *   click uses (one code path, one guard seam).
@@ -82,25 +82,24 @@ describe('BillDetailsChevrons', () => {
     expect(next.querySelector('kbd')).not.toBeNull();
   });
 
-  it('renders the clamp as a muted verdict with NO Kbd chip — a dead key must not advertise', () => {
+  it('renders the clamp as the same Kbd keycap, faded out — the key shape survives, inert', () => {
     rail.chevronNext = { target: null, settled: true };
     render(<BillDetailsChevrons />);
     const clamp = screen.getByLabelText('Next category');
     expect(clamp).toHaveAttribute('aria-disabled', 'true');
-    expect(clamp.querySelector('kbd')).toBeNull();
+    // The verdict IS a keycap — the live stepper's chip, dimmed, not a bare arrow.
+    expect(clamp.tagName).toBe('KBD');
+    expect(clamp).toHaveClass('opacity-60');
+    expect(clamp).toHaveTextContent('→');
     expect(screen.queryByRole('link', { name: /Next category/ })).toBeNull();
   });
 
   it('ArrowRight / ArrowLeft click their stepper — flipCategory fires via the anchor onClick', () => {
     render(<BillDetailsChevrons />);
     pressArrow('ArrowRight');
-    expect(rail.flipCategory).toHaveBeenCalledWith(
-      expect.objectContaining({ billId: 'p1' }),
-    );
+    expect(rail.flipCategory).toHaveBeenCalledWith(expect.objectContaining({ billId: 'p1' }));
     pressArrow('ArrowLeft');
-    expect(rail.flipCategory).toHaveBeenCalledWith(
-      expect.objectContaining({ billId: 'd1' }),
-    );
+    expect(rail.flipCategory).toHaveBeenCalledWith(expect.objectContaining({ billId: 'd1' }));
   });
 
   it('a clamped direction has no anchor — the key press is a no-op', () => {
