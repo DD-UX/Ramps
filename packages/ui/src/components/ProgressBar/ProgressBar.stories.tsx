@@ -21,7 +21,11 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** Active — the sweep the app shows while a tab, search or page re-queries. */
+/**
+ * Active — the sweep the app shows while a tab, search or page re-queries.
+ * The segment is ELECTRIC, the DraggablePanel divider's live-drag blue — the
+ * kit's one "in motion" colour, so every busy surface speaks it.
+ */
 export const Active: Story = {
   args: { active: true, delayMs: 0 },
 };

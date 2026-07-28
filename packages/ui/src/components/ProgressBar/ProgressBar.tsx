@@ -11,9 +11,11 @@ import { cn } from '../../lib/cn';
  * Where `Skeleton` stands in for content whose shape is known and `Spinner`
  * marks a single control as busy, this marks a whole REGION as refreshing while
  * its current contents stay readable: a 2px rail spanning the content width with
- * a token-tinted segment sweeping across it. It is the right instrument when a
- * surface re-queries in place — switching a lifecycle tab, typing a search,
- * paging a table — because the rows underneath remain the user's context.
+ * an ELECTRIC segment sweeping across it — the same live blue the
+ * DraggablePanel divider turns while dragged, the kit's one "something is in
+ * motion" colour. It is the right instrument when a surface re-queries in
+ * place — switching a lifecycle tab, typing a search, paging a table — because
+ * the rows underneath remain the user's context.
  *
  * Two behaviours make it feel like craft rather than a widget:
  *
@@ -80,10 +82,10 @@ export function ProgressBar({
       {visible &&
         (reduceMotion ? (
           // Reduced motion: present, not travelling.
-          <span className="bg-accent absolute inset-0 block" />
+          <span className="bg-electric absolute inset-0 block" />
         ) : (
           <motion.span
-            className={cn('bg-accent rounded-pill absolute inset-y-0 left-0 block', SEGMENT_CLASS)}
+            className={cn('bg-electric rounded-pill absolute inset-y-0 left-0 block', SEGMENT_CLASS)}
             // x is a percentage of the SEGMENT's own width (a third of the
             // track), so -100% parks it just off the left edge and 300% carries
             // its left edge to the right edge — one clean pass, no pop.

@@ -5,6 +5,7 @@ import { Button } from '@ramps/ui/Button';
 import { EmptyState } from '@ramps/ui/EmptyState';
 import { FieldError } from '@ramps/ui/FieldError';
 import { ActivityIcon } from '@ramps/ui/icons';
+import { ProgressBar } from '@ramps/ui/ProgressBar';
 import { Skeleton } from '@ramps/ui/Skeleton';
 import { Tabs } from '@ramps/ui/Tabs';
 import { Activity, createElement, useEffect, useRef, useState } from 'react';
@@ -327,13 +328,23 @@ export function BillDetailsForm() {
       </BillDetailsPane>
 
       {/* Same h-12 band as the document pane's tab bar — the two Tabs rows share
-          one height; items-stretch keeps the underline on the border. */}
-      <Tabs
-        tabs={[...BILL_DETAILS_TABS]}
-        value={tab}
-        onValueChange={(value) => setTab(value as BillDetailsTab)}
-        className="px-rui-5 h-12 shrink-0 items-stretch"
-      />
+          one height; items-stretch keeps the underline on the border. The
+          wrapper exists for the loading rail: while the record is below `full`
+          (a cold deep link's placeholder, a rail hop's seed) an ELECTRIC sweep
+          — the DraggablePanel divider's live-drag blue, the kit's one
+          data-in-flight colour — rides the tabs' bottom border. Absolutely
+          pinned over the border (`-bottom-px`, same offset as the tab
+          underline) so it adds NO height to the flex rhythm, and gone the
+          moment the full record lands. */}
+      <div className="relative shrink-0">
+        <Tabs
+          tabs={[...BILL_DETAILS_TABS]}
+          value={tab}
+          onValueChange={(value) => setTab(value as BillDetailsTab)}
+          className="px-rui-5 h-12 items-stretch"
+        />
+        <ProgressBar active={!full} label="Loading bill" className="absolute inset-x-0 -bottom-px" />
+      </div>
       {/* Overview holds the resizable split: form on the white left pane,
             invoice preview on the warm limestone right pane. The panel supplies
             each pane's surface + framing, so children only bring padding.
