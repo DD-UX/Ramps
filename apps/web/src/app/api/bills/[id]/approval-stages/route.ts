@@ -1,11 +1,12 @@
 import { ApprovalStagesResponseSchema, SaveApprovalStagesSchema } from '@ramps/schemas/approvals';
-import { IdSchema } from '@ramps/schemas/primitives';
 import { saveApprovalStages } from '@ramps/sdk/approvals';
 import { getBill } from '@ramps/sdk/bills';
 import { createServerSupabase } from '@ramps/sdk/server';
 import { NextResponse } from 'next/server';
 
 import { isApprovalRouteEditable } from '@/features/bill-details/constants/approval-editable.constants';
+
+import { requireBillId, requireBody } from '../helpers/bill-route.helpers';
 
 /**
  * PUT /api/bills/[id]/approval-stages — replace a bill's editable approval route
@@ -22,25 +23,15 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const { id } = await params;
-  if (!IdSchema.safeParse(id).success) {
-    return NextResponse.json({ error: 'Invalid bill id' }, { status: 400 });
-  }
+  const { value: id, response: badId } = await requireBillId(params);
+  if (badId) return badId;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
-
-  const parsed = SaveApprovalStagesSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid approval stages', issues: parsed.error.issues },
-      { status: 422 },
-    );
-  }
+  const { value: stages, response: badBody } = await requireBody(
+    request,
+    SaveApprovalStagesSchema,
+    'approval stages',
+  );
+  if (badBody) return badBody;
 
   const supabase = createServerSupabase();
 
@@ -55,7 +46,7 @@ export async function PUT(
     return NextResponse.json({ error: 'This bill is no longer editable' }, { status: 409 });
   }
 
-  const approval_stages = await saveApprovalStages(supabase, id, parsed.data);
+  const approval_stages = await saveApprovalStages(supabase, id, stages);
 
   // Re-validate the response shape at the boundary before it crosses the wire.
   return NextResponse.json(ApprovalStagesResponseSchema.parse({ approval_stages }));

@@ -1,8 +1,8 @@
-import { BillMutationResponseSchema, BillSaveSchema } from '@ramps/schemas/bills';
-import { IdSchema } from '@ramps/schemas/primitives';
-import { BillNotEditableError, submitBill } from '@ramps/sdk/bills';
-import { createServerSupabase } from '@ramps/sdk/server';
-import { NextResponse } from 'next/server';
+import { BillSaveSchema } from '@ramps/schemas/bills';
+import { submitBill } from '@ramps/sdk/bills';
+import type { NextResponse } from 'next/server';
+
+import { requireBillId, requireBody, respondWithBillMutation } from '../helpers/bill-route.helpers';
 
 /**
  * POST /api/bills/[id]/submit — CREATE BILL. A superset of the Save-draft PUT:
@@ -19,35 +19,15 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const { id } = await params;
-  if (!IdSchema.safeParse(id).success) {
-    return NextResponse.json({ error: 'Invalid bill id' }, { status: 400 });
-  }
+  const { value: id, response: badId } = await requireBillId(params);
+  if (badId) return badId;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const { value: form, response: badBody } = await requireBody(
+    request,
+    BillSaveSchema,
+    'bill payload',
+  );
+  if (badBody) return badBody;
 
-  const parsed = BillSaveSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid bill payload', issues: parsed.error.issues },
-      { status: 422 },
-    );
-  }
-
-  const supabase = createServerSupabase();
-
-  try {
-    const bill = await submitBill(supabase, id, parsed.data);
-    return NextResponse.json(BillMutationResponseSchema.parse({ bill }));
-  } catch (error) {
-    if (error instanceof BillNotEditableError) {
-      return NextResponse.json({ error: error.message }, { status: 409 });
-    }
-    throw error;
-  }
+  return respondWithBillMutation((supabase) => submitBill(supabase, id, form));
 }

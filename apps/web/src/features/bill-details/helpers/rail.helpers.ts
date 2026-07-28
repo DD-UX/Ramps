@@ -21,9 +21,9 @@ import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
  * The status group the rail lists for a bill in `status` — the FIRST tab (by
  * the catalog's own `sort_order`) whose group contains it. Empty-group tabs
  * (Overview, "no filter") are skipped: the rail wants the bill's category, not
- * the whole payables inbox. A status no tab claims (e.g. `rejected` when only
- * History rolls it up and History was deleted) degrades to just itself, so the
- * rail still shows the bill's own kind rather than nothing.
+ * the whole payables inbox. A status no tab claims (`rejected`/`archived` —
+ * deliberately in no named tab) degrades to just itself, so the rail still
+ * shows the bill's own kind rather than nothing.
  */
 export function railStatusesFor(
   tabs: readonly BillTabType[],

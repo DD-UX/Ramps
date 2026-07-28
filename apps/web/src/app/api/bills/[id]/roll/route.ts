@@ -1,8 +1,7 @@
-import { BillMutationResponseSchema } from '@ramps/schemas/bills';
-import { IdSchema } from '@ramps/schemas/primitives';
-import { BillNotEditableError, rollPaymentNow } from '@ramps/sdk/bills';
-import { createServerSupabase } from '@ramps/sdk/server';
-import { NextResponse } from 'next/server';
+import { rollPaymentNow } from '@ramps/sdk/bills';
+import type { NextResponse } from 'next/server';
+
+import { requireBillId, respondWithBillMutation } from '../helpers/bill-route.helpers';
 
 /**
  * POST /api/bills/[id]/roll — COMPLETE PAYMENT ("roll it now"). Releases a
@@ -18,20 +17,8 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const { id } = await params;
-  if (!IdSchema.safeParse(id).success) {
-    return NextResponse.json({ error: 'Invalid bill id' }, { status: 400 });
-  }
+  const { value: id, response: badId } = await requireBillId(params);
+  if (badId) return badId;
 
-  const supabase = createServerSupabase();
-
-  try {
-    const bill = await rollPaymentNow(supabase, id);
-    return NextResponse.json(BillMutationResponseSchema.parse({ bill }));
-  } catch (error) {
-    if (error instanceof BillNotEditableError) {
-      return NextResponse.json({ error: error.message }, { status: 409 });
-    }
-    throw error;
-  }
+  return respondWithBillMutation((supabase) => rollPaymentNow(supabase, id));
 }

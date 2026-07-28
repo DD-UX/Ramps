@@ -12,15 +12,31 @@
  * Idempotent: re-running overwrites the same `invoices/<bill_id>.pdf` object and
  * re-points the column, so it's safe to run repeatedly.
  *
+ * The drawing itself is NOT here: it's `renderInvoicePdf` from
+ * `@ramps/sdk/invoice-pdf` (imported from the built dist), so this seed helper
+ * and the live "Create demo bill" server function render pixel-identical
+ * documents from a single definition. Build the SDK first.
+ *
  * Env (read from apps/web/.env.local): SUPABASE_URL, SUPABASE_SECRET_KEY.
- * Run:  node scripts/generate-invoice-pdfs.mjs
+ * Run:  pnpm --filter @ramps/sdk build && node scripts/generate-invoice-pdfs.mjs
  */
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createClient } from '@supabase/supabase-js';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+
+// The one invoice drawing, shared with the app — a plain script can't resolve
+// the workspace alias, so import the built artifact directly.
+let renderInvoicePdf;
+try {
+  ({ renderInvoicePdf } = await import(
+    new URL('../packages/sdk/dist/invoice-pdf.js', import.meta.url).href
+  ));
+} catch {
+  console.error('Missing @ramps/sdk build — run `pnpm --filter @ramps/sdk build` first.');
+  process.exit(1);
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -129,99 +145,6 @@ const INVOICE_OVERRIDES = {
   },
 };
 
-const dollars = (cents) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format((cents ?? 0) / 100);
-const fmtDate = (iso) =>
-  iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', { dateStyle: 'medium' }) : '—';
-
-/** Draw one invoice PDF from a bill row → Uint8Array of PDF bytes. */
-async function renderInvoice(bill) {
-  const doc = await PDFDocument.create();
-  const page = doc.addPage([612, 792]); // US Letter
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-
-  const ink = rgb(0.09, 0.1, 0.12);
-  const hush = rgb(0.42, 0.45, 0.5);
-  const line = rgb(0.85, 0.86, 0.88);
-  const M = 54; // margin
-  const right = 612 - M;
-  let y = 792 - 64;
-
-  const text = (s, x, yy, { size = 10, f = font, color = ink } = {}) =>
-    page.drawText(String(s ?? ''), { x, y: yy, size, font: f, color });
-  const rtext = (s, xRight, yy, opts = {}) => {
-    const size = opts.size ?? 10;
-    const f = opts.f ?? font;
-    const w = f.widthOfTextAtSize(String(s ?? ''), size);
-    text(s, xRight - w, yy, opts);
-  };
-  const hr = (yy) =>
-    page.drawLine({ start: { x: M, y: yy }, end: { x: right, y: yy }, thickness: 1, color: line });
-
-  // Header
-  text('INVOICE', M, y, { size: 22, f: bold });
-  rtext(bill.vendor_name ?? 'Unknown vendor', right, y + 4, { size: 13, f: bold });
-  rtext('Bill from', right, y + 20, { size: 8, color: hush });
-  y -= 34;
-  rtext(`Amount due  ${dollars(bill.amount_cents)}`, right, y, { size: 11, f: bold });
-  y -= 22;
-  hr(y);
-  y -= 26;
-
-  // Meta grid
-  const meta = [
-    ['Invoice number', bill.invoice_number ?? '—'],
-    ['Invoice date', fmtDate(bill.invoice_date)],
-    ['Due date', fmtDate(bill.due_date)],
-    ['PO number', bill.po_number ?? '—'],
-  ];
-  for (const [label, value] of meta) {
-    text(label, M, y, { size: 8, color: hush });
-    text(value, M + 130, y, { size: 10, f: bold });
-    y -= 20;
-  }
-  y -= 10;
-  hr(y);
-  y -= 22;
-
-  // Line items table
-  text('DESCRIPTION', M, y, { size: 8, color: hush });
-  rtext('QTY', right - 210, y, { size: 8, color: hush });
-  rtext('UNIT PRICE', right - 90, y, { size: 8, color: hush });
-  rtext('AMOUNT', right, y, { size: 8, color: hush });
-  y -= 8;
-  hr(y);
-  y -= 20;
-
-  const lines = bill.line_items?.length
-    ? bill.line_items
-    : [{ description: bill.memo ?? 'Services rendered', qty: null, unit_price_cents: null, amount_cents: bill.amount_cents }];
-
-  for (const li of lines) {
-    text(li.description ?? '—', M, y, { size: 10 });
-    rtext(li.qty ?? '—', right - 210, y);
-    rtext(li.unit_price_cents != null ? dollars(li.unit_price_cents) : '—', right - 90, y);
-    rtext(dollars(li.amount_cents), right, y);
-    y -= 20;
-  }
-  y -= 4;
-  hr(y);
-  y -= 24;
-
-  rtext('Total due', right - 120, y, { size: 10, color: hush });
-  rtext(dollars(bill.amount_cents), right, y, { size: 13, f: bold });
-
-  // Footer note
-  if (bill.memo) {
-    text('Memo', M, 96, { size: 8, color: hush });
-    text(bill.memo, M, 80, { size: 9, color: hush });
-  }
-  text('Generated invoice · Ramps demo data', M, 54, { size: 8, color: hush });
-
-  return doc.save();
-}
-
 async function main() {
   const { data: bills, error } = await supabase
     .from('bills')
@@ -242,7 +165,7 @@ async function main() {
         .slice()
         .sort((a, b) => (a.line_no ?? 0) - (b.line_no ?? 0)),
     };
-    const bytes = await renderInvoice(bill);
+    const bytes = await renderInvoicePdf(bill);
     const path = `${bill.id}.pdf`;
 
     const { error: upErr } = await supabase.storage

@@ -4,12 +4,12 @@ import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
 /**
  * Chevron logic — the `< >` category steppers in the detail header.
  *
- * The chevrons walk the rail between the WORK categories, and which
+ * The chevrons walk the rail between the bill categories, and which
  * categories those are is a WHITELIST ({@link CHEVRON_NAVIGABLE_TAB_CODES}):
  * an explicit, ordered list of `bill_tabs` codes, resolved against the
- * catalog at runtime. The whitelist is the single opt-in — Overview and
- * History aren't "special-cased out", they're simply not on it — and its
- * order is the walk order. The agreed behavior (findings doc, T2):
+ * catalog at runtime. The whitelist is the single opt-in — Overview isn't
+ * "special-cased out", it's simply not on it — and its order is the walk
+ * order. The agreed behavior (findings doc, T2):
  *
  * - **Skip empty.** A chevron targets the nearest NON-EMPTY category in its
  *   direction — an empty category is skipped, not landed on.
@@ -28,10 +28,16 @@ import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
 /**
  * The ordered whitelist of chevron-navigable tab codes. Codes the catalog
  * doesn't carry are ignored, so a renamed/deleted tab degrades the ring
- * instead of breaking it; a catalog tab NOT listed here (Overview, History,
- * anything a customer adds) is simply not a chevron stop.
+ * instead of breaking it; a catalog tab NOT listed here (Overview, anything
+ * a customer adds) is simply not a chevron stop. Paid — the terminal
+ * category — closes the ring so reviewers can walk into settled bills.
  */
-export const CHEVRON_NAVIGABLE_TAB_CODES = ['drafts', 'for_approval', 'for_payment'] as const;
+export const CHEVRON_NAVIGABLE_TAB_CODES = [
+  'drafts',
+  'for_approval',
+  'for_payment',
+  'paid',
+] as const;
 
 /** Two status arrangements are the same category iff they list the same states in order. */
 export function sameStatuses(a: readonly BillStatusType[], b: readonly BillStatusType[]): boolean {
@@ -70,7 +76,7 @@ export interface ChevronState {
  * The candidate categories in each direction from the current one, nearest
  * first, ready for the skip-empty walk. When the current category is ON the
  * ring, its ring position splits it. When it's a catalog category the
- * whitelist omits (History — or anything a customer adds), its `sort_order`
+ * whitelist omits (anything a customer adds), its `sort_order`
  * interpolates a position instead, so you can still chevron OUT of an
  * unlisted category, just never INTO one. A category no tab claims (the
  * degraded single-status rail) has no position at all — both sides come back

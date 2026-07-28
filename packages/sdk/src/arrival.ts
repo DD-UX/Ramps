@@ -1,9 +1,11 @@
 /**
- * Server-side payment-arrival date math. The `payments` row carries an
- * `arrival_date` — when the money LANDS, not when it leaves — derived from the
- * scheduled date as "2 business days" for the ACH rail (§6). The web app has a
- * client twin of this for the live read-out; the server owns its OWN copy so
- * the persisted `arrival_date` never depends on whatever the browser sent.
+ * Payment-arrival date math. The `payments` row carries an `arrival_date` —
+ * when the money LANDS, not when it leaves — derived from the scheduled date
+ * as "2 business days" for the ACH rail (§6). Pure and dependency-free, so the
+ * module is exported (`@ramps/sdk/arrival`) and the web's live read-out runs
+ * the SAME math the server persists. The trust boundary is unchanged: the
+ * browser never sends an arrival date — `schedulePayment` computes the stored
+ * value here, server-side, from the scheduled date alone.
  *
  * Dates are the app's bare `YYYY-MM-DD` ISO strings, parsed at UTC noon so day
  * arithmetic never trips the negative-timezone off-by-one.

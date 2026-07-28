@@ -123,19 +123,21 @@ test.describe('token fidelity', () => {
   });
 
   /**
-   * ProgressBar — the indeterminate activity rail. Its one colour decision is
-   * that the travelling segment is the ACCENT lime, the same token the primary
-   * button fills with, so "the product is working" reads in one hue everywhere.
-   * The obvious drift is someone reaching for a conventional progress blue.
+   * ProgressBar — the indeterminate activity rail. Its one color decision is
+   * that the traveling segment is the ELECTRIC token — the saturated true
+   * blue that already means "active" (the DraggablePanel divider while you
+   * drag) — so in-flight work reads in the same hue as any live interaction.
+   * The obvious drift is someone reaching for a raw CSS blue (or back to the
+   * accent lime, which is reserved for the primary button's resting fill).
    */
-  test('ProgressBar sweep is the accent lime, never a generic progress blue', async ({ page }) => {
+  test('ProgressBar sweep is the electric token, never a raw CSS blue', async ({ page }) => {
     await page.goto(storyUrl('primitives-progressbar--active'));
     const rail = page.getByRole('progressbar');
     await expect(rail).toBeVisible();
 
     const segment = rail.locator('span').first();
     await expect(segment).toBeVisible();
-    await expect(segment).toHaveCSS('background-color', hexToRgb(RUI['--rui-accent']));
+    await expect(segment).toHaveCSS('background-color', hexToRgb(RUI['--rui-electric']));
     await expect(segment).not.toHaveCSS('background-color', 'rgb(0, 0, 255)');
   });
 });

@@ -1,8 +1,8 @@
-import { ApproveBillSchema, BillMutationResponseSchema } from '@ramps/schemas/bills';
-import { IdSchema } from '@ramps/schemas/primitives';
-import { approveBill, BillNotEditableError } from '@ramps/sdk/bills';
-import { createServerSupabase } from '@ramps/sdk/server';
-import { NextResponse } from 'next/server';
+import { ApproveBillSchema } from '@ramps/schemas/bills';
+import { approveBill } from '@ramps/sdk/bills';
+import type { NextResponse } from 'next/server';
+
+import { requireBillId, requireBody, respondWithBillMutation } from '../helpers/bill-route.helpers';
 
 /**
  * POST /api/bills/[id]/approve — APPROVE. Advances a bill out of the approval
@@ -20,36 +20,16 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const { id } = await params;
-  if (!IdSchema.safeParse(id).success) {
-    return NextResponse.json({ error: 'Invalid bill id' }, { status: 400 });
-  }
+  const { value: id, response: badId } = await requireBillId(params);
+  if (badId) return badId;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const { value: payload, response: badBody } = await requireBody(
+    request,
+    ApproveBillSchema,
+    'approve payload',
+  );
+  if (badBody) return badBody;
 
-  const parsed = ApproveBillSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid approve payload', issues: parsed.error.issues },
-      { status: 422 },
-    );
-  }
-
-  const { schedule, ...form } = parsed.data;
-  const supabase = createServerSupabase();
-
-  try {
-    const bill = await approveBill(supabase, id, form, schedule);
-    return NextResponse.json(BillMutationResponseSchema.parse({ bill }));
-  } catch (error) {
-    if (error instanceof BillNotEditableError) {
-      return NextResponse.json({ error: error.message }, { status: 409 });
-    }
-    throw error;
-  }
+  const { schedule, ...form } = payload;
+  return respondWithBillMutation((supabase) => approveBill(supabase, id, form, schedule));
 }

@@ -5,7 +5,7 @@ import type { BillStatusType } from '@ramps/schemas/bills';
  * Bill Pay tab helpers — the thin logic over the `bill_tabs` rows.
  *
  * The tab bar is DATA: the product categories (Overview | Drafts | For approval
- * | For payment | History) live in the `bill_tabs` lookup and arrive as
+ * | For payment | Paid) live in the `bill_tabs` lookup and arrive as
  * `BillTabType[]` rows (via `listBillTabs`, ordered by `sort_order`). These
  * helpers are the logic over those rows — how a `?tab=` code resolves to a row,
  * which status group a tab filters by, how per-status counts roll up into a

@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { Button } from '../Button/Button';
 import { ApprovalsWorkflowApproverPicker } from './ApprovalsWorkflowApproverPicker';
-import type { ApprovalsRole, ApprovalsUser } from './stageHelpers';
+import { STORY_ROLES as ROLES, STORY_USERS as USERS } from './storyFixtures';
 
 /**
  * ApprovalsWorkflowApproverPicker stories — the click Popover behind BOTH
@@ -19,23 +19,8 @@ import type { ApprovalsRole, ApprovalsUser } from './stageHelpers';
  *
  * `hideRoleIds` drops already-used roles so a role only approves once; users are
  * never hidden. `onSubmit` is a no-op logger here — ApprovalsWorkflow wires the
- * real add/edit/remove.
+ * real add/edit/remove. The catalog is the family's shared `storyFixtures`.
  */
-const ROLES: ApprovalsRole[] = [
-  { id: 'role-admin', name: 'Any Admin' },
-  { id: 'role-approver', name: 'Any Approver' },
-  { id: 'role-bookkeeper', name: 'Any Bookkeeper' },
-];
-
-const USERS: ApprovalsUser[] = [
-  { id: 'user-hannah', name: 'Hannah Smolinski', roleIds: ['role-admin'] },
-  { id: 'user-diego', name: 'Diego Díaz', roleIds: ['role-admin', 'role-approver'] },
-  { id: 'user-jane', name: 'Jane Doe', roleIds: ['role-approver'] },
-  { id: 'user-harrington', name: 'Harrington Smith', roleIds: [] },
-  { id: 'user-pam', name: 'Pam Beesly', roleIds: ['role-bookkeeper'] },
-  { id: 'user-oscar', name: 'Oscar Martinez', roleIds: ['role-bookkeeper'] },
-];
-
 const meta = {
   title: 'Primitives/ApprovalsWorkflowApproverPicker',
   component: ApprovalsWorkflowApproverPicker,

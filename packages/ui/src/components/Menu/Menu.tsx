@@ -5,6 +5,7 @@ import type { ReactNode, RefObject } from 'react';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import { cn } from '../../lib/cn';
+import { clampShiftX, collisionBox, reanchorWhileOpen, verticalFits } from '../../lib/collision';
 import { DISABLED_CONTROL } from '../../lib/disabled';
 import { IconButton } from '../IconButton/IconButton';
 import { tapPreset } from '../motion/pressVariants';
@@ -92,9 +93,6 @@ const ITEM_TONE: Record<MenuItemTone, string> = {
   destructive: 'text-destructive hover:bg-tone-critical-surface',
 };
 
-/** Viewport padding the panel never crosses when reframing (matches Popover). */
-const COLLISION_PADDING = 8;
-
 export function Menu({
   items,
   label = 'More actions',
@@ -161,12 +159,7 @@ export function Menu({
 
       const anchorRect = anchor.getBoundingClientRect();
       // The clip box: the boundary element's rect, else the whole viewport.
-      const box = boundary?.current?.getBoundingClientRect() ?? {
-        left: 0,
-        top: 0,
-        right: window.innerWidth,
-        bottom: window.innerHeight,
-      };
+      const box = collisionBox(boundary);
       // offsetWidth/Height: layout size, independent of any transform.
       const panelW = panel.offsetWidth;
       const panelH = panel.offsetHeight;
@@ -175,26 +168,16 @@ export function Menu({
       // aligns the panel to the anchor, `start` left-aligns it. Shift clamps that
       // edge into the boundary, then we hand back the delta from the natural spot.
       const naturalLeft = align === 'end' ? anchorRect.right - panelW : anchorRect.left;
-      const minLeft = box.left + COLLISION_PADDING;
-      const maxLeft = box.right - COLLISION_PADDING - panelW;
-      const clampedLeft = Math.min(Math.max(naturalLeft, minLeft), Math.max(minLeft, maxLeft));
-      setShiftX(clampedLeft - naturalLeft);
+      setShiftX(clampShiftX(naturalLeft, panelW, box));
 
       // Flip only when the preferred vertical side overflows the boundary AND the
       // other side fits within it.
-      const fitsBelow = anchorRect.bottom + panelH <= box.bottom - COLLISION_PADDING;
-      const fitsAbove = anchorRect.top - panelH >= box.top + COLLISION_PADDING;
+      const { fitsBelow, fitsAbove } = verticalFits(anchorRect, panelH, box);
       const preferTop = side === 'top';
       setFlipped(preferTop ? !fitsAbove && fitsBelow : !fitsBelow && fitsAbove);
     };
 
-    compute();
-    window.addEventListener('resize', compute);
-    window.addEventListener('scroll', compute, true);
-    return () => {
-      window.removeEventListener('resize', compute);
-      window.removeEventListener('scroll', compute, true);
-    };
+    return reanchorWhileOpen(compute);
   }, [panelOpen, align, side, boundary]);
 
   // Does the panel end up BELOW the trigger? `side` is the preference; `flipped`

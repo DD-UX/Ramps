@@ -25,6 +25,10 @@
       "types": "./dist/users.d.ts",
       "import": "./dist/users.js"
     },
+    "./arrival": {
+      "types": "./dist/arrival.d.ts",
+      "import": "./dist/arrival.js"
+    },
     "./approvals": {
       "types": "./dist/approvals.d.ts",
       "import": "./dist/approvals.js"

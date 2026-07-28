@@ -18,8 +18,9 @@ import {
  * concrete landing, an honest "not knowable yet", and the end clamp.
  *
  * The fixture mirrors the seeded `bill_tabs` catalog, same as the tab-bar
- * helper tests: Overview first and unfiltered, the work categories in order,
- * History last — with only drafts/for_approval/for_payment whitelisted.
+ * helper tests: Overview first and unfiltered, then the four whitelisted
+ * categories in order — drafts/for_approval/for_payment/paid — with Paid
+ * closing the ring as the terminal stop.
  */
 const TABS: BillTabType[] = [
   { id: '1', name: 'Overview', code: 'overview', statuses: [], sort_order: 0, created_by: null },
@@ -49,13 +50,23 @@ const TABS: BillTabType[] = [
   },
   {
     id: '5',
-    name: 'History',
-    code: 'history',
+    name: 'Paid',
+    code: 'paid',
     statuses: ['paid'],
     sort_order: 4,
     created_by: null,
   },
 ];
+
+/** A customer-added catalog tab the whitelist never lists — the unlisted case. */
+const CUSTOM_TAB: BillTabType = {
+  id: '6',
+  name: 'Rejected',
+  code: 'rejected_view',
+  statuses: ['rejected'],
+  sort_order: 5,
+  created_by: 'user-1',
+};
 
 const tab = (code: string): BillTabType => {
   const found = TABS.find((t) => t.code === code);
@@ -82,18 +93,22 @@ describe('chevronRing', () => {
 
   it('a whitelisted code the catalog dropped degrades the ring, never breaks it', () => {
     const withoutApproval = TABS.filter((t) => t.code !== 'for_approval');
-    expect(chevronRing(withoutApproval).map((t) => t.code)).toEqual(['drafts', 'for_payment']);
+    expect(chevronRing(withoutApproval).map((t) => t.code)).toEqual([
+      'drafts',
+      'for_payment',
+      'paid',
+    ]);
   });
 
   it('a whitelisted tab with NO statuses is not a stop — nothing to land in', () => {
     const gutted = TABS.map((t) => (t.code === 'drafts' ? { ...t, statuses: [] } : t));
-    expect(chevronRing(gutted).map((t) => t.code)).toEqual(['for_approval', 'for_payment']);
+    expect(chevronRing(gutted).map((t) => t.code)).toEqual(['for_approval', 'for_payment', 'paid']);
   });
 
-  it('catalog tabs off the whitelist (Overview, History) are simply not stops', () => {
-    const codes = chevronRing(TABS).map((t) => t.code);
+  it('catalog tabs off the whitelist (Overview, custom views) are simply not stops', () => {
+    const codes = chevronRing([...TABS, CUSTOM_TAB]).map((t) => t.code);
     expect(codes).not.toContain('overview');
-    expect(codes).not.toContain('history');
+    expect(codes).not.toContain('rejected_view');
   });
 });
 
@@ -101,28 +116,34 @@ describe('chevronCandidates', () => {
   it('splits the ring at the current category, nearest candidate first', () => {
     const mid = chevronCandidates(TABS, tab('for_approval').statuses);
     expect(mid.prev.map((t) => t.code)).toEqual(['drafts']);
-    expect(mid.next.map((t) => t.code)).toEqual(['for_payment']);
+    expect(mid.next.map((t) => t.code)).toEqual(['for_payment', 'paid']);
 
-    const last = chevronCandidates(TABS, tab('for_payment').statuses);
+    const last = chevronCandidates(TABS, tab('paid').statuses);
     // Nearest FIRST — the walk order, so prev reads right-to-left on the ring.
-    expect(last.prev.map((t) => t.code)).toEqual(['for_approval', 'drafts']);
+    expect(last.prev.map((t) => t.code)).toEqual(['for_payment', 'for_approval', 'drafts']);
     expect(last.next).toEqual([]);
   });
 
   it('ring ends have an empty side — the whitelist order IS first and last', () => {
     const first = chevronCandidates(TABS, tab('drafts').statuses);
     expect(first.prev).toEqual([]);
-    expect(first.next.map((t) => t.code)).toEqual(['for_approval', 'for_payment']);
+    expect(first.next.map((t) => t.code)).toEqual(['for_approval', 'for_payment', 'paid']);
   });
 
   it('an unlisted category interpolates by sort_order — chevron OUT, never INTO', () => {
-    // History (sort_order 4) sits after the whole ring: everything is `prev`.
-    const history = chevronCandidates(TABS, tab('history').statuses);
-    expect(history.prev.map((t) => t.code)).toEqual(['for_payment', 'for_approval', 'drafts']);
-    expect(history.next).toEqual([]);
-    // …and History itself is never a candidate from a ring member.
-    const fromPayment = chevronCandidates(TABS, tab('for_payment').statuses);
-    expect(fromPayment.next.map((t) => t.code)).not.toContain('history');
+    // The custom view (sort_order 5) sits after the whole ring: everything is `prev`.
+    const catalog = [...TABS, CUSTOM_TAB];
+    const unlisted = chevronCandidates(catalog, CUSTOM_TAB.statuses);
+    expect(unlisted.prev.map((t) => t.code)).toEqual([
+      'paid',
+      'for_payment',
+      'for_approval',
+      'drafts',
+    ]);
+    expect(unlisted.next).toEqual([]);
+    // …and the custom view itself is never a candidate from a ring member.
+    const fromPayment = chevronCandidates(catalog, tab('for_payment').statuses);
+    expect(fromPayment.next.map((t) => t.code)).not.toContain('rejected_view');
   });
 
   it('a category no tab claims has no position — both sides clamp', () => {
@@ -155,9 +176,9 @@ describe('resolveChevronState', () => {
   });
 
   it('an UNLOADED candidate stops the walk unsettled — no skipping past the unseen', () => {
-    // History's list hasn't warmed; drafts beyond it is loaded and non-empty,
+    // Paid's list hasn't warmed; drafts beyond it is loaded and non-empty,
     // but the walk must not steal the hop from the nearer neighbor.
-    const state = resolveChevronState([tab('history'), tab('drafts')], listFor);
+    const state = resolveChevronState([tab('paid'), tab('drafts')], listFor);
     expect(state).toEqual({ target: null, settled: false });
   });
 

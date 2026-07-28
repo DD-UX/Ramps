@@ -55,9 +55,9 @@ describe('buildPageQuery', () => {
   });
 
   it('preserves ?tab= when returning to page 1', () => {
-    const next = buildPageQuery('tab=history&page=2', 1);
+    const next = buildPageQuery('tab=paid&page=2', 1);
     const params = new URLSearchParams(next);
-    expect(params.get('tab')).toBe('history');
+    expect(params.get('tab')).toBe('paid');
     expect(params.has('page')).toBe(false);
   });
 

@@ -44,8 +44,8 @@ const TABS: BillTabType[] = [
   },
   {
     id: '5',
-    name: 'History',
-    code: 'history',
+    name: 'Paid',
+    code: 'paid',
     statuses: ['paid'],
     sort_order: 4,
     created_by: null,
@@ -62,21 +62,21 @@ describe('resolveTab', () => {
   it('resolves a real tab code to its row', () => {
     expect(resolveTab(TABS, 'drafts').code).toBe('drafts');
     expect(resolveTab(TABS, 'for_payment').code).toBe('for_payment');
-    expect(resolveTab(TABS, 'history').code).toBe('history');
+    expect(resolveTab(TABS, 'paid').code).toBe('paid');
   });
 
   it('falls back to the first tab for missing / unknown / stale codes', () => {
     expect(resolveTab(TABS, undefined).code).toBe('overview');
     expect(resolveTab(TABS, '').code).toBe('overview');
     expect(resolveTab(TABS, 'garbage').code).toBe('overview');
-    expect(resolveTab(TABS, 'paid').code).toBe('overview'); // an old ?status= value is not a tab
+    expect(resolveTab(TABS, 'history').code).toBe('overview'); // the retired pre-rename slug degrades safely
     expect(resolveTab(TABS, 'DRAFTS').code).toBe('overview'); // case-sensitive
   });
 
   it('honors the catalog order — the first row is the default, whatever it is', () => {
-    const reordered: BillTabType[] = [...TABS].reverse(); // History first, Overview last
-    expect(resolveTab(reordered, undefined).code).toBe('history');
-    expect(resolveTab(reordered, 'nope').code).toBe('history');
+    const reordered: BillTabType[] = [...TABS].reverse(); // Paid first, Overview last
+    expect(resolveTab(reordered, undefined).code).toBe('paid');
+    expect(resolveTab(reordered, 'nope').code).toBe('paid');
   });
 
   it('resolves every code the catalog advertises', () => {
@@ -113,9 +113,9 @@ describe('statusesForTab', () => {
     ]);
   });
 
-  it('maps for_approval and history to their single states', () => {
+  it('maps for_approval and paid to their single states', () => {
     expect(statusesForTab(byCode('for_approval'))).toEqual(['awaiting_approval']);
-    expect(statusesForTab(byCode('history'))).toEqual(['paid']);
+    expect(statusesForTab(byCode('paid'))).toEqual(['paid']);
   });
 });
 
@@ -142,7 +142,7 @@ describe('countForTab', () => {
     expect(countForTab(byCode('drafts'), counts)).toBe(3); // 2 + 1
     expect(countForTab(byCode('for_payment'), counts)).toBe(4); // 1 + 2 + 1
     expect(countForTab(byCode('for_approval'), counts)).toBe(3);
-    expect(countForTab(byCode('history'), counts)).toBe(4);
+    expect(countForTab(byCode('paid'), counts)).toBe(4);
   });
 
   it('the default tab totals every state, including rejected/archived', () => {
@@ -180,7 +180,7 @@ describe('buildTabCounts', () => {
       'drafts',
       'for_approval',
       'for_payment',
-      'history',
+      'paid',
     ]);
   });
 
@@ -190,7 +190,7 @@ describe('buildTabCounts', () => {
     expect(result.drafts).toBe(3); // 2 + 1
     expect(result.for_approval).toBe(3);
     expect(result.for_payment).toBe(4); // 1 + 2 + 1
-    expect(result.history).toBe(4);
+    expect(result.paid).toBe(4);
   });
 
   it('is all zeros when no counts are supplied', () => {
@@ -225,9 +225,9 @@ describe('tabHref', () => {
   });
 
   it('respects whatever the default is — a reordered catalog moves the drop', () => {
-    // If 'history' is the first row, selecting it drops the param instead.
-    expect(tabHref('/bills', 'history', 'history')).toBe('/bills');
-    expect(tabHref('/bills', 'overview', 'history')).toBe('/bills?tab=overview');
+    // If 'paid' is the first row, selecting it drops the param instead.
+    expect(tabHref('/bills', 'paid', 'paid')).toBe('/bills');
+    expect(tabHref('/bills', 'overview', 'paid')).toBe('/bills?tab=overview');
   });
 
   it('never drops the param when there is no default (empty catalog)', () => {

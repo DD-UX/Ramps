@@ -527,6 +527,46 @@ export const StickyColumns: StoryObj = {
 };
 
 /**
+ * The three-bill page both pagination stories render: the same rows, columns
+ * and band config, so the plain story and the pinned-to-floor story disagree
+ * only about the thing they exist to contrast — the height of the shell.
+ */
+const paginationBills: Bill[] = (
+  [
+    ['b1', 'Berroco, Inc.', 825_00],
+    ['b2', 'Ziply Fiber', 106_58],
+    ['b3', 'Clarity Online', 262_50],
+  ] as const
+).map(([id, vendor, amountCents]) =>
+  makeBill({
+    id,
+    vendor,
+    amountCents,
+    submitter: 'Hannah Smolinski',
+    submittedDate: 'Feb 22, 2026',
+    status: 'scheduled',
+    approvalProgress: 'Payment details needed',
+    nextApprover: 'N/A',
+  }),
+);
+
+const paginationColumns: TableColumn<Bill, string>[] = [
+  vendorSubmitterColumn({ width: '300px' }),
+  statusPillColumn,
+  amountColumn,
+  actionsColumn('Review'),
+];
+
+const paginationFooter = {
+  type: 'pagination',
+  page: 1,
+  pageSize: 3,
+  totalCount: 3,
+  noun: 'bills',
+  totalCents: sumCents(paginationBills),
+} as const;
+
+/**
  * **Pagination footer** — the "1–3 of 3 bills · $1,194.08 total" band from
  * does-ramp/17, now the real `footer={{ type: 'pagination' }}`: "Select ⌄"
  * on the left, the clickable underlined range + hushed meta on the right,
@@ -534,51 +574,14 @@ export const StickyColumns: StoryObj = {
  * by the LargeDataset story.)
  */
 export const PaginationFooter: StoryObj = {
-  render: () => {
-    const bills: Bill[] = (
-      [
-        ['b1', 'Berroco, Inc.', 825_00],
-        ['b2', 'Ziply Fiber', 106_58],
-        ['b3', 'Clarity Online', 262_50],
-      ] as const
-    ).map(([id, vendor, amountCents]) =>
-      makeBill({
-        id,
-        vendor,
-        amountCents,
-        submitter: 'Hannah Smolinski',
-        submittedDate: 'Feb 22, 2026',
-        status: 'scheduled',
-        approvalProgress: 'Payment details needed',
-        nextApprover: 'N/A',
-      }),
-    );
-
-    const totalCents = sumCents(bills);
-
-    const columns: TableColumn<Bill, string>[] = [
-      vendorSubmitterColumn({ width: '300px' }),
-      statusPillColumn,
-      amountColumn,
-      actionsColumn('Review'),
-    ];
-
-    return (
-      <Table
-        data={bills}
-        columns={columns}
-        getRowId={(row) => row.id}
-        footer={{
-          type: 'pagination',
-          page: 1,
-          pageSize: 3,
-          totalCount: 3,
-          noun: 'bills',
-          totalCents,
-        }}
-      />
-    );
-  },
+  render: () => (
+    <Table
+      data={paginationBills}
+      columns={paginationColumns}
+      getRowId={(row) => row.id}
+      footer={paginationFooter}
+    />
+  ),
 };
 
 /**
@@ -591,56 +594,19 @@ export const PaginationFooter: StoryObj = {
  * gate measures the gap + floor position here.
  */
 export const PaginationPinnedToFloor: StoryObj = {
-  render: () => {
-    const bills: Bill[] = (
-      [
-        ['b1', 'Berroco, Inc.', 825_00],
-        ['b2', 'Ziply Fiber', 106_58],
-        ['b3', 'Clarity Online', 262_50],
-      ] as const
-    ).map(([id, vendor, amountCents]) =>
-      makeBill({
-        id,
-        vendor,
-        amountCents,
-        submitter: 'Hannah Smolinski',
-        submittedDate: 'Feb 22, 2026',
-        status: 'scheduled',
-        approvalProgress: 'Payment details needed',
-        nextApprover: 'N/A',
-      }),
-    );
-
-    const totalCents = sumCents(bills);
-
-    const columns: TableColumn<Bill, string>[] = [
-      vendorSubmitterColumn({ width: '300px' }),
-      statusPillColumn,
-      amountColumn,
-      actionsColumn('Review'),
-    ];
-
-    return (
-      // A fixed-height shell TALLER than the 3 rows — the Table fills it
-      // (h-full), so the flex-1 filler opens up and the band drops to the floor.
-      <div style={{ height: 500 }} className="bg-canvas">
-        <Table
-          className="h-full"
-          data={bills}
-          columns={columns}
-          getRowId={(row) => row.id}
-          footer={{
-            type: 'pagination',
-            page: 1,
-            pageSize: 3,
-            totalCount: 3,
-            noun: 'bills',
-            totalCents,
-          }}
-        />
-      </div>
-    );
-  },
+  render: () => (
+    // A fixed-height shell TALLER than the 3 rows — the Table fills it
+    // (h-full), so the flex-1 filler opens up and the band drops to the floor.
+    <div style={{ height: 500 }} className="bg-canvas">
+      <Table
+        className="h-full"
+        data={paginationBills}
+        columns={paginationColumns}
+        getRowId={(row) => row.id}
+        footer={paginationFooter}
+      />
+    </div>
+  ),
 };
 
 /**

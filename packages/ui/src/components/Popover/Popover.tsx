@@ -15,6 +15,7 @@ import {
 
 import { useClickAway } from '../../hooks/useClickAway';
 import { cn } from '../../lib/cn';
+import { clampShiftX, collisionBox, reanchorWhileOpen, verticalFits } from '../../lib/collision';
 
 /**
  * Popover — the floating detail card behind Bill Pay's **vendor card**
@@ -186,9 +187,6 @@ export type PopoverContentProps = PropsWithChildren<{
   className?: string;
 }>;
 
-/** Viewport padding the card never crosses (Popper's `padding` default). */
-const COLLISION_PADDING = 8;
-
 /** The floating card surface — white, near-square, soft popover shadow. */
 function PopoverContent({ children, sideOffset = 8, className }: PopoverContentProps) {
   const { mode, open, boundary } = usePopoverContext('Content');
@@ -214,12 +212,7 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
       const anchorRect = anchor.getBoundingClientRect();
       // The clip box: the `boundary` element's rect (e.g. a split pane), else
       // the whole viewport. Both shift and flip clamp to this box.
-      const box = boundary?.current?.getBoundingClientRect() ?? {
-        left: 0,
-        top: 0,
-        right: window.innerWidth,
-        bottom: window.innerHeight,
-      };
+      const box = collisionBox(boundary);
       // offsetWidth/Height: layout size, immune to the enter animation's
       // scale transform (a getBoundingClientRect mid-fade under-measures).
       const cardW = card.offsetWidth;
@@ -227,26 +220,15 @@ function PopoverContent({ children, sideOffset = 8, className }: PopoverContentP
 
       // Shift: clamp the centered card into the box's horizontal range.
       const naturalLeft = anchorRect.left + anchorRect.width / 2 - cardW / 2;
-      const minLeft = box.left + COLLISION_PADDING;
-      const maxLeft = box.right - COLLISION_PADDING - cardW;
-      const clampedLeft = Math.min(Math.max(naturalLeft, minLeft), Math.max(minLeft, maxLeft));
-      setShiftX(clampedLeft - naturalLeft);
+      setShiftX(clampShiftX(naturalLeft, cardW, box));
 
       // Flip: only when below overflows the box AND above actually fits within
       // it — otherwise stay below (matching Popper's fallback behavior).
-      const fitsBelow = anchorRect.bottom + sideOffset + cardH <= box.bottom - COLLISION_PADDING;
-      const fitsAbove = anchorRect.top - sideOffset - cardH >= box.top + COLLISION_PADDING;
+      const { fitsBelow, fitsAbove } = verticalFits(anchorRect, cardH, box, sideOffset);
       setFlipped(!fitsBelow && fitsAbove);
     };
 
-    compute();
-    // Re-anchor while open: viewport resizes and any ancestor scroll.
-    window.addEventListener('resize', compute);
-    window.addEventListener('scroll', compute, true);
-    return () => {
-      window.removeEventListener('resize', compute);
-      window.removeEventListener('scroll', compute, true);
-    };
+    return reanchorWhileOpen(compute);
   }, [mode, open, sideOffset, boundary]);
 
   // The one skin, shared by both modes.

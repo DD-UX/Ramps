@@ -39,8 +39,8 @@ const TABS: BillTabType[] = [
   },
   {
     id: '3',
-    name: 'History',
-    code: 'history',
+    name: 'Paid',
+    code: 'paid',
     statuses: ['paid'],
     sort_order: 2,
     created_by: null,
@@ -106,14 +106,14 @@ describe('BillsPageContent', () => {
 
   it('rolls the per-status counts up into each tab badge', () => {
     renderContent({ countsByStatus: COUNTS });
-    // Overview = grand total (7), Drafts = draft+missing_info (3), History = paid (4).
+    // Overview = grand total (7), Drafts = draft+missing_info (3), Paid = paid (4).
     expect(screen.getByRole('tab', { name: /overview/i })).toHaveTextContent('7');
     expect(screen.getByRole('tab', { name: /drafts/i })).toHaveTextContent('3');
-    expect(screen.getByRole('tab', { name: /history/i })).toHaveTextContent('4');
+    expect(screen.getByRole('tab', { name: /paid/i })).toHaveTextContent('4');
   });
 
   it('passes the bootstrap bills down into the table', () => {
-    mockSearch = 'tab=history';
+    mockSearch = 'tab=paid';
     renderContent({ initialBills: [makeBill({ vendor_name: 'Globex' })] });
     expect(screen.getByText('Globex')).toBeInTheDocument();
   });

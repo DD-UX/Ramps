@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { ApprovalsWorkflow } from './ApprovalsWorkflow';
-import type { ApprovalsRole, ApprovalsStage, ApprovalsUser } from './stageHelpers';
+import type { ApprovalsStage } from './stageHelpers';
+import { STORY_ROLES as ROLES, STORY_USERS as USERS } from './storyFixtures';
 
 /**
  * ApprovalsWorkflow — the compound approval chain from snapshot 10
@@ -9,25 +10,9 @@ import type { ApprovalsRole, ApprovalsStage, ApprovalsUser } from './stageHelper
  * "＋ Add approver" checkbox picker that appends a stage.
  *
  * The component is domain-free — every story hands it a plain fixture catalog
- * (roles + users) and an initial chain, exactly as an app would pass real data.
+ * (roles + users, shared across the family via `storyFixtures`) and an initial
+ * chain, exactly as an app would pass real data.
  */
-const ROLES: ApprovalsRole[] = [
-  { id: 'role-admin', name: 'Any Admin' },
-  { id: 'role-approver', name: 'Any Approver' },
-  { id: 'role-bookkeeper', name: 'Any Bookkeeper' },
-];
-
-const USERS: ApprovalsUser[] = [
-  { id: 'user-hannah', name: 'Hannah Smolinski', roleIds: ['role-admin'] },
-  { id: 'user-diego', name: 'Diego Díaz', roleIds: ['role-admin', 'role-approver'] },
-  { id: 'user-jane', name: 'Jane Doe', roleIds: ['role-approver'] },
-  { id: 'user-harrington', name: 'Harrington Smith', roleIds: [] },
-  { id: 'user-michael', name: 'Michael Scott', roleIds: ['role-admin'] },
-  { id: 'user-pam', name: 'Pam Beesly', roleIds: ['role-bookkeeper'] },
-  { id: 'user-oscar', name: 'Oscar Martinez', roleIds: ['role-bookkeeper', 'role-approver'] },
-  { id: 'user-angela', name: 'Angela Martin', roleIds: ['role-bookkeeper'] },
-];
-
 const meta = {
   title: 'Primitives/ApprovalsWorkflow',
   component: ApprovalsWorkflow,

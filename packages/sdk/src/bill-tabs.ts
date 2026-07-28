@@ -6,7 +6,7 @@ import { toSdkError, type ServerSupabase } from './server.js';
  * @ramps/sdk bill-tabs facade — the Bill Pay tab bar as data.
  *
  * The five product categories (Overview | Drafts | For approval | For payment |
- * History) live in the `bill_tabs` lookup table, not a hardcoded constant, so
+ * Paid) live in the `bill_tabs` lookup table, not a hardcoded constant, so
  * the grouping — and, later, custom saved views — is a data change. This facade
  * reads that catalog and `.parse()`s each row against `BillTabSchema` (the
  * single Zod gate); callers get validated models, never raw PostgREST JSON.

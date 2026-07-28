@@ -3,7 +3,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { ApprovalsWorkflowStageRow } from './ApprovalsWorkflowStageRow';
-import type { ApprovalsRole, ApprovalsUser } from './stageHelpers';
+import { STORY_ROLES as ROLES, STORY_USERS as USERS } from './storyFixtures';
 
 /**
  * ApprovalsWorkflowStageRow stories — one numbered step in the chain: the drag
@@ -12,27 +12,13 @@ import type { ApprovalsRole, ApprovalsUser } from './stageHelpers';
  * **Remove**. Edit reopens the shared picker prefilled with this stage's
  * selection, anchored to the row's ⋮.
  *
- * The row is a **sortable `<li>`** ({@link useSortable}), so every story wraps it
+ * The row is a **sortable `<li>`** (dnd-kit's `useSortable`), so every story wraps it
  * in the `DndContext` + `SortableContext` the workflow provides — without them
  * the sortable hook has no context and the grip is inert. `onEdit`/`onRemove`
  * are no-ops here; the ApprovalsWorkflow stories cover the wired-up
- * commit/remove/reorder behaviour.
+ * commit/remove/reorder behaviour. The catalog is the family's shared
+ * `storyFixtures`.
  */
-const ROLES: ApprovalsRole[] = [
-  { id: 'role-admin', name: 'Any Admin' },
-  { id: 'role-approver', name: 'Any Approver' },
-  { id: 'role-bookkeeper', name: 'Any Bookkeeper' },
-];
-
-const USERS: ApprovalsUser[] = [
-  { id: 'user-hannah', name: 'Hannah Smolinski', roleIds: ['role-admin'] },
-  { id: 'user-diego', name: 'Diego Díaz', roleIds: ['role-admin', 'role-approver'] },
-  { id: 'user-jane', name: 'Jane Doe', roleIds: ['role-approver'] },
-  { id: 'user-harrington', name: 'Harrington Smith', roleIds: [] },
-  { id: 'user-pam', name: 'Pam Beesly', roleIds: ['role-bookkeeper'] },
-  { id: 'user-oscar', name: 'Oscar Martinez', roleIds: ['role-bookkeeper'] },
-];
-
 const meta = {
   title: 'Primitives/ApprovalsWorkflowStageRow',
   component: ApprovalsWorkflowStageRow,

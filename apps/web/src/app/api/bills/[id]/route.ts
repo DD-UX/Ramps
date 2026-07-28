@@ -1,14 +1,11 @@
-import {
-  BillDetailResponseSchema,
-  BillMutationResponseSchema,
-  BillSaveSchema,
-} from '@ramps/schemas/bills';
-import { IdSchema } from '@ramps/schemas/primitives';
-import { BillNotEditableError, getBill, saveBill } from '@ramps/sdk/bills';
+import { BillDetailResponseSchema, BillSaveSchema } from '@ramps/schemas/bills';
+import { getBill, saveBill } from '@ramps/sdk/bills';
 import { createServerSupabase } from '@ramps/sdk/server';
 import { NextResponse } from 'next/server';
 
 import { publicDocumentUrl } from '@/features/bill-details/helpers/document-url.helpers';
+
+import { requireBillId, requireBody, respondWithBillMutation } from './helpers/bill-route.helpers';
 
 /**
  * GET /api/bills/[id] — READ one bill's full detail.
@@ -25,10 +22,8 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const { id } = await params;
-  if (!IdSchema.safeParse(id).success) {
-    return NextResponse.json({ error: 'Invalid bill id' }, { status: 400 });
-  }
+  const { value: id, response: badId } = await requireBillId(params);
+  if (badId) return badId;
 
   const supabase = createServerSupabase();
   const bill = await getBill(supabase, id);
@@ -57,36 +52,15 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const { id } = await params;
-  if (!IdSchema.safeParse(id).success) {
-    return NextResponse.json({ error: 'Invalid bill id' }, { status: 400 });
-  }
+  const { value: id, response: badId } = await requireBillId(params);
+  if (badId) return badId;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+  const { value: form, response: badBody } = await requireBody(
+    request,
+    BillSaveSchema,
+    'bill payload',
+  );
+  if (badBody) return badBody;
 
-  const parsed = BillSaveSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid bill payload', issues: parsed.error.issues },
-      { status: 422 },
-    );
-  }
-
-  const supabase = createServerSupabase();
-
-  try {
-    const bill = await saveBill(supabase, id, parsed.data);
-    // Re-validate the response shape at the boundary before it crosses the wire.
-    return NextResponse.json(BillMutationResponseSchema.parse({ bill }));
-  } catch (error) {
-    if (error instanceof BillNotEditableError) {
-      return NextResponse.json({ error: error.message }, { status: 409 });
-    }
-    throw error;
-  }
+  return respondWithBillMutation((supabase) => saveBill(supabase, id, form));
 }

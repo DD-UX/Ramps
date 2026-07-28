@@ -71,6 +71,22 @@ type Story = StoryObj<typeof meta>;
  * SideMenuAction with the spark glyph — text vetted ink, glyph vetted hushed).
  * Ours says "About DD" and links out to https://www.diegodiaz.dev/.
  */
+/**
+ * The spend run both product shells share — Manage spend → Expenses → Travel →
+ * the active Bill Pay. The stories differ around it (badges, sections, richer
+ * chrome), not inside it.
+ */
+const spendRun = (
+  <>
+    <SideMenuItem icon={<Wallet size={16} />}>Manage spend</SideMenuItem>
+    <SideMenuItem icon={<Receipt size={16} />}>Expenses</SideMenuItem>
+    <SideMenuItem icon={<Plane size={16} />}>Travel</SideMenuItem>
+    <SideMenuItem icon={<FileText size={16} />} active>
+      Bill Pay
+    </SideMenuItem>
+  </>
+);
+
 export const RampBillPayReplica: Story = {
   render: () => (
     <SideMenu
@@ -86,12 +102,7 @@ export const RampBillPayReplica: Story = {
         Home
       </SideMenuItem>
       <SideMenuItem icon={<TrendingUp size={16} />}>Insights</SideMenuItem>
-      <SideMenuItem icon={<Wallet size={16} />}>Manage spend</SideMenuItem>
-      <SideMenuItem icon={<Receipt size={16} />}>Expenses</SideMenuItem>
-      <SideMenuItem icon={<Plane size={16} />}>Travel</SideMenuItem>
-      <SideMenuItem icon={<FileText size={16} />} active>
-        Bill Pay
-      </SideMenuItem>
+      {spendRun}
       <SideMenuItem icon={<CreditCard size={16} />}>Treasury</SideMenuItem>
       <SideMenuDivider />
       <SideMenuItem icon={<BookOpen size={16} />} badge={383}>
@@ -149,12 +160,7 @@ export const UpdatedNav: Story = {
       <SideMenuItem icon={<TrendingUp size={16} />}>Insights</SideMenuItem>
       <SideMenuDivider />
       {/* Section 2 — the active "Bill Pay" sits in a plain run with the rest. */}
-      <SideMenuItem icon={<Wallet size={16} />}>Manage spend</SideMenuItem>
-      <SideMenuItem icon={<Receipt size={16} />}>Expenses</SideMenuItem>
-      <SideMenuItem icon={<Plane size={16} />}>Travel</SideMenuItem>
-      <SideMenuItem icon={<FileText size={16} />} active>
-        Bill Pay
-      </SideMenuItem>
+      {spendRun}
       <SideMenuItem icon={<Landmark size={16} />}>Financial accounts</SideMenuItem>
       <SideMenuDivider />
       {/* Section 3 — another plain run. */}

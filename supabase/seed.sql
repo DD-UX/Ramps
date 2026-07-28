@@ -290,6 +290,6 @@ insert into bill_tabs (id, name, code, statuses, sort_order, created_by) values
   ('99999999-9999-9999-9999-999999999902'::uuid, 'Drafts',       'drafts',       '{draft,missing_info}'::bill_status[],                1, null),
   ('99999999-9999-9999-9999-999999999903'::uuid, 'For approval', 'for_approval', '{awaiting_approval}'::bill_status[],                 2, null),
   ('99999999-9999-9999-9999-999999999904'::uuid, 'For payment',  'for_payment',  '{approved,scheduled,partially_paid}'::bill_status[], 3, null),
-  ('99999999-9999-9999-9999-999999999905'::uuid, 'History',      'history',      '{paid}'::bill_status[],                              4, null);
+  ('99999999-9999-9999-9999-999999999905'::uuid, 'Paid',         'paid',         '{paid}'::bill_status[],                              4, null);
 
 commit;
