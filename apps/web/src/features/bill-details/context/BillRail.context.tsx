@@ -11,9 +11,11 @@ import { useParams } from 'next/navigation';
 import {
   createContext,
   type ReactNode,
+  type RefObject,
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import useSWR from 'swr';
@@ -79,6 +81,13 @@ export interface BillRailContextValue {
    * (a cold deep link, or a bill from another category).
    */
   seedFor: (id: string) => BillListItemType | null;
+  /**
+   * The detail left pane's scrollTop, parked across bill → bill hops. It has
+   * to live HERE — the whole `[id]` client tree (screen included) remounts
+   * per navigation, so only this layout-level provider outlives a hop — for
+   * {@link useSwapScrollTop} to glide the incoming pane back to the top.
+   */
+  carriedPaneScrollTopRef: RefObject<number>;
 }
 
 const BillRailContext = createContext<BillRailContextValue | null>(null);
@@ -140,6 +149,11 @@ export function BillRailProvider({ tabs, refs, children }: BillRailProviderProps
     [bills],
   );
 
+  // Parked pane offset for hop-to-hop scroll continuity — see the field's
+  // docblock. A ref (not state): writes happen in unmount cleanups and must
+  // never re-render the rail.
+  const carriedPaneScrollTopRef = useRef(0);
+
   const value = useMemo<BillRailContextValue>(
     () => ({
       tabs,
@@ -149,6 +163,7 @@ export function BillRailProvider({ tabs, refs, children }: BillRailProviderProps
       bills: bills ?? null,
       loading: bills == null || statuses == null,
       seedFor,
+      carriedPaneScrollTopRef,
     }),
     [tabs, refs, activeId, statuses, bills, seedFor],
   );

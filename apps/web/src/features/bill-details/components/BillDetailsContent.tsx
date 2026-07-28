@@ -6,12 +6,14 @@ import { DraggablePanel } from '@ramps/ui/DraggablePanel';
 import { useFormState } from 'react-hook-form';
 
 import { CommonUnsavedChangesGuard } from '@/features/common/components/CommonUnsavedChangesGuard';
+import { useSwapScrollTop } from '@/features/common/hooks/useSwapScrollTop';
 
 import {
   BILL_DETAIL_DATA_LEVEL,
   type BillDetailDataLevel,
 } from '../constants/data-level.constants';
 import { BillDetailProvider, useBillDetail } from '../context/BillDetail.context';
+import { useBillRail } from '../context/BillRail.context';
 import { useSaveBillDraft } from '../hooks/useSaveBillDraft';
 import { BillDetailsDocument } from './BillDetailsDocument';
 import { BillDetailsForm } from './BillDetailsForm';
@@ -78,11 +80,18 @@ export function BillDetailsContent({
  */
 function BillDetailsBody() {
   const { form, leftPaneRef, pendingApprovalStagesRef } = useBillDetail();
+  // The parked offset comes from the RAIL context: the whole `[id]` client
+  // tree remounts on a hop, so only the layout-level provider outlives it.
+  const { carriedPaneScrollTopRef } = useBillRail();
   const { saveDraft } = useSaveBillDraft();
   // Subscribe THIS component to dirtiness via the control (see note above);
   // `form.formState.isDirty` would read stale because the proxy subscribes the
   // provider, not this child.
   const { isDirty } = useFormState({ control: form.control });
+  // On a bill → bill hop, start the (remounted) left pane at the previous
+  // bill's offset and glide it to the top — the hop alone would hard-cut to
+  // 0 with no sense of travel.
+  useSwapScrollTop(leftPaneRef, carriedPaneScrollTopRef);
 
   return (
     // min-h-0 is load-bearing: as a flex item this div's default min-height is
