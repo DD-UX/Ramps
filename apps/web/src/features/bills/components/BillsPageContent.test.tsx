@@ -1,24 +1,29 @@
 import type { BillTabType } from '@ramps/schemas/bill-tabs';
 import type { BillListItemType, BillStatusType } from '@ramps/schemas/bills';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { SWRConfig } from 'swr';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { railBillsSwrKey } from '@/features/bill-details/helpers/bill-cache.helpers';
 
 import { BillsPageContent } from './BillsPageContent';
 
 /**
- * BillsPageContent is the Bill Pay surface AND its derivation engine: the RSC
- * bootstrap hands it one whole category, and `?tab=` / `?q=` / `?page=` are
- * client derivations over the SWR-cached rows (see the component docblock).
- * These tests pin the composition (heading, badge roll-up, bills reaching the
- * table) and the derivations (URL-driven active tab, client search filter,
- * client page window + clamp).
+ * BillsPageContent is the Bill Pay surface over a SERVER-owned query: the RSC
+ * bootstrap hands it the URL's exact window (`?tab=` + `?q=` + `?page=`), and
+ * the component renders that payload VERBATIM — no client-side filter, no
+ * client-side slice (see the component docblock). These tests pin the
+ * composition (heading, badge roll-up, the payload reaching the table, the
+ * URL-named tab selected) and the two side jobs: healing a stranded `?page=`
+ * via a history REPLACE, and seeding the rail cache ONLY when the bootstrap
+ * payload is provably a whole category.
  *
  * The URL is the input, so `useSearchParams` is a mutable stub set per test.
  * Each render gets an ISOLATED SWR cache (`provider: () => new Map()`) with
  * mount revalidation off — the component under test must work from its
  * bootstrap payload alone, and a shared cache would bleed one test's seed
- * into the next.
+ * into the next. The cache Map is returned so the rail-seed tests can inspect
+ * exactly what the component wrote into it.
  */
 let mockSearch = '';
 vi.mock('next/navigation', () => ({
@@ -80,10 +85,12 @@ function makeBill(overrides: Partial<BillListItemType> = {}): BillListItemType {
 type ContentProps = Partial<Parameters<typeof BillsPageContent>[0]>;
 
 function renderContent(props: ContentProps = {}) {
-  return render(
-    <SWRConfig value={{ provider: () => new Map(), revalidateOnMount: false }}>
+  const cache = new Map();
+  const view = render(
+    <SWRConfig value={{ provider: () => cache, revalidateOnMount: false }}>
       <BillsPageContent
         initialBills={[]}
+        initialTotal={0}
         pageSize={10}
         tabs={TABS}
         countsByStatus={{}}
@@ -92,10 +99,15 @@ function renderContent(props: ContentProps = {}) {
       />
     </SWRConfig>,
   );
+  return { cache, ...view };
 }
 
 beforeEach(() => {
   mockSearch = '';
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('BillsPageContent', () => {
@@ -114,7 +126,7 @@ describe('BillsPageContent', () => {
 
   it('passes the bootstrap bills down into the table', () => {
     mockSearch = 'tab=paid';
-    renderContent({ initialBills: [makeBill({ vendor_name: 'Globex' })] });
+    renderContent({ initialBills: [makeBill({ vendor_name: 'Globex' })], initialTotal: 1 });
     expect(screen.getByText('Globex')).toBeInTheDocument();
   });
 
@@ -133,29 +145,74 @@ describe('BillsPageContent', () => {
     expect(selected[0]).toHaveTextContent('Drafts');
   });
 
-  it('filters the cached rows client-side from ?q=', () => {
+  it('renders a searched window VERBATIM — filtering is the server’s, not a client re-derivation', () => {
+    // Under ?q= the bootstrap payload IS the server's filtered result. If the
+    // component re-filtered client-side, 'Acme Co' (which doesn't match the
+    // term) would vanish — it must not: the payload is trusted as-is.
     mockSearch = 'q=globex';
     renderContent({
+      search: 'globex',
       initialBills: [
         makeBill({ id: 'a', vendor_name: 'Acme Co' }),
         makeBill({ id: 'b', vendor_name: 'Globex' }),
       ],
+      initialTotal: 2,
     });
     const body = document.querySelector('tbody') as HTMLElement;
     expect(within(body).getByText('Globex')).toBeInTheDocument();
-    expect(within(body).queryByText('Acme Co')).not.toBeInTheDocument();
+    expect(within(body).getByText('Acme Co')).toBeInTheDocument();
   });
 
-  it('windows the rows to ?page= and clamps a page past the end', () => {
-    // 11 bills, page size 10 → two pages; row 11 is the only one on page 2.
-    const bills = Array.from({ length: 11 }, (_, i) =>
-      makeBill({ id: `bill-${i + 1}`, vendor_name: `Vendor ${i + 1}` }),
-    );
-    // ?page=9 must clamp to the real last page (2), not show an empty window.
+  it('heals a ?page= past the end with a history REPLACE to the real last page', () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    // The server answers an out-of-range window with no rows but the TRUE
+    // total: 11 rows at page size 10 → the real last page is 2.
     mockSearch = 'page=9';
-    renderContent({ initialBills: bills });
-    const body = document.querySelector('tbody') as HTMLElement;
-    expect(within(body).getByText('Vendor 11')).toBeInTheDocument();
-    expect(within(body).queryByText('Vendor 1')).not.toBeInTheDocument();
+    renderContent({ initialBills: [], initialTotal: 11 });
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/bills?page=2');
+  });
+
+  it('healing to page 1 drops the ?page= param entirely', () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    // An empty category: any ?page= deeplink collapses to page 1 — the
+    // canonical URL for page 1 carries no param at all.
+    mockSearch = 'page=5';
+    renderContent({ initialBills: [], initialTotal: 0 });
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/bills');
+  });
+
+  it('leaves the URL alone when the page is in range', () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    mockSearch = 'page=2';
+    renderContent({ initialBills: [makeBill()], initialTotal: 11 });
+    expect(replaceState).not.toHaveBeenCalled();
+  });
+
+  it('seeds the rail cache when the bootstrap payload IS the whole category', async () => {
+    mockSearch = 'tab=paid';
+    const bills = [makeBill({ id: 'a' }), makeBill({ id: 'b' })];
+    const { cache } = renderContent({ initialBills: bills, initialTotal: 2 });
+    await waitFor(() => {
+      expect((cache.get(railBillsSwrKey(['paid'])) as { data?: unknown })?.data).toEqual(bills);
+    });
+  });
+
+  it('never seeds the rail from a searched or windowed payload', async () => {
+    // A filtered page (search != null) and a partial window (length < total)
+    // must both refuse: a rail group seeded from either would silently
+    // amputate the rail's category.
+    mockSearch = 'tab=paid';
+    const { cache } = renderContent({
+      search: 'acme',
+      initialBills: [makeBill()],
+      initialTotal: 1,
+    });
+    await act(async () => {});
+    expect(cache.get(railBillsSwrKey(['paid']))).toBeUndefined();
+
+    mockSearch = 'tab=paid&page=2';
+    const { cache: windowed } = renderContent({ initialBills: [makeBill()], initialTotal: 11 });
+    await act(async () => {});
+    expect(windowed.get(railBillsSwrKey(['paid']))).toBeUndefined();
   });
 });

@@ -4,21 +4,29 @@ import {
   type BillDetailType,
   type BillListItemType,
   BillListResponseSchema,
+  type BillListResponseType,
   type BillStatusType,
 } from '@ramps/schemas/bills';
 import type { ScopedMutator } from 'swr';
 
 /**
- * The client cache contract for the `/bills/:id` surface — the SWR keys and
- * fetchers behind the rail's category list and the bill detail.
+ * The client cache contract for the bill surfaces — the SWR keys and fetchers
+ * behind the detail rail's category list, the bill detail, AND the Bill Pay
+ * table's server-windowed pages.
  *
- * One rule shapes both halves: NAVIGATION NEVER FETCHES. The rail's group is
- * fetched once per category and every bill → bill hop just moves the active
- * highlight over data already held; the detail is seeded (streamed by the RSC
- * page, or synthesized from the rail item) and the fetchers below exist to
- * REVALIDATE — focus, reconnect, a mutation reconciling — not to gate paint.
- * Both fetchers parse the wire shape against the schema SSoT, so the client
- * cache can only ever hold validated models, same as the server loaders.
+ * One rule shapes the rail/detail halves: NAVIGATION NEVER FETCHES. The
+ * rail's group is fetched once per category and every bill → bill hop just
+ * moves the active highlight over data already held; the detail is seeded
+ * (streamed by the RSC page, or synthesized from the rail item) and those
+ * fetchers exist to REVALIDATE — focus, reconnect, a mutation reconciling —
+ * not to gate paint.
+ *
+ * The LIST half is the deliberate exception: the Bill Pay table is
+ * server-filtered and server-paginated, so its key carries the whole query
+ * (category + `?q=` + `?page=`) and changing any of them IS a fetch — cached
+ * under the sweeping progress rail, exactly the tab-switch treatment. All
+ * fetchers parse the wire shape against the schema SSoT, so the client cache
+ * can only ever hold validated models, same as the server loaders.
  */
 
 /**
@@ -32,6 +40,25 @@ const RAIL_BILLS_PREFIX = 'RAIL_BILLS:';
 
 export function railBillsSwrKey(statuses: readonly BillStatusType[]): string {
   return `${RAIL_BILLS_PREFIX}${statuses.join(',')}`;
+}
+
+/**
+ * SWR key for one Bill Pay table WINDOW — one server-filtered, server-windowed
+ * page of a category. Unlike the rail's per-category key, the whole query is
+ * the identity: the category (`?tab=`'s statuses), the search term (`?q=`) and
+ * the page (`?page=`) each name a DIFFERENT server result, so each gets its
+ * own entry — flipping any of them is a key change, which is what raises SWR's
+ * `isLoading` and sweeps the progress rail, the same loading treatment a tab
+ * switch gets.
+ */
+const BILLS_LIST_PREFIX = 'BILLS_LIST:';
+
+export function billsListSwrKey(
+  statuses: readonly BillStatusType[],
+  term: string | null,
+  page: number,
+): string {
+  return `${BILLS_LIST_PREFIX}${statuses.join(',')}|q=${term ?? ''}|page=${page}`;
 }
 
 /**
@@ -58,18 +85,19 @@ export function billDetailSwrKey(id: string): string {
  *   Without a bill — a caller whose response may already be stale again, like
  *   a save chased by a stages write — the entry revalidates instead:
  *   `mutate(key)` re-runs the detail hook's bound fetcher.
- * - EVERY rail category list, by key-filter: a write that moves a bill's
- *   status moves it BETWEEN groups, so both the group it left and the group
- *   it joined are stale — and which pair that is isn't this helper's
- *   business. Non-mounted categories hold no entries, so the filter touches
- *   exactly what's alive. This revalidation is also the seeded path's safety
- *   net: if a seed ever disagrees with the server, the next rail read and the
- *   detail's focus revalidation converge on truth.
+ * - EVERY rail category list AND every Bill Pay table window, by key-filter:
+ *   a write that moves a bill's status moves it BETWEEN groups, so both the
+ *   group it left and the group it joined are stale — and which pair that is
+ *   isn't this helper's business. The table's windows are just as stale (the
+ *   row leaves one tab's pages and joins another's, shifting counts and
+ *   windows), so the same filter sweeps both prefixes. Non-mounted categories
+ *   and windows hold no entries, so the filter touches exactly what's alive.
+ *   This revalidation is also the seeded path's safety net: if a seed ever
+ *   disagrees with the server, the next rail read and the detail's focus
+ *   revalidation converge on truth.
  *
  * Takes the caller's scoped `mutate` (from `useSWRConfig()`) rather than being
  * a hook itself, so plain async flows can call it after their POST settles.
- * On surfaces with no SWR entries at all (the Bill Pay table's kebab) both
- * halves are no-ops — the caller's `router.refresh()` still covers RSC data.
  *
  * Never rejects: a failed revalidation just leaves an entry at its current
  * value (the write itself already succeeded), and the focus / reconnect
@@ -90,10 +118,36 @@ export async function reconcileBillCaches(
     : mutate(billDetailSwrKey(id));
   await Promise.all([
     detail.catch(() => undefined),
-    mutate((key) => typeof key === 'string' && key.startsWith(RAIL_BILLS_PREFIX)).catch(
-      () => undefined,
-    ),
+    mutate(
+      (key) =>
+        typeof key === 'string' &&
+        (key.startsWith(RAIL_BILLS_PREFIX) || key.startsWith(BILLS_LIST_PREFIX)),
+    ).catch(() => undefined),
   ]);
+}
+
+/**
+ * Fetch one Bill Pay table window through `GET /api/bills`, validated — the
+ * server-filtered (`q`), server-windowed (`page` × `pageSize`) page of one
+ * category, WITH the full filtered `total` for the footer's "X–Y of N". The
+ * same endpoint the rail revalidates through; this caller just asks for a
+ * window of it instead of the whole category.
+ */
+export async function fetchBillsList(
+  statuses: readonly BillStatusType[],
+  term: string | null,
+  page: number,
+  pageSize: number,
+): Promise<BillListResponseType> {
+  const params = new URLSearchParams({ statuses: statuses.join(',') });
+  if (term) params.set('q', term);
+  if (page > 1) params.set('page', String(page));
+  params.set('pageSize', String(pageSize));
+  const response = await fetch(`/api/bills?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Failed to load bills (${response.status})`);
+  }
+  return BillListResponseSchema.parse(await response.json());
 }
 
 /** Fetch one rail category through `GET /api/bills?statuses=…`, validated. */

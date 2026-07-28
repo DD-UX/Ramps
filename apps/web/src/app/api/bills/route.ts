@@ -9,6 +9,9 @@ import { createServerSupabase } from '@ramps/sdk/server';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { normalizePageParam } from '@/features/bills/helpers/page-query.helpers';
+import { normalizeSearchParam } from '@/features/common/helpers/search-query.helpers';
+
 /**
  * The `?statuses=` query — a comma-separated status group (the rail's
  * category, a tab's roll-up). Parsed against the status enum so a bogus value
@@ -18,19 +21,38 @@ import { z } from 'zod';
 const StatusesParamSchema = z.array(BillStatusSchema);
 
 /**
- * GET /api/bills — LIST bills, optionally filtered to a status group.
+ * The `?pageSize=` cap. The Bill Pay table asks for its `BILLS_PAGE_SIZE`
+ * window; the cap just keeps a hand-crafted URL from turning the endpoint
+ * into an unbounded dump with pagination semantics it didn't ask for.
+ */
+const MAX_PAGE_SIZE = 100;
+
+/**
+ * GET /api/bills — LIST bills: a status group, optionally searched (`?q=`)
+ * and windowed (`?page=` × `?pageSize=`).
  *
- * The browser→API read behind the client-side rail cache: the detail screen's
- * rail keys an SWR entry per status group and revalidates it here (focus /
- * reconnect / mutation), instead of re-downloading the list through an RSC
- * render on every bill → bill hop. Returns the same validated envelope the
- * server pages read ({@link BillListResponseSchema}) — the SDK facade is the
- * single query; only the transport differs. Unwindowed on purpose: a rail
- * group is the WHOLE category, so pagination here would reintroduce the
- * "silently incomplete list" problem the tri-state Prev/Next exists to avoid.
+ * Two callers, one endpoint, distinguished by `?pageSize=`:
+ *
+ * - The detail screen's RAIL revalidates its per-category SWR entry here
+ *   (focus / reconnect / mutation) with `?statuses=` alone — UNWINDOWED on
+ *   purpose: a rail group is the WHOLE category, so pagination there would
+ *   reintroduce the "silently incomplete list" problem the tri-state
+ *   Prev/Next exists to avoid.
+ * - The Bill Pay TABLE fetches its server-filtered, server-windowed pages by
+ *   adding `?q=` / `?page=` / `?pageSize=` — the same query the RSC bootstrap
+ *   runs, so a tab/search/page change revalidates to exactly what a full
+ *   reload of that URL would render.
+ *
+ * Either way the SDK facade is the single query and the response is the same
+ * validated envelope the server pages read ({@link BillListResponseSchema}) —
+ * `total` is always the FULL filtered count, so the table's footer stays
+ * honest about "of N" no matter the window. `?q=` and `?page=` are hardened
+ * with the SAME normalizers the RSC applies to the page URL, so both
+ * transports agree on what a blank search or a garbage page means.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const raw = request.nextUrl.searchParams.get('statuses');
+  const query = request.nextUrl.searchParams;
+  const raw = query.get('statuses');
   const parts = raw ? raw.split(',').filter((part) => part.length > 0) : [];
 
   const parsed = StatusesParamSchema.safeParse(parts);
@@ -39,8 +61,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
   const statuses: BillStatusType[] = parsed.data;
 
+  const search = normalizeSearchParam(query.get('q') ?? undefined);
+  const rawPageSize = Number(query.get('pageSize') ?? undefined);
+  const pageSize =
+    Number.isInteger(rawPageSize) && rawPageSize > 0 ? Math.min(rawPageSize, MAX_PAGE_SIZE) : null;
+
   const supabase = createServerSupabase();
-  const { bills, total } = await listBills(supabase, statuses.length > 0 ? { statuses } : {});
+  const { bills, total } = await listBills(supabase, {
+    ...(statuses.length > 0 ? { statuses } : {}),
+    search,
+    // No/garbage `?pageSize=` means the rail's unwindowed read — omit BOTH
+    // windowing options so `listBills` returns every matching row.
+    ...(pageSize ? { page: normalizePageParam(query.get('page') ?? undefined), pageSize } : {}),
+  });
   return NextResponse.json(BillListResponseSchema.parse({ bills, total }));
 }
 
