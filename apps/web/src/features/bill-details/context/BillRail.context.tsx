@@ -14,6 +14,7 @@ import {
   type RefObject,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -25,6 +26,14 @@ import {
   fetchRailBills,
   railBillsSwrKey,
 } from '../helpers/bill-cache.helpers';
+import {
+  chevronCandidates,
+  chevronRing,
+  type ChevronState,
+  type ChevronTarget,
+  resolveChevronState,
+  sameStatuses,
+} from '../helpers/chevron.helpers';
 import { railStatusesFor } from '../helpers/rail.helpers';
 
 /**
@@ -45,8 +54,11 @@ import { railStatusesFor } from '../helpers/rail.helpers';
  *  1. the active bill's detail cache entry (the RSC page STREAMS a seed into
  *     it on every navigation — cold links included), or
  *  2. the current rail list itself (a hop within the category — the clicked
- *     card IS the proof of the status).
- * Until either lands (a cold link's first moments) `statuses` is null, the
+ *     card IS the proof of the status), or
+ *  3. any WARMED neighbor list (a chevron hop's landing — including the
+ *     guard modal's programmatic navigations, which skip the chevron's
+ *     onClick entirely).
+ * Until one lands (a cold link's first moments) `statuses` is null, the
  * rail renders its own skeletons, and nothing is fetched — there is no key to
  * fetch yet.
  *
@@ -65,7 +77,11 @@ export interface BillRailContextValue {
   refs: BillDetailRefsType;
   /** The bill the route is showing (`[id]` — the server truth, not the pill). */
   activeId: string;
-  /** The active category's status arrangement, or null while still unknown. */
+  /**
+   * The SHOWN category's status arrangement, or null while still unknown.
+   * Usually the active bill's resolved category; during a chevron hop it is
+   * the flip target's — the optimistic frame — until resolution catches up.
+   */
   statuses: readonly BillStatusType[] | null;
   /** The category's bills, due-date ordered — null until the first load lands. */
   bills: BillListItemType[] | null;
@@ -77,10 +93,28 @@ export interface BillRailContextValue {
   loading: boolean;
   /**
    * Look up one bill's rail summary — the SEED the detail screen paints from
-   * while its full record streams. Null when the id isn't in the loaded list
-   * (a cold deep link, or a bill from another category).
+   * while its full record streams. Searches the active category first, then
+   * every WARMED neighbor category (so a chevron hop's landing bill seeds
+   * before its category is even active). Null when no loaded list knows the
+   * id (a cold deep link).
    */
   seedFor: (id: string) => BillListItemType | null;
+  /**
+   * The `<` / `>` category steppers' state (see `chevron.helpers`): the
+   * nearest non-empty category in each direction with the bill the hop lands
+   * on, `settled: false` while a candidate list is still warming, and a
+   * settled null target at a true end — the clamp.
+   */
+  chevronPrev: ChevronState;
+  chevronNext: ChevronState;
+  /**
+   * Flip the rail to a chevron target's category NOW — the optimistic half of
+   * a chevron hop, called from the chevron's `onClick` (which only fires when
+   * the unsaved-changes guard lets the click through — a vetoed click never
+   * flips, so there is nothing to roll back). The flip retires on its own
+   * when the landed route's status resolution catches up (or contradicts it).
+   */
+  flipCategory: (target: ChevronTarget) => void;
   /**
    * The detail left pane's scrollTop, parked across bill → bill hops. It has
    * to live HERE — the whole `[id]` client tree (screen included) remounts
@@ -98,9 +132,46 @@ export interface BillRailProviderProps {
   children: ReactNode;
 }
 
-/** Two status arrangements are the same category iff they list the same states in order. */
-function sameStatuses(a: readonly BillStatusType[], b: readonly BillStatusType[]): boolean {
-  return a.length === b.length && a.every((status, index) => status === b[index]);
+/**
+ * RailCategoryWarmer — one invisible SWR subscription per NEIGHBOR category.
+ *
+ * Rendered by the provider for every chevron-eligible category, it
+ * background-fetches the category's list into the SAME `railBillsSwrKey`
+ * entry the rail reads. One investment, three payoffs: the chevrons know
+ * their target id + label immediately, a chevron hop's landing rail paints
+ * with zero network, and the extended `seedFor` hands the landing detail its
+ * seed tier. The list is REPORTED up (an effect, not a render-time read) so
+ * the provider can fold all warmed lists into one synchronous view without a
+ * hooks-in-a-loop.
+ */
+function RailCategoryWarmer({
+  statuses,
+  onList,
+}: {
+  statuses: readonly BillStatusType[];
+  onList: (key: string, list: BillListItemType[]) => void;
+}) {
+  const key = railBillsSwrKey(statuses);
+  const { data } = useSWR(key, () => fetchRailBills(statuses));
+  useEffect(() => {
+    if (data) onList(key, data);
+  }, [key, data, onList]);
+  return null;
+}
+
+/** A chevron before its answer is knowable — stable identity so renders can share it. */
+const UNRESOLVED: ChevronState = { target: null, settled: false };
+
+/** The bill's status from whichever warmed list knows it — rung 3 of the status resolution. */
+function warmStatusFor(
+  warmLists: Record<string, BillListItemType[]>,
+  id: string,
+): BillStatusType | null {
+  for (const list of Object.values(warmLists)) {
+    const found = list.find((bill) => bill.id === id);
+    if (found) return found.status;
+  }
+  return null;
 }
 
 export function BillRailProvider({ tabs, refs, children }: BillRailProviderProps) {
@@ -114,16 +185,48 @@ export function BillRailProvider({ tabs, refs, children }: BillRailProviderProps
     null,
   );
 
+  // The warmed neighbor lists, keyed by their `railBillsSwrKey` — the
+  // provider's synchronous view of what the warmers below have landed. A
+  // report is identity-guarded so a revalidation that returns the same array
+  // doesn't loop a render. Declared BEFORE the sticky category: the warm
+  // lists are rung 3 of the status resolution below.
+  const [warmLists, setWarmLists] = useState<Record<string, BillListItemType[]>>({});
+  const reportWarmList = useCallback((key: string, list: BillListItemType[]) => {
+    setWarmLists((prev) => (prev[key] === list ? prev : { ...prev, [key]: list }));
+  }, []);
+
   // The resolved category — STICKY state, not a derivation: it only moves when
   // the active bill's known status maps to a different group, so an id change
   // within the category can never blank the list.
   const [statuses, setStatuses] = useState<readonly BillStatusType[] | null>(null);
 
+  // The optimistic chevron flip: the category to show NOW, plus the sticky
+  // identity it superseded (`from`) so the retire effect below can tell
+  // "resolution caught up" apart from "still waiting". Null whenever the rail
+  // simply shows the resolved category.
+  const [pendingFlip, setPendingFlip] = useState<{
+    statuses: readonly BillStatusType[];
+    billId: string;
+    from: readonly BillStatusType[] | null;
+  } | null>(null);
+  const flipCategory = useCallback(
+    (target: ChevronTarget) => {
+      setPendingFlip({ statuses: target.tab.statuses, billId: target.billId, from: statuses });
+    },
+    [statuses],
+  );
+
+  // What the rail actually shows: an alive flip wins over the sticky category.
+  const shownStatuses = pendingFlip?.statuses ?? statuses;
+
   const { data: bills } = useSWR(
-    statuses ? railBillsSwrKey(statuses) : null,
-    statuses ? () => fetchRailBills(statuses) : null,
+    shownStatuses ? railBillsSwrKey(shownStatuses) : null,
+    shownStatuses ? () => fetchRailBills(shownStatuses) : null,
     // A rail left open should catch up when the user comes back — the global
-    // focus:false is tuned for slow catalogs, not a live worklist.
+    // focus:false is tuned for slow catalogs, not a live worklist. NOTE: no
+    // keepPreviousData here — the rail labels rows with category headers, so
+    // painting the OLD category's bills under a flipped header would lie;
+    // honest skeletons (the `loading` flag) cover the gap instead.
     { revalidateOnFocus: true },
   );
 
@@ -132,7 +235,7 @@ export function BillRailProvider({ tabs, refs, children }: BillRailProviderProps
   const knownStatus =
     detailEntry?.bill.status ??
     bills?.find((bill) => bill.id === activeId)?.status ??
-    null;
+    warmStatusFor(warmLists, activeId);
 
   // Advance the sticky category DURING RENDER — React's "adjusting state when
   // a prop changes" pattern: the setState restarts this render before commit,
@@ -144,9 +247,49 @@ export function BillRailProvider({ tabs, refs, children }: BillRailProviderProps
     if (statuses == null || !sameStatuses(statuses, next)) setStatuses(next);
   }
 
+  // Retire the flip once the sticky category MOVES — fulfilled or contradicted
+  // alike. The sticky identity only ever changes on a real category change, so
+  // `statuses !== pendingFlip.from` is exactly "the resolution has spoken
+  // since the flip"; until then the flip keeps the optimistic category up.
+  // Same render-time adjustment pattern as the sticky advance above (often the
+  // very render that advance restarted), so the flip retires in the same
+  // commit the resolved category paints — no one-frame double take.
+  if (pendingFlip && statuses !== pendingFlip.from) {
+    setPendingFlip(null);
+  }
+
+  // Every chevron-eligible category gets a warmer — the whitelist ring from
+  // chevron.helpers, resolved against the catalog. The ACTIVE category is
+  // included harmlessly: SWR dedupes the key with the main subscription
+  // above, and its report just mirrors `bills`.
+  const warmTabs = useMemo(() => chevronRing(tabs), [tabs]);
+
+  // The chevrons' state: candidates in each direction from the CURRENT
+  // category, then the skip-empty walk over whatever has warmed. While the
+  // category itself is unknown the chevrons are UNSETTLED, not clamped —
+  // walking zero candidates would return a "you're at the edge" verdict that
+  // loading has no business passing.
+  const listForTab = useCallback(
+    (tab: BillTabType) => warmLists[railBillsSwrKey(tab.statuses)],
+    [warmLists],
+  );
+  const candidates = shownStatuses ? chevronCandidates(tabs, shownStatuses) : null;
+  const chevronPrev = candidates ? resolveChevronState(candidates.prev, listForTab) : UNRESOLVED;
+  const chevronNext = candidates ? resolveChevronState(candidates.next, listForTab) : UNRESOLVED;
+
   const seedFor = useCallback(
-    (id: string) => bills?.find((bill) => bill.id === id) ?? null,
-    [bills],
+    (id: string) => {
+      const active = bills?.find((bill) => bill.id === id);
+      if (active) return active;
+      // Not in the active category — a chevron hop mid-flight. The warmed
+      // neighbor lists are the same rail summaries, so they seed identically.
+      for (const list of Object.values(warmLists)) {
+        const warm = list.find((bill) => bill.id === id);
+        if (warm) return warm;
+      }
+      return null;
+    },
+    [bills, warmLists],
   );
 
   // Parked pane offset for hop-to-hop scroll continuity — see the field's
@@ -159,16 +302,26 @@ export function BillRailProvider({ tabs, refs, children }: BillRailProviderProps
       tabs,
       refs,
       activeId,
-      statuses,
+      statuses: shownStatuses,
       bills: bills ?? null,
-      loading: bills == null || statuses == null,
+      loading: bills == null || shownStatuses == null,
       seedFor,
+      chevronPrev,
+      chevronNext,
+      flipCategory,
       carriedPaneScrollTopRef,
     }),
-    [tabs, refs, activeId, statuses, bills, seedFor],
+    [tabs, refs, activeId, shownStatuses, bills, seedFor, chevronPrev, chevronNext, flipCategory],
   );
 
-  return <BillRailContext.Provider value={value}>{children}</BillRailContext.Provider>;
+  return (
+    <BillRailContext.Provider value={value}>
+      {warmTabs.map((tab) => (
+        <RailCategoryWarmer key={tab.id} statuses={tab.statuses} onList={reportWarmList} />
+      ))}
+      {children}
+    </BillRailContext.Provider>
+  );
 }
 
 /** Read the rail store. Throws outside the provider (i.e. outside `(detail)/bills`). */

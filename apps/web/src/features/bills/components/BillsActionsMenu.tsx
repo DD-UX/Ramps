@@ -73,15 +73,15 @@ export function BillsActionsMenu({ bill, side = 'bottom', disabled = false }: Bi
       if (busy) return; // guard against a double-fire while a request is in flight
       setBusy(true);
       try {
-        if (action === BILL_ACTION.ARCHIVE) {
-          await apiClient.bills.archive(bill.id);
-        } else {
-          await apiClient.bills.reject(bill.id);
-        }
+        const { bill: moved } =
+          action === BILL_ACTION.ARCHIVE
+            ? await apiClient.bills.archive(bill.id)
+            : await apiClient.bills.reject(bill.id);
         // Both surfaces, one call each: RSC table rows via refresh, the detail
-        // screen's SWR entries (rail + detail) via reconcile. Awaiting the
-        // reconcile holds `busy` until the status flip lands on screen.
-        await reconcileBillCaches(mutate, bill.id);
+        // screen's SWR entries via reconcile — seeded with the re-read bill,
+        // so the footer's status flips in the same paint as the response.
+        // Awaiting still holds `busy` until the rail revalidation settles.
+        await reconcileBillCaches(mutate, bill.id, moved);
         router.refresh();
       } catch {
         // Swallow: the refresh re-reads server truth, and the menu re-enables so

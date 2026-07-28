@@ -45,6 +45,7 @@ const BILL_LIST_SELECT = `
   invoice_number, invoice_date, due_date, accounting_date, po_number,
   amount_cents, currency, memo, document_url, status,
   vendors ( name ),
+  entities ( name ),
   flags:bill_flags!bill_flags_bill_id_fkey ( id, bill_id, type, message, related_bill_id, amount_cents, dismissed )
 ` as const;
 
@@ -67,6 +68,8 @@ interface BillListRow {
   status: string;
   /** Embedded vendor — a single object or null (an FK-to-one embed). */
   vendors: { name: string } | null;
+  /** Embedded entity — same FK-to-one embed shape as the vendor label. */
+  entities: { name: string } | null;
   /** Embedded flags — already filtered to the undismissed ones; parsed by schema. */
   flags: unknown[];
 }
@@ -185,13 +188,15 @@ export async function listBills(
   if (error) throw toSdkError(error);
 
   const rows = (data ?? []) as unknown as BillListRow[];
-  // Flatten the embedded vendor to `vendor_name`, then parse. The schema is
-  // the boundary guard — a shape the DB shouldn't produce fails loudly here.
+  // Flatten the embedded vendor/entity to their `_name` labels, then parse.
+  // The schema is the boundary guard — a shape the DB shouldn't produce fails
+  // loudly here.
   const bills = rows.map((row) => {
-    const { vendors, ...bill } = row;
+    const { vendors, entities, ...bill } = row;
     return BillListItemSchema.parse({
       ...bill,
       vendor_name: vendors?.name ?? null,
+      entity_name: entities?.name ?? null,
     });
   });
 

@@ -41,8 +41,8 @@ export function useSchedulePayment() {
     }
     setSubmitting(true);
     try {
-      await apiClient.bills.schedulePayment(bill.id, payload);
-      await reconcileBillCaches(mutate, bill.id);
+      const { bill: scheduled } = await apiClient.bills.schedulePayment(bill.id, payload);
+      await reconcileBillCaches(mutate, bill.id, scheduled);
       return true;
     } catch {
       setError('Could not schedule the payment. Please try again.');

@@ -186,6 +186,11 @@ export type BillWithLineItemsType = z.infer<typeof BillWithLineItemsSchema>;
  * without a second round-trip:
  *   - `vendor_name` — the joined vendor label (null on email-ingested drafts
  *     that arrived before a vendor was matched — the `missing_info` case).
+ *   - `entity_name` — the joined "Create bill under" entity label. The table
+ *     doesn't render it, but the DETAIL screen's seed tier does: a rail item
+ *     that carries it lets the entity field paint instantly on a rail hop,
+ *     same as vendor, instead of skeletoning until the full record streams.
+ *     One join column buys one fewer skeleton (feedback response §4).
  *   - `flags` — the UNDISMISSED risk flags only; they render as the red ↳
  *     annotation rows beneath the row (§2). Dismissed flags never reach here.
  * Line items are intentionally omitted — those load with the detail drawer
@@ -193,6 +198,7 @@ export type BillWithLineItemsType = z.infer<typeof BillWithLineItemsSchema>;
  */
 export const BillListItemSchema = BillSchema.extend({
   vendor_name: z.string().nullable(),
+  entity_name: z.string().nullable(),
   flags: z.array(BillFlagSchema).default([]),
 });
 export type BillListItemType = z.infer<typeof BillListItemSchema>;

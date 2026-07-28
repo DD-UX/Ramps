@@ -49,12 +49,13 @@ export function useSubmitBill() {
     setError(null);
     setSubmitting(true);
     try {
-      await apiClient.bills.submit(bill.id, form.getValues());
+      const { bill: submitted } = await apiClient.bills.submit(bill.id, form.getValues());
       // Clear dirty state before we leave, so the guard doesn't intercept.
       form.reset(form.getValues());
       // Fire-and-forget: we're leaving this screen, but its SWR entries (rail
-      // list, detail) survive in cache — reconcile so a back-nav is fresh.
-      void reconcileBillCaches(mutate, bill.id);
+      // list, detail) survive in cache — seed the detail with the re-read
+      // bill and revalidate the rails so a back-nav finds truth, not staleness.
+      void reconcileBillCaches(mutate, bill.id, submitted);
       router.push(FOR_APPROVAL_HREF);
       router.refresh();
       return true;

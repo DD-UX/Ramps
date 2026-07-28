@@ -21,6 +21,7 @@ const RAIL_ITEM: BillListItemType = {
   document_url: null,
   status: 'awaiting_approval',
   vendor_name: 'Trashlab Supply Co.',
+  entity_name: 'Trashlab US',
   flags: [],
 };
 
@@ -35,7 +36,9 @@ describe('billDetailFromSeed', () => {
 
   it('fills detail-only concerns with their "not loaded" values, never invented data', () => {
     const seeded = billDetailFromSeed(RAIL_ITEM);
-    expect(seeded.entity_name).toBeNull();
+    // entity_name is NOT in this list: the list select carries the joined
+    // label (T2), so the seed tier paints it as truth like vendor_name.
+    expect(seeded.entity_name).toBe('Trashlab US');
     expect(seeded.line_items).toEqual([]);
     expect(seeded.approvals).toEqual([]);
     expect(seeded.approval_stages).toEqual([]);

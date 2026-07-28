@@ -8,6 +8,7 @@ import { BILL_STATUS_LABEL } from '../constants/status-label.constants';
 import { useBillRail } from '../context/BillRail.context';
 import { RailActiveProvider } from '../context/RailActive.context';
 import { groupBillsByStatus, railOrderedIds } from '../helpers/rail.helpers';
+import { BillDetailsChevrons } from './BillDetailsChevrons';
 import { BillDetailsRailItem } from './BillDetailsRailItem';
 import { BillDetailsRailNav } from './BillDetailsRailNav';
 
@@ -47,7 +48,9 @@ export function BillDetailsRail() {
       aria-label="Bills in this category"
       className="border-bone gap-rui-4 w-64 bg-white flex shrink-0 flex-col border-r"
     >
-      {/* h-12 like the header band next door — the rail's top row shares its line. */}
+      {/* h-12 like the header band next door — the rail's top row shares its
+          line. "← Bill Pay" leads it alone; the rail is w-64, too narrow for
+          three labels on one line. */}
       <div className="px-rui-4 border-stone flex h-[3.1rem] shrink-0 items-center border-b-2">
         <Link
           href="/bills"
@@ -57,6 +60,11 @@ export function BillDetailsRail() {
           Bill Pay
         </Link>
       </div>
+
+      {/* The category steppers take the footer's own layout — one at each end
+          of a slim row under the band, both real anchors the unsaved-changes
+          guard can intercept. */}
+      <BillDetailsChevrons />
 
       {/* The provider carries the OPTIMISTIC active id (which card holds the
           floating limestone pill) — clicks/arrows move it instantly, the

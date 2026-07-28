@@ -46,7 +46,7 @@ export function useSaveBillDraft() {
     setSaving(true);
     try {
       // 1) The form itself — header + line items — always persists.
-      await apiClient.bills.save(bill.id, form.getValues());
+      const { bill: saved } = await apiClient.bills.save(bill.id, form.getValues());
 
       // 2) The staged approval route, only if the chain editor queued one.
       const pending = pendingApprovalStagesRef.current;
@@ -61,8 +61,11 @@ export function useSaveBillDraft() {
       // Fire-and-forget: the rail card mirrors saved fields (vendor, amount,
       // due date), so its list revalidates alongside the detail entry. Not
       // awaited — the save already succeeded, and a same-level detail refresh
-      // never resets the form (see the provider's ladder contract).
-      void reconcileBillCaches(mutate, bill.id);
+      // never resets the form (see the provider's ladder contract). The
+      // re-read bill seeds the detail entry ONLY when no stages write chased
+      // the save: that second PUT would make `saved.approval_stages` stale, so
+      // in that case the entry revalidates instead of seeding a lie.
+      void reconcileBillCaches(mutate, bill.id, pending ? undefined : saved);
       return true;
     } catch {
       setError('Could not save your changes. They are not persisted yet.');

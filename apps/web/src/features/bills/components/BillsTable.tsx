@@ -23,10 +23,11 @@ import { BillsActionsMenu } from './BillsActionsMenu';
  * boundary — so this layer only maps fields to cells.
  *
  * Columns mirror the frames: Vendor (sticky-left), Invoice #, Due date,
- * Status pill, Amount (sticky-right, right-aligned tabular money). The footer is
- * the vetted pagination band: the server windows the query to `page`/`pageSize`,
- * and the band's page picker navigates `?page=` (preserving the tab and search),
- * re-running the Server Component for the next window.
+ * Status pill, Amount (sticky-right, right-aligned tabular money). The footer
+ * is the vetted pagination band: the caller windows the rows to
+ * `page`/`pageSize` (`BillsPageContent` slices the SWR-cached category), and
+ * the band's page picker navigates `?page=` (preserving the tab and search) —
+ * a shallow URL update the caller re-derives the window from.
  */
 export interface BillsTableProps {
   bills: BillListItemType[];
@@ -137,8 +138,8 @@ export function BillsTable({ bills, total, page, pageSize }: BillsTableProps) {
   const totalCents = bills.reduce((sum, bill) => sum + bill.amount_cents, 0);
 
   // Flip pages by navigating `?page=` (preserving `?tab=` / `?q=`), so the page
-  // is shareable URL state like the tab and search — the Server Component
-  // re-queries the window; page 1 drops the param. buildPageQuery owns the math.
+  // is shareable URL state like the tab and search — the provider's transport
+  // (shallow here) carries it; page 1 drops the param. buildPageQuery owns the math.
   const onPageChange = useCallback(
     (next: number) => {
       const query = buildPageQuery(search, next);

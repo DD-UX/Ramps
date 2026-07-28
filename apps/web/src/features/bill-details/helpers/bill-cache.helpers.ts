@@ -1,6 +1,7 @@
 import {
   BillDetailResponseSchema,
   type BillDetailResponseType,
+  type BillDetailType,
   type BillListItemType,
   BillListResponseSchema,
   type BillStatusType,
@@ -47,14 +48,23 @@ export function billDetailSwrKey(id: string): string {
  * Reconcile the client caches after a WRITE to one bill — the single follow-up
  * every mutation hook calls in place of the old whole-tree `router.refresh()`.
  *
- * Two revalidations, one per cache the write can invalidate:
- * - the bill's own detail entry (`mutate(key)` re-runs the detail hook's
- *   bound fetcher, so the screen re-reads the record it's showing), and
+ * Two moves, one per cache the write can invalidate:
+ * - the bill's own detail entry. Every mutation endpoint already RETURNS the
+ *   re-read bill, so when the caller hands it over the entry is SEEDED with
+ *   it (`revalidate: false`) — the screen flips to post-write truth in the
+ *   same paint, no second roundtrip between the POST settling and the UI
+ *   catching up. The seed is an updater so the cached `documentUrl` (resolved
+ *   server-side, not part of the mutation response) rides along untouched.
+ *   Without a bill — a caller whose response may already be stale again, like
+ *   a save chased by a stages write — the entry revalidates instead:
+ *   `mutate(key)` re-runs the detail hook's bound fetcher.
  * - EVERY rail category list, by key-filter: a write that moves a bill's
  *   status moves it BETWEEN groups, so both the group it left and the group
  *   it joined are stale — and which pair that is isn't this helper's
  *   business. Non-mounted categories hold no entries, so the filter touches
- *   exactly what's alive.
+ *   exactly what's alive. This revalidation is also the seeded path's safety
+ *   net: if a seed ever disagrees with the server, the next rail read and the
+ *   detail's focus revalidation converge on truth.
  *
  * Takes the caller's scoped `mutate` (from `useSWRConfig()`) rather than being
  * a hook itself, so plain async flows can call it after their POST settles.
@@ -66,9 +76,20 @@ export function billDetailSwrKey(id: string): string {
  * revalidation recovers it — the caller's success path must not turn into an
  * error line over a refresh.
  */
-export async function reconcileBillCaches(mutate: ScopedMutator, id: string): Promise<void> {
+export async function reconcileBillCaches(
+  mutate: ScopedMutator,
+  id: string,
+  bill?: BillDetailType,
+): Promise<void> {
+  const detail = bill
+    ? mutate<BillDetailResponseType | null>(
+        billDetailSwrKey(id),
+        (current) => ({ bill, documentUrl: current?.documentUrl ?? null }),
+        { revalidate: false },
+      )
+    : mutate(billDetailSwrKey(id));
   await Promise.all([
-    mutate(billDetailSwrKey(id)).catch(() => undefined),
+    detail.catch(() => undefined),
     mutate((key) => typeof key === 'string' && key.startsWith(RAIL_BILLS_PREFIX)).catch(
       () => undefined,
     ),

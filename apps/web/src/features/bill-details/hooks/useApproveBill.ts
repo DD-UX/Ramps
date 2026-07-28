@@ -24,9 +24,10 @@ import { toSchedulePayload } from '../helpers/payment-completeness.helpers';
  * subject, only its status/footer change. So on success it `form.reset(
  * getValues())` to clear `isDirty` (nothing more is editable once approved, and
  * a clean form keeps the unsaved-changes guard quiet), then AWAITS
- * {@link reconcileBillCaches} — the detail entry re-read is what flips the
- * footer to "Schedule payment" / "View schedule" (and moves the rail card to
- * its new category), so the button's busy state holds until the flip lands.
+ * {@link reconcileBillCaches} WITH the re-read bill the POST returned — the
+ * detail entry is seeded in place (no second roundtrip), so the footer flips
+ * to "Schedule payment" / "View schedule" the moment the response lands, and
+ * the rail revalidation moves the card to its new category behind it.
  */
 export function useApproveBill() {
   const { bill, form, payment } = useBillDetail();
@@ -39,11 +40,14 @@ export function useApproveBill() {
     setSubmitting(true);
     try {
       const schedule = toSchedulePayload(payment);
-      await apiClient.bills.approve(bill.id, { ...form.getValues(), schedule });
+      const { bill: approved } = await apiClient.bills.approve(bill.id, {
+        ...form.getValues(),
+        schedule,
+      });
       // Clear dirty state so the unsaved-changes guard stays quiet; the bill is
       // no longer editable here, so its own values are the truth to reset to.
       form.reset(form.getValues());
-      await reconcileBillCaches(mutate, bill.id);
+      await reconcileBillCaches(mutate, bill.id, approved);
       return true;
     } catch {
       setError('Could not approve the bill. Your changes are not persisted yet.');

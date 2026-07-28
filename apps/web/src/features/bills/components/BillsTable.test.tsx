@@ -59,6 +59,7 @@ function makeBill(overrides: Partial<BillListItemType> = {}): BillListItemType {
     document_url: null,
     status: 'paid',
     vendor_name: 'Acme Co',
+    entity_name: null,
     flags: [],
     ...overrides,
   };

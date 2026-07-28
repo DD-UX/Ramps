@@ -31,8 +31,8 @@ export function useRollPayment() {
     setError(null);
     setSubmitting(true);
     try {
-      await apiClient.bills.rollPaymentNow(bill.id);
-      await reconcileBillCaches(mutate, bill.id);
+      const { bill: paid } = await apiClient.bills.rollPaymentNow(bill.id);
+      await reconcileBillCaches(mutate, bill.id, paid);
       return true;
     } catch {
       setError('Could not complete the payment. Please try again.');

@@ -73,8 +73,12 @@ export interface UpDownNavigation {
   setActiveId: (id: string) => void;
 }
 
-/** True when a key belongs to something else: a field, or an open dialog. */
-function isTypingOrDialog(target: EventTarget | null): boolean {
+/**
+ * True when a key belongs to something else: a field, or an open dialog.
+ * Exported for the sibling document-wide bindings (the rail's ←/→ category
+ * steppers) so every arrow shares ONE definition of "the user is typing".
+ */
+export function isTypingOrDialog(target: EventTarget | null): boolean {
   if (target instanceof HTMLElement) {
     if (target.closest('input, textarea, select, [contenteditable="true"]')) return true;
   }
