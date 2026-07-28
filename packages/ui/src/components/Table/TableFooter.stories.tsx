@@ -182,8 +182,9 @@ export const PaginationMultiPage: Story = {
 };
 
 /**
- * A middle page — both Prev/Next steps live, `← Prev` and `Next →` flanking
- * the range summary with the Kbd hints on their outer edges.
+ * A middle page — both Prev/Next steps live, side by side ahead of the range
+ * summary (`← Prev · Next → · 11–15 of 21 …`) with the Kbd hints on their
+ * outer edges.
  */
 export const PaginationMiddlePage: Story = {
   render: () => (

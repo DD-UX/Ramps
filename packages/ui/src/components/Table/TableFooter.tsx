@@ -165,10 +165,12 @@ export interface TablePaginationFooterProps {
  * total" on the right, on a single canvas band under a limestone hairline.
  *
  * When the band is INTERACTIVE (`onPageChange` provided), the right cluster
- * gains the {@link TablePagerStep} Prev/Next pair FLANKING the range summary —
- * `← Prev · 1–10 of N … · Next →` — single-step siblings of the range menu's
- * jump-anywhere picker. A static band (no `onPageChange`) renders neither
- * pager nor the steps: a summary that can't navigate shouldn't dress like one.
+ * gains the {@link TablePagerStep} Prev/Next pair SIDE BY SIDE ahead of the
+ * range summary — `← Prev · Next → · 1–10 of N …` — so the eye reads the two
+ * steps as one seamless control, then the range; they're single-step siblings
+ * of the range menu's jump-anywhere picker. A static band (no `onPageChange`)
+ * renders neither pager nor the steps: a summary that can't navigate
+ * shouldn't dress like one.
  *
  * Rendered as a `<div>` (NOT a <tfoot>) so Table can pin it to the SCROLL
  * container's floor — below the flex-1 filler whitespace — rather than the
@@ -233,18 +235,27 @@ export function TablePaginationFooter({
             },
           ]}
         />
-        {/* Right — the Prev/Next steps flank the range summary (hints on the
-            outer edges, pointing the way the page flips), and the range
-            numbers are the ONLY underlined part of the summary ("1–7"
-            underlined, " of 7 bills · $… total" plain, all one hushed gray —
-            8x zoom, frame 6). Clicking the range opens the (inferred) page
-            picker. */}
+        {/* Right — the Prev/Next steps sit SIDE BY SIDE ahead of the range
+            summary (`← Prev · Next →` — each step's Kbd hint still rides its
+            outer edge, pointing the way the page flips), so the pair reads as
+            one seamless control before the numbers. The range numbers are the
+            ONLY underlined part of the summary ("1–7" underlined, " of 7
+            bills · $… total" plain, all one hushed gray — 8x zoom, frame 6).
+            Clicking the range opens the (inferred) page picker. */}
         <div className="gap-rui-4 flex items-center whitespace-nowrap">
           {onPageChange && (
             <TablePagerStep
               direction="prev"
               targetPage={page - 1}
               disabled={page <= 1}
+              onPageChange={onPageChange}
+            />
+          )}
+          {onPageChange && (
+            <TablePagerStep
+              direction="next"
+              targetPage={page + 1}
+              disabled={page >= totalPages}
               onPageChange={onPageChange}
             />
           )}
@@ -281,14 +292,6 @@ export function TablePaginationFooter({
               {extra}
             </span>
           </div>
-          {onPageChange && (
-            <TablePagerStep
-              direction="next"
-              targetPage={page + 1}
-              disabled={page >= totalPages}
-              onPageChange={onPageChange}
-            />
-          )}
         </div>
       </div>
     </div>
