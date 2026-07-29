@@ -138,7 +138,11 @@ export const UpdatedNav: Story = {
       aria-label="Bill Pay navigation"
       header={
         <>
-          <SideMenuHeader icon={<CircleDot size={16} />}>Clara Media LLC</SideMenuHeader>
+          {/* The frame's workspace SWITCHER: a handler, so the caret is
+              earned. Drop the `onClick` and the band becomes a plain label. */}
+          <SideMenuHeader icon={<CircleDot size={16} />} onClick={() => {}}>
+            Clara Media LLC
+          </SideMenuHeader>
           <SideMenuProgress
             icon={<Rocket size={16} />}
             title="Setup guide"
@@ -193,6 +197,8 @@ export const ScopedNav: Story = {
   render: () => (
     <SideMenu
       aria-label="Bill Pay navigation"
+      // No `onClick`: this build has one workspace, so the band is a LABEL —
+      // no caret, no hover, no pointer. The opposite branch to UpdatedNav.
       header={<SideMenuHeader icon={<CircleDot size={16} />}>Ramps Demo</SideMenuHeader>}
       footer={
         <SideMenuAction icon={<ArrowRight size={16} />} href="/design-system">

@@ -160,7 +160,12 @@ export interface SideMenuHeaderProps extends PropsWithChildren {
    * beside "Clara Media LLC"). Rendered hushed, like the item icons.
    */
   icon?: ReactNode;
-  /** Fires the workspace switcher (the chevron is a switch affordance). */
+  /**
+   * Fires the workspace switcher — and, by its presence alone, DECIDES whether
+   * the band is a control at all. Given, the header renders as a button with
+   * the chevron switch affordance; omitted, it renders as a plain label with no
+   * caret, no hover and no pointer (see {@link SideMenuHeader}).
+   */
   onClick?: () => void;
   /** Bone hairline beneath the band (the frame's border under the header). */
   divider?: boolean;
@@ -354,12 +359,23 @@ export function SideMenuDivider({ className }: SideMenuDividerProps) {
 
 /**
  * SideMenuHeader — the workspace band at the top of the updated nav: a small
- * mark, the company name, and a chevron-down switch affordance, over a bone
- * hairline (the "border beneath data" the frame shows under the header).
+ * mark, the company name, and (when there is somewhere to go) a chevron-down
+ * switch affordance, over a bone hairline (the "border beneath data" the frame
+ * shows under the header).
  *
- * Goes in the SideMenu `header` slot. Renders a <button> (the chevron is a
- * workspace switcher) so it's a real control, not decoration; the label is ink,
- * the mark + chevron are hushed — the item palette.
+ * THE CARET FOLLOWS THE HANDLER. This used to render a <button> with a chevron
+ * unconditionally, so a header with no `onClick` still wore a dropdown's caret,
+ * still lit up on hover, still showed a pointer — and did nothing when clicked.
+ * That is the reviewer's "half-real affordance" in miniature: a control that
+ * advertises a menu it does not have. So the shape is DERIVED rather than
+ * configured:
+ *
+ *   onClick given → a real <button>: hover wash, pointer, focus ring, caret.
+ *   onClick absent → a plain <div>: a label, and nothing but a label.
+ *
+ * Deriving it beats a `caret` boolean, because a boolean lets a caller put the
+ * caret back on a header that goes nowhere — the exact bug, still spellable.
+ * Here it is unrepresentable: you cannot get the caret without a destination.
  */
 export function SideMenuHeader({
   children,
@@ -368,28 +384,49 @@ export function SideMenuHeader({
   divider = true,
   className,
 }: SideMenuHeaderProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'gap-rui-2 rounded-square px-rui-2 py-rui-1 flex w-full items-center',
-        'text-sm font-body text-hushed transition-colors outline-none',
-        'hover:bg-limestone cursor-pointer',
-        'focus-visible:bg-limestone',
-        divider && 'border-bone pb-rui-2 mb-rui-1 border-b',
-        className,
-      )}
-    >
+  const switchable = onClick !== undefined;
+
+  const body = (
+    <>
       {icon && (
         <span className="text-hushed flex-shrink-0" aria-hidden>
           {icon}
         </span>
       )}
       <span className="flex-1 truncate text-left">{children}</span>
-      <span className="text-hushed flex-shrink-0" aria-hidden>
-        <ChevronDown size={16} />
-      </span>
+      {switchable && (
+        <span className="text-hushed flex-shrink-0" aria-hidden>
+          <ChevronDown size={16} />
+        </span>
+      )}
+    </>
+  );
+
+  const shared = cn(
+    'gap-rui-2 rounded-square px-rui-2 py-rui-1 flex w-full items-center',
+    'text-sm font-body text-hushed',
+    divider && 'border-bone pb-rui-2 mb-rui-1 border-b',
+    className,
+  );
+
+  if (!switchable) {
+    // No hover wash, no pointer, no caret, no tab stop — the band is a label,
+    // and a label that reacts to the mouse is a promise it can't keep.
+    return <div className={shared}>{body}</div>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        shared,
+        'transition-colors outline-none',
+        'hover:bg-limestone cursor-pointer',
+        'focus-visible:bg-limestone',
+      )}
+    >
+      {body}
     </button>
   );
 }

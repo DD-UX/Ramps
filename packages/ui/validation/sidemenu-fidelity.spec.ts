@@ -396,6 +396,35 @@ test.describe('SideMenu fidelity (vetted against product frames)', () => {
   });
 
   /**
+   * THE INVERSE, and the one that answers a real complaint: a header with no
+   * `onClick` wore the switcher's caret anyway, so the workspace band looked
+   * like a dropdown and did nothing when clicked. The caret is now DERIVED from
+   * the handler, so a label cannot dress as a menu.
+   *
+   * Asserted as the absence of the whole affordance — caret, button role, and
+   * pointer cursor — because any one of them alone still reads as "clickable".
+   */
+  test('Scoped nav: a header with nowhere to go is a label — no caret, no button, no pointer', async ({
+    page,
+  }) => {
+    await page.goto(storyUrl('primitives-sidemenu--scoped-nav'));
+
+    const label = page.getByText('Ramps Demo', { exact: true });
+    await expect(label).toBeVisible();
+
+    // Not a control: nothing in the nav claims to be a workspace switcher.
+    await expect(
+      page.getByRole('button', { name: /Ramps Demo/ }),
+      'the band is not a button',
+    ).toHaveCount(0);
+
+    // The band is the label's parent — the row that would have carried the caret.
+    const band = label.locator('..');
+    await expect(band.locator('svg'), 'the only glyph is the workspace mark').toHaveCount(1);
+    await expect(band, 'a label does not invite a click').toHaveCSS('cursor', 'auto');
+  });
+
+  /**
    * Setup-guide progress block: the fill is the POSITIVE green (verified
    * constructive token) on a BONE track, and the ARIA progressbar carries the
    * completion value (30% in the story).

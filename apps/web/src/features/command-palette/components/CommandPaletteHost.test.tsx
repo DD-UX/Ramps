@@ -213,6 +213,15 @@ describe('CommandPaletteHost', () => {
     await screen.findByRole('dialog');
 
     const field = screen.getByRole('combobox', { name: 'Search' });
+    // WAIT FOR FOCUS, don't assume it. The palette focuses its field one frame
+    // after open (AnimatePresence has to put the node in the document first),
+    // and the whole ↑/↓ contract hangs off the field's own `onKeyDown` — so a
+    // key pressed before focus lands goes to `document.body` and does NOTHING.
+    // Skipping this wait made the test flaky in exactly the way that matters:
+    // under load it failed with the highlight parked on row 0, which is
+    // indistinguishable from the arrows being genuinely broken.
+    await waitFor(() => expect(field).toHaveFocus());
+
     const [first, second] = screen.getAllByRole('option');
     // Focus never leaves the field — the active row is pointed at instead.
     expect(field).toHaveAttribute('aria-activedescendant', first?.id);

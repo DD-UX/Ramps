@@ -42,10 +42,12 @@ import type { ChevronState } from '../helpers/chevron.helpers';
  * - target → a real `<Link>` to the landing BILL (never a router.push — the
  *   guard's click capture is the whole point), `prefetch` forced on like the
  *   side nav's links.
- * - settled null → the muted clamp: every candidate that way is empty. There
- *   is no landing name to say, so the Kbd keycap stays — same shape as the
- *   live stepper's hint — but FADED (the system's disabled dim): the key
- *   still reads as "this key exists", the fade says it does nothing here.
+ * - settled null → the muted clamp: every candidate that way is empty, and
+ *   since the ring WRAPS that means every other category is — an empty app,
+ *   not an end of the line. There is no landing name to say, so the Kbd
+ *   keycap stays — same shape as the live stepper's hint — but FADED (the
+ *   system's disabled dim): the key still reads as "this key exists", the
+ *   fade says it does nothing here.
  *
  * A click also calls `flipCategory(target)` — the optimistic half of the hop:
  * the rail flips to the target category NOW (warm list or honest skeletons)
@@ -62,8 +64,9 @@ export function BillDetailsChevrons() {
   const { chevronPrev, chevronNext } = useBillRail();
 
   // ←/→, document-wide, mirroring useUpDownNavigation's ↑/↓ binding — but
-  // committing IMMEDIATELY (no debounced skim: the ring holds three stops and
-  // each press re-derives the next hop from the already-flipped category).
+  // committing IMMEDIATELY (no debounced skim: the ring is a handful of stops
+  // and each press re-derives the next hop from the already-flipped
+  // category, so holding the key just walks the circle).
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;

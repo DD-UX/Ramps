@@ -1,5 +1,8 @@
 'use client';
 
+import type { BillTabType } from '@ramps/schemas/bill-tabs';
+import type { BillStatusType } from '@ramps/schemas/bills';
+import { Badge } from '@ramps/ui/Badge';
 import { ArrowLeft } from '@ramps/ui/icons';
 import { Skeleton } from '@ramps/ui/Skeleton';
 import Link from 'next/link';
@@ -7,7 +10,8 @@ import Link from 'next/link';
 import { BILL_STATUS_LABEL } from '../constants/status-label.constants';
 import { useBillRail } from '../context/BillRail.context';
 import { RailActiveProvider } from '../context/RailActive.context';
-import { groupBillsByStatus, railOrderedIds } from '../helpers/rail.helpers';
+import { categoryFor } from '../helpers/chevron.helpers';
+import { categoryBadgeLabel, groupBillsByStatus, railOrderedIds } from '../helpers/rail.helpers';
 import { BillDetailsChevrons } from './BillDetailsChevrons';
 import { BillDetailsRailItem } from './BillDetailsRailItem';
 import { BillDetailsRailNav } from './BillDetailsRailNav';
@@ -35,7 +39,7 @@ import { BillDetailsRailNav } from './BillDetailsRailNav';
  * it only means "not loaded yet".
  */
 export function BillDetailsRail() {
-  const { bills, statuses, activeId, loading } = useBillRail();
+  const { bills, statuses, activeId, loading, tabs } = useBillRail();
 
   const groups = bills != null && statuses != null ? groupBillsByStatus(bills, statuses) : [];
   // The flat visual order — the one list ↑/↓ skimming and Prev/Next both walk.
@@ -49,18 +53,19 @@ export function BillDetailsRail() {
       className="border-bone gap-rui-4 w-64 bg-white flex shrink-0 flex-col border-r"
     >
       {/* h-12 like the header band next door — the rail's top row shares its
-          line. "← Bill Pay" leads it alone; the rail is w-64, too narrow for
-          three labels on one line. */}
-      <div className="px-rui-4 border-stone flex h-[3.1rem] shrink-0 items-center border-b-2">
+          line: "← Bill Pay" and, beside it, WHICH category of Bill Pay you are
+          in, named exactly as the list's tab bar names it. */}
+      <div className="px-rui-4 gap-rui-2 border-stone flex h-[3.1rem] shrink-0 items-center border-b-2">
         <Link
           href="/bills"
           // group-hover keeps the underline off the arrow glyph — decoration
           // on the anchor itself would strike through the icon's box.
-          className="gap-rui-2 text-ink text-sm font-medium group flex items-center"
+          className="gap-rui-2 text-ink text-sm font-medium group flex shrink-0 items-center"
         >
           <ArrowLeft size={16} />
           <span className="group-hover:underline">Bill Pay</span>
         </Link>
+        <RailCategoryBadge tabs={tabs} statuses={statuses} />
       </div>
 
       {/* The category steppers take the footer's own layout — one at each end
@@ -98,6 +103,66 @@ export function BillDetailsRail() {
       </RailActiveProvider>
     </aside>
   );
+}
+
+/**
+ * The category badge beside "← Bill Pay" — which slice of Bill Pay this rail
+ * is, said in the LIST'S OWN words. The name comes from the tab catalog via
+ * {@link categoryFor}, the same lookup the chevrons use to find their place on
+ * the ring, so the badge and the steppers can never disagree about where you
+ * are: `← Bill Pay  [For payment]` reads as the breadcrumb it is, and the two
+ * chevrons underneath name the categories either side of it.
+ *
+ * It matters most for the one category the tab bar CAN'T show you — Closed
+ * (rejected + archived) has no tab, so without the badge a bill that's been
+ * sent back looks like it's in some unnamed limbo.
+ *
+ * Three states, all honest:
+ * - category unknown yet → a bar the badge's size. The band's chrome stays
+ *   real (the "← Bill Pay" escape hatch must never skeletonise), but naming a
+ *   category before we know it would be a guess.
+ * - a catalog/Closed category → its `name`, verbatim from the tab.
+ * - no category at all → the degraded rail of one, so the STATUS's own label
+ *   is the truest thing available; there is no tab to name.
+ *
+ * Whichever name lands, {@link categoryBadgeLabel} phrases it with the noun it
+ * counts — "Closed bills", not "Closed" — so the chip names a set of things
+ * instead of leaving an adjective hanging.
+ */
+function RailCategoryBadge({
+  tabs,
+  statuses,
+}: {
+  tabs: BillTabType[];
+  statuses: readonly BillStatusType[] | null;
+}) {
+  if (statuses == null) {
+    // h-5 is the badge's own box (text-xs + py-0.5) and ml-auto is its resting
+    // place — settling swaps content, never height or side, so the band never
+    // twitches.
+    return <Skeleton className="h-5 w-20 ml-auto" />;
+  }
+
+  const label = categoryFor(tabs, statuses)?.name ?? labelForLoneStatus(statuses);
+  if (!label) return null;
+
+  // `ml-auto` pins it to the band's right edge, hard against the rail's border
+  // — the two ends of the row read as the two halves of the breadcrumb ("where
+  // you came from" ↔ "where you are") rather than one run-on phrase.
+  //
+  // `truncate` over the flex child: a long custom tab name gives up its own
+  // width rather than pushing "← Bill Pay" out of a w-64 rail.
+  return (
+    <Badge tone="accent" className="min-w-0 ml-auto truncate">
+      {categoryBadgeLabel(label)}
+    </Badge>
+  );
+}
+
+/** The fallback name for a rail no category claims — just the status itself. */
+function labelForLoneStatus(statuses: readonly BillStatusType[]): string | null {
+  const [only] = statuses;
+  return statuses.length === 1 && only ? BILL_STATUS_LABEL[only] : null;
 }
 
 /**

@@ -134,6 +134,67 @@ describe('BillRailProvider', () => {
     });
   });
 
+  /**
+   * The Closed category, end to end through the provider — the seam the pure
+   * helper tests can't reach. Note what the fixture does NOT have: a catalog
+   * tab for rejected/archived. `CLOSED_TAB` supplies it, which means the
+   * provider must (a) resolve a rejected bill's category to the pair, (b) warm
+   * that pair under a key the rail's OWN subscription agrees with — a
+   * mismatch there would warm one entry and read another, and the rail would
+   * sit on skeletons forever — and (c) hand the bill a way out.
+   */
+  describe('the Closed category (rejected + archived)', () => {
+    beforeEach(() => {
+      // Archived FIRST in the raw list: the wire order is due-date across
+      // statuses, so this also proves the landing respects the rail's grouping.
+      billsByKey.set('rejected,archived', [bill('x1', 'archived'), bill('r1', 'rejected')]);
+    });
+
+    it('rails a rejected bill with its archived neighbors, and `next` walks out to Drafts', async () => {
+      params.id = 'r1';
+      const view = mountRail();
+
+      await waitFor(() => expect(view.result.current.loading).toBe(false));
+      expect(view.result.current.statuses).toEqual(['rejected', 'archived']);
+      // Both states in one rail — not the rail of one this used to be.
+      expect(view.result.current.bills?.map((b) => b.id)).toEqual(['x1', 'r1']);
+
+      await waitFor(() => expect(view.result.current.chevronNext.settled).toBe(true));
+      expect(view.result.current.chevronNext.target).toMatchObject({
+        billId: 'd1',
+        tab: { code: 'drafts' },
+      });
+    });
+
+    it('wraps `prev` round the seam — Closed opens the ring, so `←` exits at the far end', async () => {
+      params.id = 'r1';
+      const view = mountRail();
+
+      // The ring is a loop, so index 0 is not a dead end: `←` continues from
+      // the tail. This fixture's catalog stops at For payment (no Paid tab),
+      // so the far end IS For payment — the wrap lands on its head bill
+      // rather than reporting a clamp.
+      await waitFor(() => expect(view.result.current.chevronPrev.settled).toBe(true));
+      expect(view.result.current.chevronPrev.target).toMatchObject({
+        billId: 'p1',
+        tab: { code: 'for_payment' },
+      });
+    });
+
+    it('is reachable BACK from Drafts, landing on the rail’s first card', async () => {
+      params.id = 'd1';
+      const view = mountRail();
+
+      await waitFor(() => expect(view.result.current.chevronPrev.settled).toBe(true));
+      // 'x1' heads the raw list, but the rail sections Rejected above
+      // Archived — so the hop selects 'r1', the first card you actually see.
+      expect(view.result.current.chevronPrev.target).toMatchObject({
+        billId: 'r1',
+        tab: { code: 'closed', name: 'Closed' },
+      });
+    });
+  });
+
   it('seedFor reaches warmed neighbors — a hop’s landing bill seeds pre-flip', async () => {
     const view = mountRail();
     await waitFor(() => expect(view.result.current.loading).toBe(false));
