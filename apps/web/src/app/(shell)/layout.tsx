@@ -1,8 +1,8 @@
 import type { PropsWithChildren } from 'react';
 
+import { CommandPaletteTrigger } from '@/features/command-palette/components/CommandPaletteTrigger';
 import { CommonSideMenu } from '@/features/common/components/CommonSideMenu';
 import { CommonTopBar } from '@/features/common/components/CommonTopBar';
-import { CommonTopBarSearch } from '@/features/common/components/CommonTopBarSearch';
 
 /**
  * The common application shell shared by every non-detail page (bills list,
@@ -11,6 +11,10 @@ import { CommonTopBarSearch } from '@/features/common/components/CommonTopBarSea
  * left, the TopBar with the general search across the top, and a scrollable
  * `<main>` for the page body. Detail views live in a sibling `(detail)/` group
  * and deliberately opt out of this chrome.
+ *
+ * The top bar's search is a TRIGGER, not a field: the palette it opens is
+ * mounted at the ROOT layout instead, precisely because `(detail)/` skips this
+ * frame and ⌘K has to work there too.
  */
 export default function ShellLayout({ children }: PropsWithChildren) {
   return (
@@ -27,7 +31,7 @@ export default function ShellLayout({ children }: PropsWithChildren) {
           gutter up front makes that shift structurally impossible. */}
       <div className="flex flex-1 [scrollbar-gutter:stable] flex-col overflow-auto">
         <CommonTopBar>
-          <CommonTopBarSearch />
+          <CommandPaletteTrigger />
         </CommonTopBar>
         <main className="flex flex-1 flex-col">{children}</main>
       </div>

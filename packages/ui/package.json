@@ -43,6 +43,10 @@
       "types": "./dist/components/SegmentedArea/SegmentedArea.d.ts",
       "import": "./dist/components/SegmentedArea/SegmentedArea.js"
     },
+    "./CommandPalette": {
+      "types": "./dist/components/CommandPalette/CommandPalette.d.ts",
+      "import": "./dist/components/CommandPalette/CommandPalette.js"
+    },
     "./Checkbox": {
       "types": "./dist/components/Checkbox/Checkbox.d.ts",
       "import": "./dist/components/Checkbox/Checkbox.js"
