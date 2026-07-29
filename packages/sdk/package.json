@@ -21,6 +21,10 @@
       "types": "./dist/vendors.d.ts",
       "import": "./dist/vendors.js"
     },
+    "./insights": {
+      "types": "./dist/insights.d.ts",
+      "import": "./dist/insights.js"
+    },
     "./users": {
       "types": "./dist/users.d.ts",
       "import": "./dist/users.js"

@@ -48,6 +48,10 @@
     "./activity": {
       "types": "./dist/activity.d.ts",
       "import": "./dist/activity.js"
+    },
+    "./insights": {
+      "types": "./dist/insights.d.ts",
+      "import": "./dist/insights.js"
     }
   },
   "files": [

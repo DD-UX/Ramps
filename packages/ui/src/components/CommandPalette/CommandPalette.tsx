@@ -400,7 +400,16 @@ function CommandPaletteRow({
   LinkComponent,
 }: CommandPaletteRowProps) {
   const className = cn(
-    'gap-rui-3 rounded-square px-rui-3 py-rui-2 relative flex w-full items-center text-left',
+    // `isolate` is LOAD-BEARING, not decoration. The highlight below is a
+    // `-z-10` fill, and `relative` alone does not open a stacking context — a
+    // negatively-stacked child then paints in the nearest ancestor that does
+    // (the `fixed z-50` scrim), which puts it BEHIND the panel's own white
+    // background. The row still moved and `aria-activedescendant` still
+    // tracked it; there was simply nothing to see, so ↑/↓ read as broken.
+    // `isolation: isolate` pins the fill inside this row — above the panel's
+    // white, below the row's content. Same fix, same reason, as the detail
+    // rail's active card.
+    'gap-rui-3 rounded-square px-rui-3 py-rui-2 relative isolate flex w-full items-center text-left',
     'cursor-pointer no-underline',
   );
 
@@ -412,6 +421,7 @@ function CommandPaletteRow({
       {active && (
         <motion.span
           layoutId="command-palette-active"
+          data-testid="command-palette-highlight"
           className="bg-limestone rounded-square inset-0 absolute -z-10"
           transition={{ type: 'spring', stiffness: 700, damping: 45 }}
         />
